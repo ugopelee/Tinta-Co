@@ -4,6 +4,7 @@ import type { Diseno } from "@tinta/compartido/tipos";
 import {
   BarraProgreso,
   Contador,
+  DesvanecerAlSalir,
   Filete,
   Marquesina,
   Parallax,
@@ -12,7 +13,6 @@ import {
 } from "@/components/animaciones";
 import { Cabecera } from "@/components/Cabecera";
 import type { Sesion } from "@/components/MenuCuenta";
-import { TarjetaReservaRapida } from "@/components/TarjetaReservaRapida";
 import { CatalogoPlegable } from "@/components/CatalogoPlegable";
 import { FormularioReserva } from "@/components/FormularioReserva";
 
@@ -34,14 +34,14 @@ export default async function Landing() {
   return (
     <div className="relative z-10">
       <BarraProgreso />
+      <Cabecera sesion={sesion} />
 
       <main>
-        <Hero sesion={sesion} />
+        <Hero disenos={disenos} />
         <Cifras />
         <Servicios />
         <Marquesina palabras={estudio.marquesina} />
         <Catalogo disenos={disenos} />
-        <Reserva disenos={disenos} />
       </main>
 
       <Pie />
@@ -71,10 +71,10 @@ async function leerSesion(): Promise<Sesion | null> {
   };
 }
 
-function Hero({ sesion }: { sesion: Sesion | null }) {
+function Hero({ disenos }: { disenos: Diseno[] }) {
   return (
     <section className="p-3 sm:p-5">
-      <div className="cristal relative flex min-h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-[1.75rem] p-6 sm:min-h-[calc(100vh-2.5rem)] sm:rounded-[2.25rem] sm:p-10">
+      <DesvanecerAlSalir className="cristal relative overflow-hidden rounded-[1.75rem] px-6 pb-12 pt-28 sm:rounded-[2.25rem] sm:px-10 sm:pb-16 sm:pt-36">
         {/* Niebla del fondo: dos focos que se cruzan, como en una sesión nocturna. */}
         <Parallax
           intensidad={0.16}
@@ -82,7 +82,7 @@ function Hero({ sesion }: { sesion: Sesion | null }) {
         >
           <div
             aria-hidden
-            className="absolute left-1/2 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[150px]"
+            className="absolute left-1/4 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[150px]"
             style={{ background: "var(--acento)" }}
           />
           <div
@@ -92,17 +92,11 @@ function Hero({ sesion }: { sesion: Sesion | null }) {
           />
         </Parallax>
 
-        <div className="relative">
-          <Revelar>
-            <Cabecera sesion={sesion} />
-          </Revelar>
-        </div>
-
-        <div className="relative mt-16 flex flex-1 flex-col justify-between gap-14 lg:mt-20">
-          <div className="flex flex-col justify-between gap-12 lg:flex-row lg:items-start">
-            <h1 className="titular text-[clamp(3rem,10.5vw,8.5rem)] leading-[0.86]">
+        <div className="relative grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-start lg:gap-14">
+          <div className="lg:pt-6">
+            <h1 className="titular text-[clamp(2.75rem,7.5vw,6rem)] leading-[0.86]">
               {estudio.hero.lineas.map((linea, indice) => (
-                <Revelar key={linea} retardo={160 + indice * 130}>
+                <Revelar key={linea} retardo={120 + indice * 130}>
                   <span
                     className={`block ${
                       indice === estudio.hero.lineaApagada
@@ -116,20 +110,14 @@ function Hero({ sesion }: { sesion: Sesion | null }) {
               ))}
             </h1>
 
-            <Revelar retardo={620} className="lg:pt-10">
-              <TarjetaReservaRapida />
-            </Revelar>
-          </div>
-
-          <div className="flex flex-wrap items-end justify-between gap-10">
-            <Revelar retardo={760}>
-              <p className="parrafo max-w-xs text-sm text-tenue">
+            <Revelar retardo={560}>
+              <p className="parrafo mt-8 max-w-sm text-sm text-tenue sm:text-base">
                 {estudio.hero.entradilla}
               </p>
             </Revelar>
 
-            <Revelar retardo={860}>
-              <div className="flex items-center gap-8">
+            <Revelar retardo={680}>
+              <div className="mt-10 flex flex-wrap items-end gap-10">
                 <div>
                   <p className="flex items-baseline gap-2">
                     <span aria-hidden className="text-acento">
@@ -141,15 +129,42 @@ function Hero({ sesion }: { sesion: Sesion | null }) {
                     de {estudio.cifras[1].valor.toLocaleString("es-ES")} piezas
                   </p>
                 </div>
-                <div className="hidden sm:block">
+                <div>
                   <p className="cifra text-2xl">{estudio.cifras[0].valor}</p>
                   <p className="mt-1 text-xs text-tenue">años tatuando</p>
+                </div>
+                <div>
+                  <p className="cifra text-2xl">{estudio.cifras[2].valor}</p>
+                  <p className="mt-1 text-xs text-tenue">artistas</p>
                 </div>
               </div>
             </Revelar>
           </div>
+
+          <Revelar retardo={420}>
+            <div
+              id="reserva"
+              className="cristal-denso scroll-mt-28 rounded-2xl p-6 sm:p-8"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="titular text-2xl">{estudio.reserva.titulo}</h2>
+                  <p className="mt-1.5 text-sm text-tenue">
+                    {estudio.reserva.entradilla}
+                  </p>
+                </div>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-sm text-tenue">
+                  ✦
+                </span>
+              </div>
+
+              <div className="mt-7">
+                <FormularioReserva disenos={disenos} />
+              </div>
+            </div>
+          </Revelar>
         </div>
-      </div>
+      </DesvanecerAlSalir>
     </section>
   );
 }
@@ -228,35 +243,6 @@ function Catalogo({ disenos }: { disenos: Diseno[] }) {
             <CatalogoPlegable disenos={disenos} />
           </div>
         )}
-      </div>
-    </section>
-  );
-}
-
-function Reserva({ disenos }: { disenos: Diseno[] }) {
-  return (
-    <section
-      id="reserva"
-      className="relative scroll-mt-24 overflow-hidden px-6 py-24 sm:py-36"
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/3 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full opacity-[0.12] blur-[140px]"
-        style={{ background: "var(--acento)" }}
-      />
-
-      <div className="relative mx-auto max-w-3xl">
-        <TituloSeccion
-          etiqueta="Cita previa"
-          titulo={estudio.reserva.titulo}
-          descripcion={estudio.reserva.entradilla}
-        />
-
-        <Revelar retardo={180}>
-          <div className="mt-14 rounded-2xl border border-borde bg-superficie/70 p-6 backdrop-blur-sm sm:p-10">
-            <FormularioReserva disenos={disenos} />
-          </div>
-        </Revelar>
       </div>
     </section>
   );

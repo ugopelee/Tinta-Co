@@ -7,7 +7,6 @@ import { formularioInicial } from "@tinta/compartido/formularios";
 import { estudio } from "@tinta/compartido/estudio";
 import type { Diseno } from "@tinta/compartido/tipos";
 import { EVENTO_ELEGIR_DISENO } from "@/components/TarjetaFlash";
-import { EVENTO_ELEGIR_ESTILO } from "@/components/TarjetaReservaRapida";
 
 const claseCampo =
   "w-full rounded-lg border border-borde bg-fondo/60 px-4 py-3 text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
@@ -34,6 +33,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
   const [disenoElegido, setDisenoElegido] = useState("");
   const [estiloElegido, setEstiloElegido] = useState("");
   const [fechaElegida, setFechaElegida] = useState("");
+  const [verTodosLosEstilos, setVerTodosLosEstilos] = useState(false);
 
   // El catálogo avisa por evento cuando tocas una pieza.
   useEffect(() => {
@@ -41,21 +41,9 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
       setDisenoElegido((evento as CustomEvent<string>).detail);
     };
 
-    // La tarjeta de la portada manda estilo y fecha ya elegidos.
-    const alElegirEstilo = (evento: Event) => {
-      const { estilo, fecha } = (
-        evento as CustomEvent<{ estilo: string; fecha: string }>
-      ).detail;
-      setEstiloElegido(estilo);
-      if (fecha) setFechaElegida(fecha);
-    };
-
     window.addEventListener(EVENTO_ELEGIR_DISENO, alElegirDiseno);
-    window.addEventListener(EVENTO_ELEGIR_ESTILO, alElegirEstilo);
-    return () => {
+    return () =>
       window.removeEventListener(EVENTO_ELEGIR_DISENO, alElegirDiseno);
-      window.removeEventListener(EVENTO_ELEGIR_ESTILO, alElegirEstilo);
-    };
   }, []);
 
   useEffect(() => {
@@ -64,13 +52,16 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
     if (resultado.estado === "ok") formulario.current?.reset();
   }, [resultado]);
 
-  const estilos = useMemo(
-    () =>
-      [...estudio.estilos].sort(
-        (a, b) => Number(b.destacado) - Number(a.destacado),
-      ),
-    [],
-  );
+  // En la portada el formulario comparte espacio con el titular, así que de
+  // entrada solo se ven los estilos habituales.
+  const estilos = useMemo(() => {
+    const ordenados = [...estudio.estilos].sort(
+      (a, b) => Number(b.destacado) - Number(a.destacado),
+    );
+    return verTodosLosEstilos
+      ? ordenados
+      : ordenados.filter((estilo) => estilo.destacado);
+  }, [verTodosLosEstilos]);
 
   const hoy = new Date().toISOString().slice(0, 10);
 
@@ -176,6 +167,16 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
               </span>
             </label>
           ))}
+
+          {!verTodosLosEstilos && (
+            <button
+              type="button"
+              onClick={() => setVerTodosLosEstilos(true)}
+              className="rounded-full border border-dashed border-borde px-4 py-2 text-sm text-tenue transition-colors duration-300 hover:border-tenue hover:text-texto"
+            >
+              Más estilos
+            </button>
+          )}
         </div>
       </fieldset>
 
@@ -227,7 +228,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         <textarea
           id="mensaje"
           name="mensaje"
-          rows={5}
+          rows={3}
           maxLength={2000}
           placeholder="Tamaño aproximado, referencias, si es tu primer tatuaje…"
           className={`${claseCampo} resize-y`}

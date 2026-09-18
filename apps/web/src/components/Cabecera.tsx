@@ -11,32 +11,37 @@ const enlaces = [
 ];
 
 /**
- * La navegación vive dentro del panel de cristal de la portada, no pegada a
- * la ventana: es lo que hace que la portada se lea como una pieza.
+ * Fija arriba y con la píldora centrada respecto a la ventana, no respecto
+ * al logo: por eso va posicionada de forma absoluta y no dentro del flujo.
  */
 export function Cabecera({ sesion }: { sesion: Sesion | null }) {
   return (
-    <nav className="flex items-center justify-between gap-4">
-      <Link
-        href="/"
-        className="titular text-xl transition-opacity duration-300 hover:opacity-70"
-      >
-        {estudio.nombre}
-      </Link>
+    <header className="fixed inset-x-0 top-0 z-50 px-4 py-4 sm:px-7 sm:py-6">
+      <div className="relative flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="titular text-lg transition-opacity duration-300 hover:opacity-70 sm:text-xl"
+        >
+          {estudio.nombre}
+        </Link>
 
-      <div className="hidden items-center gap-8 md:flex">
-        {enlaces.map((enlace) => (
-          <a
-            key={enlace.href}
-            href={enlace.href}
-            className="enlace-sutil -my-2 py-2 text-sm text-tenue transition-colors duration-300 hover:text-texto"
-          >
-            {enlace.texto}
-          </a>
-        ))}
-      </div>
+        {/* En móvil no caben logo, menú y cuenta en la misma línea, así que
+            la píldora baja al pulgar. */}
+        <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 sm:absolute sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2">
+          <ul className="flex items-center gap-1 rounded-full bg-texto/95 p-1.5 shadow-lg shadow-black/30 backdrop-blur">
+            {enlaces.map((enlace) => (
+              <li key={enlace.href}>
+                <a
+                  href={enlace.href}
+                  className="block rounded-full px-3.5 py-2 text-[0.8rem] font-medium text-fondo/70 transition-colors duration-300 hover:bg-fondo/10 hover:text-fondo sm:px-5 sm:text-sm"
+                >
+                  {enlace.texto}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <div className="flex items-center gap-3">
         {sesion ? (
           <MenuCuenta sesion={sesion} />
         ) : (
@@ -47,14 +52,7 @@ export function Cabecera({ sesion }: { sesion: Sesion | null }) {
             Acceder
           </Link>
         )}
-
-        <a
-          href="#reserva"
-          className="boton-barrido hidden rounded-full bg-texto px-5 py-2.5 text-sm font-medium text-fondo transition-colors duration-300 sm:block"
-        >
-          {estudio.hero.cta}
-        </a>
       </div>
-    </nav>
+    </header>
   );
 }

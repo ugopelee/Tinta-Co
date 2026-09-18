@@ -179,6 +179,65 @@ export function Cortina({
   );
 }
 
+/**
+ * Encoge y apaga su contenido a medida que sale por arriba, que es el gesto
+ * con el que se despide la portada de la referencia.
+ */
+export function DesvanecerAlSalir({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const referencia = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const nodo = referencia.current;
+    if (!nodo || prefiereMenosMovimiento()) return;
+
+    let pendiente = 0;
+
+    const actualizar = () => {
+      const caja = nodo.getBoundingClientRect();
+      // 0 mientras está arriba del todo, 1 cuando ya ha salido una pantalla.
+      const salida = Math.min(
+        1,
+        Math.max(0, -caja.top / Math.max(1, window.innerHeight)),
+      );
+
+      nodo.style.opacity = String(1 - salida * 0.8);
+      nodo.style.transform = `scale(${1 - salida * 0.05})`;
+      nodo.style.filter = `blur(${(salida * 6).toFixed(1)}px)`;
+      pendiente = 0;
+    };
+
+    const alMoverse = () => {
+      if (!pendiente) pendiente = requestAnimationFrame(actualizar);
+    };
+
+    actualizar();
+    window.addEventListener("scroll", alMoverse, { passive: true });
+    window.addEventListener("resize", alMoverse);
+
+    return () => {
+      window.removeEventListener("scroll", alMoverse);
+      window.removeEventListener("resize", alMoverse);
+      if (pendiente) cancelAnimationFrame(pendiente);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={referencia}
+      className={className}
+      style={{ transformOrigin: "center top", willChange: "transform, opacity" }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /** Desplaza su contenido a distinta velocidad que el scroll. */
 export function Parallax({
   children,
