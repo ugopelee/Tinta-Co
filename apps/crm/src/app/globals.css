@@ -19,11 +19,10 @@
 /* Bodoni es una romana de contraste alto: a tamaño grande pide tracking
    negativo, y su eje óptico afina los remates. */
 .titular {
-  font-family: var(--font-titulo), Georgia, serif;
-  font-optical-sizing: auto;
-  letter-spacing: -0.028em;
+  font-family: var(--font-titulo), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.035em;
   text-wrap: balance;
-  font-weight: 400;
 }
 
 .titular em {

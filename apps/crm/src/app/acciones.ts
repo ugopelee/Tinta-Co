@@ -41,8 +41,10 @@ export async function iniciarSesion(
     return { estado: "error", mensaje: "Email o contraseña incorrectos." };
   }
 
-  // Solo permitimos volver a rutas internas del CRM.
-  redirect(volver.startsWith("/") ? volver : "/");
+  // Solo rutas internas. Ojo con "//otro-dominio.com": empieza por "/" pero
+  // el navegador lo trata como absoluto, y sería un redirect abierto.
+  const esInterna = volver.startsWith("/") && !volver.startsWith("//");
+  redirect(esInterna ? volver : "/");
 }
 
 export async function registrarse(

@@ -201,12 +201,16 @@ export const estudio = {
   },
 } as const;
 
-/** Estados del tablero Kanban del CRM, en orden de flujo. */
+/**
+ * Estados del tablero, en orden de flujo. Los colores están validados como
+ * paleta categórica sobre fondo oscuro: separables también con daltonismo y
+ * todos con contraste suficiente. Si tocas uno, revalida el conjunto.
+ */
 export const estadosCita = [
-  { id: "solicitada", nombre: "Solicitada", color: "#8d8d98" },
-  { id: "confirmada", nombre: "Confirmada", color: "#c2452f" },
-  { id: "realizada", nombre: "Realizada", color: "#4c9a6a" },
-  { id: "cancelada", nombre: "Cancelada", color: "#5a5a63" },
+  { id: "solicitada", nombre: "Solicitada", color: "#bd8a2e" },
+  { id: "confirmada", nombre: "Confirmada", color: "#5b8dd9" },
+  { id: "realizada", nombre: "Realizada", color: "#57a86f" },
+  { id: "cancelada", nombre: "Cancelada", color: "#c2452f" },
 ] as const;
 
 export type EstadoCita = (typeof estadosCita)[number]["id"];
