@@ -13,6 +13,8 @@ import {
 import { Cabecera } from "@/components/Cabecera";
 import type { Sesion } from "@/components/MenuCuenta";
 import { GaleriaDisenos } from "@/components/GaleriaDisenos";
+import { MarcaDeAgua } from "@/components/MarcaDeAgua";
+import { Servicios } from "@/components/Servicios";
 import { FormularioReserva } from "@/components/FormularioReserva";
 
 export default async function Landing() {
@@ -90,8 +92,11 @@ function Hero({ disenos }: { disenos: Diseno[] }) {
           />
         </Parallax>
 
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-start lg:gap-14">
-          <div className="lg:pt-6">
+        {/* El monograma del estudio, tan bajo que se lee como textura. */}
+        <MarcaDeAgua className="pointer-events-none absolute -right-24 top-1/2 h-[46rem] w-auto -translate-y-1/2 text-texto opacity-[0.035] sm:right-[6%]" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-stretch lg:gap-14">
+          <div className="flex flex-col justify-between lg:pt-4">
             <h1 className="titular text-[clamp(2.75rem,7vw,5.5rem)] leading-[1.02]">
               {estudio.hero.lineas.map((linea, indice) => (
                 <Revelar key={linea} retardo={120 + indice * 130}>
@@ -139,10 +144,10 @@ function Hero({ disenos }: { disenos: Diseno[] }) {
             </Revelar>
           </div>
 
-          <Revelar retardo={420}>
+          <Revelar retardo={420} className="h-full">
             <div
               id="reserva"
-              className="cristal-denso scroll-mt-28 rounded-2xl p-6 sm:p-8"
+              className="cristal-denso flex h-full scroll-mt-28 flex-col rounded-2xl p-6 sm:p-7"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -183,40 +188,6 @@ function Cifras() {
             <p className="etiqueta mt-4 text-tenue">{cifra.etiqueta}</p>
           </Revelar>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function Servicios() {
-  return (
-    <section id="servicios" className="scroll-mt-24 px-6 py-24 sm:py-36">
-      <div className="mx-auto max-w-6xl">
-        <TituloSeccion etiqueta="Qué hacemos" titulo="Servicios del estudio" />
-
-        <div className="mt-20">
-          <Filete className="h-px w-full bg-borde" />
-          {estudio.servicios.map((servicio, indice) => (
-            <Revelar key={servicio.id} retardo={indice * 70}>
-              <article className="group grid gap-4 border-b border-borde py-10 transition-colors duration-500 hover:bg-superficie/40 sm:grid-cols-[6rem_1fr_auto] sm:items-baseline sm:gap-10 sm:px-6">
-                <span className="etiqueta text-acento">0{indice + 1}</span>
-
-                <div>
-                  <h3 className="titular text-2xl transition-transform duration-500 sm:text-3xl sm:group-hover:translate-x-2">
-                    {servicio.nombre}
-                  </h3>
-                  <p className="parrafo mt-3 max-w-xl text-sm text-tenue">
-                    {servicio.descripcion}
-                  </p>
-                </div>
-
-                <p className="whitespace-nowrap text-sm text-tenue transition-colors duration-500 group-hover:text-texto">
-                  {servicio.detalle}
-                </p>
-              </article>
-            </Revelar>
-          ))}
-        </div>
       </div>
     </section>
   );

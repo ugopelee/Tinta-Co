@@ -15,30 +15,63 @@ function prefiereMenosMovimiento() {
   );
 }
 
-/** Marca un elemento como visible la primera vez que entra en pantalla. */
-function useEnVista<T extends HTMLElement>(margen = "0px 0px -80px 0px") {
+/**
+ * Un único listener de scroll para toda la página, en vez de un observador
+ * por elemento. Recalcula en cada fotograma quién está en pantalla y avisa a
+ * los suscritos, de modo que las animaciones vuelven a ejecutarse al subir.
+ */
+const suscritos = new Map<HTMLElement, (visible: boolean) => void>();
+let cuadroPendiente = 0;
+
+function revisarVisibles() {
+  const alto = window.innerHeight;
+
+  suscritos.forEach((avisar, nodo) => {
+    const caja = nodo.getBoundingClientRect();
+    // Margen inferior: el elemento cuenta como visible un poco antes de
+    // llegar al borde, para que no aparezca ya pegado abajo.
+    avisar(caja.top < alto - 60 && caja.bottom > 0);
+  });
+
+  cuadroPendiente = 0;
+}
+
+function alMoverse() {
+  if (!cuadroPendiente) cuadroPendiente = requestAnimationFrame(revisarVisibles);
+}
+
+function suscribir(nodo: HTMLElement, avisar: (visible: boolean) => void) {
+  if (suscritos.size === 0) {
+    window.addEventListener("scroll", alMoverse, { passive: true });
+    window.addEventListener("resize", alMoverse);
+  }
+
+  suscritos.set(nodo, avisar);
+  // Primera comprobación en el acto: si esperásemos al siguiente fotograma,
+  // lo que ya está en pantalla al cargar parpadearía.
+  revisarVisibles();
+
+  return () => {
+    suscritos.delete(nodo);
+    if (suscritos.size === 0) {
+      window.removeEventListener("scroll", alMoverse);
+      window.removeEventListener("resize", alMoverse);
+      if (cuadroPendiente) cancelAnimationFrame(cuadroPendiente);
+      cuadroPendiente = 0;
+    }
+  };
+}
+
+/** Sigue a un elemento mientras entra y sale de pantalla. */
+function useEnVista<T extends HTMLElement>() {
   const referencia = useRef<T>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const nodo = referencia.current;
     if (!nodo) return;
-
-    // Con movimiento reducido no hace falta un camino aparte: el CSS anula
-    // la duración de la transición, así que el elemento aparece de golpe.
-    const observador = new IntersectionObserver(
-      ([entrada]) => {
-        if (entrada.isIntersecting) {
-          setVisible(true);
-          observador.disconnect();
-        }
-      },
-      { threshold: 0.1, rootMargin: margen },
-    );
-
-    observador.observe(nodo);
-    return () => observador.disconnect();
-  }, [margen]);
+    return suscribir(nodo, setVisible);
+  }, []);
 
   return { referencia, visible };
 }

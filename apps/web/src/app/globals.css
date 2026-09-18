@@ -198,6 +198,22 @@ body::after {
   transform: translateY(-50%);
 }
 
+/* Entrada del nombre de servicio al cambiar de pestaña. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.surgir {
+  animation: surgir 0.7s cubic-bezier(0.22, 0.8, 0.26, 1) both;
+}
+
 /* Banda de palabras en bucle. */
 @keyframes desplazar {
   from {
@@ -270,7 +286,8 @@ body::after {
 
   .marquesina > div,
   .galeria > div,
-  .trama-puntos {
+  .trama-puntos,
+  .surgir {
     animation: none;
   }
 

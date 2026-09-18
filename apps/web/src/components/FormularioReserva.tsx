@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { reservarCita } from "@/app/acciones";
 import { formularioInicial } from "@tinta/compartido/formularios";
@@ -9,9 +9,9 @@ import type { Diseno } from "@tinta/compartido/tipos";
 import { EVENTO_ELEGIR_DISENO } from "@/components/TarjetaFlash";
 
 const claseCampo =
-  "w-full rounded-lg border border-borde bg-fondo/60 px-4 py-3 text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
+  "w-full rounded-lg border border-borde bg-fondo/60 px-3.5 py-2.5 text-sm text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
 
-const claseEtiqueta = "mb-2 block text-sm text-tenue";
+const claseEtiqueta = "mb-1.5 block text-xs text-tenue";
 
 function BotonEnviar() {
   const { pending } = useFormStatus();
@@ -20,7 +20,7 @@ function BotonEnviar() {
     <button
       type="submit"
       disabled={pending}
-      className="boton-barrido w-full rounded-full bg-acento px-6 py-4 font-medium tracking-wide text-white transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-12"
+      className="boton-barrido w-full rounded-xl bg-acento px-6 py-3 text-sm font-medium text-white transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Enviando…" : "Solicitar cita"}
     </button>
@@ -31,9 +31,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
   const [resultado, accion] = useActionState(reservarCita, formularioInicial);
   const formulario = useRef<HTMLFormElement>(null);
   const [disenoElegido, setDisenoElegido] = useState("");
-  const [estiloElegido, setEstiloElegido] = useState("");
   const [fechaElegida, setFechaElegida] = useState("");
-  const [verTodosLosEstilos, setVerTodosLosEstilos] = useState(false);
 
   // El catálogo avisa por evento cuando tocas una pieza.
   useEffect(() => {
@@ -52,17 +50,6 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
     if (resultado.estado === "ok") formulario.current?.reset();
   }, [resultado]);
 
-  // En la portada el formulario comparte espacio con el titular, así que de
-  // entrada solo se ven los estilos habituales.
-  const estilos = useMemo(() => {
-    const ordenados = [...estudio.estilos].sort(
-      (a, b) => Number(b.destacado) - Number(a.destacado),
-    );
-    return verTodosLosEstilos
-      ? ordenados
-      : ordenados.filter((estilo) => estilo.destacado);
-  }, [verTodosLosEstilos]);
-
   const hoy = new Date().toISOString().slice(0, 10);
 
   return (
@@ -71,10 +58,9 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
       action={accion}
       onReset={() => {
         setDisenoElegido("");
-        setEstiloElegido("");
         setFechaElegida("");
       }}
-      className="space-y-8"
+      className="space-y-4"
     >
       {/* Señuelo para bots: fuera de pantalla y saltado por el tabulador. */}
       <div aria-hidden className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
@@ -82,7 +68,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         <input id="apodo" name="apodo" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={claseEtiqueta} htmlFor="nombre">
             Nombre *
@@ -145,42 +131,8 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         </div>
       </div>
 
-      <fieldset>
-        <legend className={claseEtiqueta}>Estilo que te interesa</legend>
-        <div className="flex flex-wrap gap-2">
-          {estilos.map((estilo) => (
-            <label
-              key={estilo.id}
-              title={estilo.descripcion}
-              className="cursor-pointer"
-            >
-              <input
-                type="radio"
-                name="estilo_interes"
-                value={estilo.nombre}
-                checked={estiloElegido === estilo.nombre}
-                onChange={() => setEstiloElegido(estilo.nombre)}
-                className="peer sr-only"
-              />
-              <span className="inline-block rounded-full border border-borde px-4 py-2 text-sm text-tenue transition-all duration-300 hover:border-tenue hover:text-texto peer-checked:border-acento peer-checked:bg-acento/10 peer-checked:text-texto peer-focus-visible:ring-1 peer-focus-visible:ring-acento">
-                {estilo.nombre}
-              </span>
-            </label>
-          ))}
 
-          {!verTodosLosEstilos && (
-            <button
-              type="button"
-              onClick={() => setVerTodosLosEstilos(true)}
-              className="rounded-full border border-dashed border-borde px-4 py-2 text-sm text-tenue transition-colors duration-300 hover:border-tenue hover:text-texto"
-            >
-              Más estilos
-            </button>
-          )}
-        </div>
-      </fieldset>
-
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={claseEtiqueta} htmlFor="diseno_id">
             Diseño del catálogo
@@ -228,14 +180,14 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         <textarea
           id="mensaje"
           name="mensaje"
-          rows={3}
+          rows={2}
           maxLength={2000}
           placeholder="Tamaño aproximado, referencias, si es tu primer tatuaje…"
           className={`${claseCampo} resize-y`}
         />
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="space-y-3 pt-1">
         <BotonEnviar />
         <p className="text-xs leading-relaxed text-tenue sm:max-w-xs">
           {estudio.reserva.aviso}

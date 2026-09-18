@@ -33,7 +33,7 @@ export function Cabecera({ sesion }: { sesion: Sesion | null }) {
               <li key={enlace.href}>
                 <a
                   href={enlace.href}
-                  className="block rounded-full px-3.5 py-2 text-[0.8rem] font-medium text-tenue transition-colors duration-300 hover:bg-white/5 hover:text-texto sm:px-5 sm:text-sm"
+                  className="block rounded-full px-3.5 py-2 text-[0.8rem] font-medium text-texto/90 transition-colors duration-300 hover:bg-white/10 hover:text-texto sm:px-5 sm:text-sm"
                 >
                   {enlace.texto}
                 </a>
@@ -47,7 +47,7 @@ export function Cabecera({ sesion }: { sesion: Sesion | null }) {
         ) : (
           <Link
             href="/acceder"
-            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-tenue backdrop-blur transition-all duration-300 hover:border-white/30 hover:text-texto"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-texto/90 backdrop-blur transition-all duration-300 hover:border-white/30 hover:text-texto"
           >
             Acceder
           </Link>
