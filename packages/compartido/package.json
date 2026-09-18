@@ -1,0 +1,20 @@
+{
+  "name": "@tinta/compartido",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./estudio": "./src/config/estudio.ts",
+    "./tipos": "./src/tipos.ts",
+    "./formularios": "./src/formularios.ts",
+    "./supabase/servidor": "./src/supabase/server.ts",
+    "./supabase/navegador": "./src/supabase/client.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19"
+  }
+}
