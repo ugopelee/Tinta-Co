@@ -6,14 +6,13 @@ import {
   Contador,
   DesvanecerAlSalir,
   Filete,
-  Marquesina,
   Parallax,
   Revelar,
   TextoRevelado,
 } from "@/components/animaciones";
 import { Cabecera } from "@/components/Cabecera";
 import type { Sesion } from "@/components/MenuCuenta";
-import { CatalogoPlegable } from "@/components/CatalogoPlegable";
+import { GaleriaDisenos } from "@/components/GaleriaDisenos";
 import { FormularioReserva } from "@/components/FormularioReserva";
 
 export default async function Landing() {
@@ -40,7 +39,6 @@ export default async function Landing() {
         <Hero disenos={disenos} />
         <Cifras />
         <Servicios />
-        <Marquesina palabras={estudio.marquesina} />
         <Catalogo disenos={disenos} />
       </main>
 
@@ -73,8 +71,8 @@ async function leerSesion(): Promise<Sesion | null> {
 
 function Hero({ disenos }: { disenos: Diseno[] }) {
   return (
-    <section className="p-3 sm:p-5">
-      <DesvanecerAlSalir className="cristal relative overflow-hidden rounded-[1.75rem] px-6 pb-12 pt-28 sm:rounded-[2.25rem] sm:px-10 sm:pb-16 sm:pt-36">
+    <section>
+      <DesvanecerAlSalir className="relative overflow-hidden px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-36">
         {/* Niebla del fondo: dos focos que se cruzan, como en una sesión nocturna. */}
         <Parallax
           intensidad={0.16}
@@ -92,9 +90,9 @@ function Hero({ disenos }: { disenos: Diseno[] }) {
           />
         </Parallax>
 
-        <div className="relative grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-start lg:gap-14">
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-start lg:gap-14">
           <div className="lg:pt-6">
-            <h1 className="titular text-[clamp(2.75rem,7.5vw,6rem)] leading-[0.86]">
+            <h1 className="titular text-[clamp(2.75rem,7vw,5.5rem)] leading-[1.02]">
               {estudio.hero.lineas.map((linea, indice) => (
                 <Revelar key={linea} retardo={120 + indice * 130}>
                   <span
@@ -226,22 +224,44 @@ function Servicios() {
 
 function Catalogo({ disenos }: { disenos: Diseno[] }) {
   return (
-    <section id="catalogo" className="scroll-mt-24 px-6 py-24 sm:py-36">
-      <div className="mx-auto max-w-6xl">
-        <TituloSeccion
-          etiqueta="Catálogo flash"
-          titulo="Diseños listos para tatuar"
-          descripcion="Piezas ya dibujadas, con precio cerrado. Cada una se tatúa una sola vez. Abre el estilo que te interese y toca una para llevarla al formulario."
+    <section
+      id="catalogo"
+      className="relative scroll-mt-24 overflow-hidden bg-fondo py-24 sm:py-32"
+    >
+      {/* Trama de puntos y marcas de plano: textura de taller, no de web. */}
+      <div aria-hidden className="trama-puntos absolute inset-0" />
+      {[
+        "left-[12%] top-[18%]",
+        "right-[16%] top-[26%]",
+        "left-[22%] bottom-[14%]",
+        "right-[8%] bottom-[22%]",
+      ].map((posicion) => (
+        <span
+          key={posicion}
+          aria-hidden
+          className={`cruceta absolute ${posicion} h-3 w-3`}
         />
+      ))}
+
+      <div className="relative">
+        <div className="mx-auto max-w-7xl px-6">
+          <TituloSeccion
+            etiqueta="Catálogo flash"
+            titulo="Piezas listas para tatuar"
+            descripcion="Cada diseño se tatúa una sola vez. Pasa el ratón para detener la tira y toca una pieza para llevarla al formulario."
+          />
+        </div>
 
         {disenos.length === 0 ? (
-          <p className="mt-16 rounded-xl border border-borde bg-superficie p-10 text-center text-tenue">
+          <p className="mx-auto mt-16 max-w-7xl px-6 text-tenue">
             Estamos preparando el próximo set de flash. Vuelve pronto.
           </p>
         ) : (
-          <div className="mt-20">
-            <CatalogoPlegable disenos={disenos} />
-          </div>
+          <Revelar retardo={200}>
+            <div className="mt-16">
+              <GaleriaDisenos disenos={disenos} />
+            </div>
+          </Revelar>
         )}
       </div>
     </section>

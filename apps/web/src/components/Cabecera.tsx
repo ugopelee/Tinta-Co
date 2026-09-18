@@ -28,12 +28,12 @@ export function Cabecera({ sesion }: { sesion: Sesion | null }) {
         {/* En móvil no caben logo, menú y cuenta en la misma línea, así que
             la píldora baja al pulgar. */}
         <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 sm:absolute sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2">
-          <ul className="flex items-center gap-1 rounded-full bg-texto/95 p-1.5 shadow-lg shadow-black/30 backdrop-blur">
+          <ul className="flex items-center gap-1 rounded-full border border-white/10 bg-fondo/70 p-1.5 shadow-lg shadow-black/40 backdrop-blur-xl">
             {enlaces.map((enlace) => (
               <li key={enlace.href}>
                 <a
                   href={enlace.href}
-                  className="block rounded-full px-3.5 py-2 text-[0.8rem] font-medium text-fondo/70 transition-colors duration-300 hover:bg-fondo/10 hover:text-fondo sm:px-5 sm:text-sm"
+                  className="block rounded-full px-3.5 py-2 text-[0.8rem] font-medium text-tenue transition-colors duration-300 hover:bg-white/5 hover:text-texto sm:px-5 sm:text-sm"
                 >
                   {enlace.texto}
                 </a>

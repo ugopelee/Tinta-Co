@@ -150,6 +150,54 @@ body::after {
   transform: translateY(0);
 }
 
+/* Trama de puntos que deriva despacio: da textura sin competir con las
+   imágenes, y se apaga hacia los bordes. */
+.trama-puntos {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--texto) 22%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+  animation: derivar 30s linear infinite;
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000 20%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 72%);
+}
+
+@keyframes derivar {
+  to {
+    background-position: 24px 24px;
+  }
+}
+
+/* Marcas de plano técnico en las esquinas de la retícula. */
+.cruceta::before,
+.cruceta::after {
+  content: "";
+  position: absolute;
+  background: color-mix(in srgb, var(--texto) 28%, transparent);
+}
+
+.cruceta::before {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.cruceta::after {
+  top: 50%;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  transform: translateY(-50%);
+}
+
 /* Banda de palabras en bucle. */
 @keyframes desplazar {
   from {
@@ -185,6 +233,16 @@ body::after {
   animation-play-state: paused;
 }
 
+/* Tira de piezas que avanza sola y se detiene al acercarte. */
+.galeria > div {
+  animation: desplazar var(--duracion-galeria, 70s) linear infinite;
+}
+
+.galeria:hover > div,
+.galeria:focus-within > div {
+  animation-play-state: paused;
+}
+
 /* Halo que aparece bajo la tarjeta de diseño al pasar por encima. */
 .carta-flash::after {
   content: "";
@@ -210,7 +268,9 @@ body::after {
     scroll-behavior: auto;
   }
 
-  .marquesina > div {
+  .marquesina > div,
+  .galeria > div,
+  .trama-puntos {
     animation: none;
   }
 

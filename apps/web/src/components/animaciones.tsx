@@ -200,10 +200,12 @@ export function DesvanecerAlSalir({
 
     const actualizar = () => {
       const caja = nodo.getBoundingClientRect();
-      // 0 mientras está arriba del todo, 1 cuando ya ha salido una pantalla.
+      // No empieza a apagarse hasta que el bloque entero ha salido por
+      // arriba: mientras se vea el formulario, se ve nítido.
+      const recorrido = window.innerHeight * 0.8;
       const salida = Math.min(
         1,
-        Math.max(0, -caja.top / Math.max(1, window.innerHeight)),
+        Math.max(0, -caja.bottom / Math.max(1, recorrido)),
       );
 
       nodo.style.opacity = String(1 - salida * 0.8);
