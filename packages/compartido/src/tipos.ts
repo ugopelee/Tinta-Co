@@ -43,9 +43,22 @@ export type Cita = {
   mensaje: string | null;
   estado: EstadoCita;
   posicion: number;
+  importe: number | null;
+  pagado: boolean;
+  fecha_cobro: string | null;
+  metodo_pago: MetodoPago | null;
   created_at: string;
   updated_at: string;
 };
+
+export const metodosPago = [
+  { id: "efectivo", nombre: "Efectivo" },
+  { id: "tarjeta", nombre: "Tarjeta" },
+  { id: "transferencia", nombre: "Transferencia" },
+  { id: "bizum", nombre: "Bizum" },
+] as const;
+
+export type MetodoPago = (typeof metodosPago)[number]["id"];
 
 export type Actividad = {
   id: string;

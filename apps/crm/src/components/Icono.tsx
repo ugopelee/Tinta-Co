@@ -7,7 +7,8 @@ export type NombreIcono =
   | "salir"
   | "flecha"
   | "reloj"
-  | "nota";
+  | "nota"
+  | "euro";
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: "M3 3h7v8H3zM14 3h7v5h-7zM14 11h7v10h-7zM3 14h7v7H3z",
@@ -21,6 +22,7 @@ const TRAZOS: Record<NombreIcono, string> = {
   flecha: "M5 12h14M13 6l6 6-6 6",
   reloj: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3.5 2",
   nota: "M5 3h9l5 5v13H5zM14 3v5h5M8 13h8M8 17h5",
+  euro: "M17 5.5A6.5 6.5 0 0 0 7.5 12a6.5 6.5 0 0 0 9.5 6.5M4 10h8M4 14h8",
 };
 
 /** Iconos de trazo, dibujados a mano para no arrastrar una librería. */

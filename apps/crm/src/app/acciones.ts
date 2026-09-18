@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosCita, tiposActividad, type EstadoCita } from "@tinta/compartido/estudio";
+import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
 
 /**
@@ -211,6 +212,46 @@ export async function moverCita(id: string, estado: EstadoCita, posicion: number
     return { ok: false as const, mensaje: "No se ha podido mover la cita." };
   }
 
+  revalidatePath("/");
+  return { ok: true as const, mensaje: "" };
+}
+
+export async function guardarCobro(
+  id: string,
+  cambios: {
+    importe: number | null;
+    pagado: boolean;
+    metodo: MetodoPago | null;
+  },
+) {
+  const supabase = await conSesion();
+  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+
+  if (cambios.importe !== null && (cambios.importe < 0 || cambios.importe > 100000)) {
+    return { ok: false as const, mensaje: "El importe no es válido." };
+  }
+
+  if (cambios.metodo && !metodosPago.some((m) => m.id === cambios.metodo)) {
+    return { ok: false as const, mensaje: "Método de pago no válido." };
+  }
+
+  const { error } = await supabase
+    .from("citas")
+    .update({
+      importe: cambios.importe,
+      pagado: cambios.pagado,
+      // La fecha de cobro la pone el servidor, no el navegador.
+      fecha_cobro: cambios.pagado ? new Date().toISOString().slice(0, 10) : null,
+      metodo_pago: cambios.pagado ? cambios.metodo : null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error al guardar el cobro:", error);
+    return { ok: false as const, mensaje: "No se ha podido guardar el cobro." };
+  }
+
+  revalidatePath("/facturacion");
   revalidatePath("/");
   return { ok: true as const, mensaje: "" };
 }

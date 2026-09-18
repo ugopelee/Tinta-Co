@@ -18,6 +18,7 @@ const GRUPOS: { titulo: string; enlaces: Enlace[] }[] = [
       { href: "/", texto: "Panel", icono: "panel" },
       { href: "/citas", texto: "Citas", icono: "calendario" },
       { href: "/clientes", texto: "Clientes", icono: "personas" },
+      { href: "/facturacion", texto: "Facturación", icono: "euro" },
     ],
   },
 ];
