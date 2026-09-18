@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Geist_Mono, Instrument_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { estudio } from "@tinta/compartido/estudio";
 import "./globals.css";
 
@@ -9,11 +9,12 @@ const cuerpo = Instrument_Sans({
   weight: ["400", "500", "600"],
 });
 
-const titulo = Bodoni_Moda({
+// Grotesca geométrica de peso alto: sostiene titulares muy grandes sin
+// romperse, que es lo que pide esta portada.
+const titulo = Plus_Jakarta_Sans({
   variable: "--font-titulo",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  weight: ["500", "700", "800"],
 });
 
 // Reservada a etiquetas, numeración de secciones y cifras.

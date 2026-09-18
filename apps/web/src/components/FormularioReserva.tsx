@@ -7,6 +7,7 @@ import { formularioInicial } from "@tinta/compartido/formularios";
 import { estudio } from "@tinta/compartido/estudio";
 import type { Diseno } from "@tinta/compartido/tipos";
 import { EVENTO_ELEGIR_DISENO } from "@/components/TarjetaFlash";
+import { EVENTO_ELEGIR_ESTILO } from "@/components/TarjetaReservaRapida";
 
 const claseCampo =
   "w-full rounded-lg border border-borde bg-fondo/60 px-4 py-3 text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
@@ -31,15 +32,30 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
   const [resultado, accion] = useActionState(reservarCita, formularioInicial);
   const formulario = useRef<HTMLFormElement>(null);
   const [disenoElegido, setDisenoElegido] = useState("");
+  const [estiloElegido, setEstiloElegido] = useState("");
+  const [fechaElegida, setFechaElegida] = useState("");
 
   // El catálogo avisa por evento cuando tocas una pieza.
   useEffect(() => {
-    const alElegir = (evento: Event) => {
+    const alElegirDiseno = (evento: Event) => {
       setDisenoElegido((evento as CustomEvent<string>).detail);
     };
 
-    window.addEventListener(EVENTO_ELEGIR_DISENO, alElegir);
-    return () => window.removeEventListener(EVENTO_ELEGIR_DISENO, alElegir);
+    // La tarjeta de la portada manda estilo y fecha ya elegidos.
+    const alElegirEstilo = (evento: Event) => {
+      const { estilo, fecha } = (
+        evento as CustomEvent<{ estilo: string; fecha: string }>
+      ).detail;
+      setEstiloElegido(estilo);
+      if (fecha) setFechaElegida(fecha);
+    };
+
+    window.addEventListener(EVENTO_ELEGIR_DISENO, alElegirDiseno);
+    window.addEventListener(EVENTO_ELEGIR_ESTILO, alElegirEstilo);
+    return () => {
+      window.removeEventListener(EVENTO_ELEGIR_DISENO, alElegirDiseno);
+      window.removeEventListener(EVENTO_ELEGIR_ESTILO, alElegirEstilo);
+    };
   }, []);
 
   useEffect(() => {
@@ -62,7 +78,11 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
     <form
       ref={formulario}
       action={accion}
-      onReset={() => setDisenoElegido("")}
+      onReset={() => {
+        setDisenoElegido("");
+        setEstiloElegido("");
+        setFechaElegida("");
+      }}
       className="space-y-8"
     >
       {/* Señuelo para bots: fuera de pantalla y saltado por el tabulador. */}
@@ -127,6 +147,8 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
             name="fecha_deseada"
             type="date"
             min={hoy}
+            value={fechaElegida}
+            onChange={(evento) => setFechaElegida(evento.target.value)}
             className={claseCampo}
           />
         </div>
@@ -145,6 +167,8 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
                 type="radio"
                 name="estilo_interes"
                 value={estilo.nombre}
+                checked={estiloElegido === estilo.nombre}
+                onChange={() => setEstiloElegido(estilo.nombre)}
                 className="peer sr-only"
               />
               <span className="inline-block rounded-full border border-borde px-4 py-2 text-sm text-tenue transition-all duration-300 hover:border-tenue hover:text-texto peer-checked:border-acento peer-checked:bg-acento/10 peer-checked:text-texto peer-focus-visible:ring-1 peer-focus-visible:ring-acento">

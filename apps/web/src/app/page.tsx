@@ -11,6 +11,8 @@ import {
   TextoRevelado,
 } from "@/components/animaciones";
 import { Cabecera } from "@/components/Cabecera";
+import type { Sesion } from "@/components/MenuCuenta";
+import { TarjetaReservaRapida } from "@/components/TarjetaReservaRapida";
 import { CatalogoPlegable } from "@/components/CatalogoPlegable";
 import { FormularioReserva } from "@/components/FormularioReserva";
 
@@ -27,14 +29,14 @@ export default async function Landing() {
     .order("orden", { ascending: true });
 
   const disenos = (data ?? []) as Diseno[];
+  const sesion = await leerSesion();
 
   return (
     <div className="relative z-10">
       <BarraProgreso />
-      <Cabecera />
 
       <main>
-        <Hero />
+        <Hero sesion={sesion} />
         <Cifras />
         <Servicios />
         <Marquesina palabras={estudio.marquesina} />
@@ -47,66 +49,106 @@ export default async function Landing() {
   );
 }
 
-function Hero() {
+/** Datos mínimos de quien mira la página, para el menú de cuenta. */
+async function leerSesion(): Promise<Sesion | null> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("perfiles")
+    .select("nombre, email, rol")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    nombre: data?.nombre ?? data?.email ?? user.email ?? "Mi cuenta",
+    email: data?.email ?? user.email ?? "",
+    esPropietario: data?.rol === "propietario",
+  };
+}
+
+function Hero({ sesion }: { sesion: Sesion | null }) {
   return (
-    <section className="relative flex min-h-[92vh] items-center overflow-hidden px-6 pb-24 pt-36">
-      <Parallax
-        intensidad={0.22}
-        className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
-      >
-        <div
-          aria-hidden
-          className="h-[42rem] w-[42rem] -translate-y-1/3 rounded-full opacity-25 blur-[130px]"
-          style={{ background: "var(--acento)" }}
-        />
-      </Parallax>
-
-      <div className="relative mx-auto w-full max-w-5xl">
-        <Revelar>
-          <div className="mb-8 flex items-center gap-4">
-            <Filete className="h-px w-12 bg-acento" retardo={200} />
-            <p className="etiqueta text-tenue">{estudio.eslogan}</p>
-          </div>
-        </Revelar>
-
-        <h1 className="titular text-[clamp(2.75rem,9vw,7.5rem)] leading-[0.94]">
-          <TextoRevelado
-            texto={estudio.hero.titulo}
-            enfasis={estudio.hero.enfasis}
+    <section className="p-3 sm:p-5">
+      <div className="cristal relative flex min-h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-[1.75rem] p-6 sm:min-h-[calc(100vh-2.5rem)] sm:rounded-[2.25rem] sm:p-10">
+        {/* Niebla del fondo: dos focos que se cruzan, como en una sesión nocturna. */}
+        <Parallax
+          intensidad={0.16}
+          className="pointer-events-none absolute inset-0"
+        >
+          <div
+            aria-hidden
+            className="absolute left-1/2 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[150px]"
+            style={{ background: "var(--acento)" }}
           />
-        </h1>
+          <div
+            aria-hidden
+            className="absolute -right-40 bottom-0 h-[34rem] w-[34rem] rounded-full opacity-20 blur-[140px]"
+            style={{ background: "var(--acento-suave)" }}
+          />
+        </Parallax>
 
-        <div className="mt-14 grid gap-10 sm:grid-cols-[1fr_auto] sm:items-end">
-          <Revelar retardo={560}>
-            <p className="parrafo max-w-md text-base text-tenue sm:text-lg">
-              {estudio.hero.entradilla}
-            </p>
-          </Revelar>
-
-          <Revelar retardo={680}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#reserva"
-                className="boton-barrido rounded-full bg-acento px-8 py-4 text-center font-medium text-white transition-colors duration-300"
-              >
-                {estudio.hero.cta}
-              </a>
-              <a
-                href="#catalogo"
-                className="rounded-full border border-borde px-8 py-4 text-center transition-all duration-300 hover:border-texto hover:bg-superficie/60"
-              >
-                {estudio.hero.ctaSecundario}
-              </a>
-            </div>
+        <div className="relative">
+          <Revelar>
+            <Cabecera sesion={sesion} />
           </Revelar>
         </div>
-      </div>
 
-      <div
-        aria-hidden
-        className="absolute inset-x-0 bottom-8 hidden justify-center sm:flex"
-      >
-        <span className="h-12 w-px animate-pulse bg-gradient-to-b from-transparent via-tenue to-transparent" />
+        <div className="relative mt-16 flex flex-1 flex-col justify-between gap-14 lg:mt-20">
+          <div className="flex flex-col justify-between gap-12 lg:flex-row lg:items-start">
+            <h1 className="titular text-[clamp(3rem,10.5vw,8.5rem)] leading-[0.86]">
+              {estudio.hero.lineas.map((linea, indice) => (
+                <Revelar key={linea} retardo={160 + indice * 130}>
+                  <span
+                    className={`block ${
+                      indice === estudio.hero.lineaApagada
+                        ? "titular-apagado"
+                        : ""
+                    }`}
+                  >
+                    {linea}
+                  </span>
+                </Revelar>
+              ))}
+            </h1>
+
+            <Revelar retardo={620} className="lg:pt-10">
+              <TarjetaReservaRapida />
+            </Revelar>
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-10">
+            <Revelar retardo={760}>
+              <p className="parrafo max-w-xs text-sm text-tenue">
+                {estudio.hero.entradilla}
+              </p>
+            </Revelar>
+
+            <Revelar retardo={860}>
+              <div className="flex items-center gap-8">
+                <div>
+                  <p className="flex items-baseline gap-2">
+                    <span aria-hidden className="text-acento">
+                      ★
+                    </span>
+                    <span className="cifra text-2xl">4,9</span>
+                  </p>
+                  <p className="mt-1 text-xs text-tenue">
+                    de {estudio.cifras[1].valor.toLocaleString("es-ES")} piezas
+                  </p>
+                </div>
+                <div className="hidden sm:block">
+                  <p className="cifra text-2xl">{estudio.cifras[0].valor}</p>
+                  <p className="mt-1 text-xs text-tenue">años tatuando</p>
+                </div>
+              </div>
+            </Revelar>
+          </div>
+        </div>
       </div>
     </section>
   );

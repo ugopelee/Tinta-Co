@@ -31,6 +31,9 @@ export const estudio = {
 
   hero: {
     titulo: "Tinta que aguanta el paso del tiempo",
+    /** El titular se apila en tres líneas; la del medio va en tono apagado. */
+    lineas: ["Tinta que", "aguanta", "el tiempo"],
+    lineaApagada: 1,
     /** Palabras del titular que se componen en cursiva. */
     enfasis: ["paso", "del", "tiempo"],
     entradilla:

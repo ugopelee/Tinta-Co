@@ -16,19 +16,34 @@
 
 /* --- Tipografía ------------------------------------------------------ */
 
-/* Bodoni es una romana de contraste alto: a tamaño grande pide tracking
-   negativo, y su eje óptico afina los remates. */
+/* Titulares de peso alto y tracking muy cerrado: a tamaños grandes las
+   letras deben tocarse casi, que es lo que da la sensación de cartel. */
 .titular {
-  font-family: var(--font-titulo), Georgia, serif;
-  font-optical-sizing: auto;
-  letter-spacing: -0.028em;
+  font-family: var(--font-titulo), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.045em;
   text-wrap: balance;
-  font-weight: 400;
 }
 
-.titular em {
-  font-style: italic;
-  font-weight: 400;
+/* Una línea del titular en tono apagado rompe el bloque y crea jerarquía
+   sin cambiar de tamaño. */
+.titular-apagado {
+  color: color-mix(in srgb, var(--texto) 34%, transparent);
+}
+
+/* Paneles de cristal esmerilado sobre el fondo. */
+.cristal {
+  background: color-mix(in srgb, var(--texto) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--texto) 10%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.cristal-denso {
+  background: color-mix(in srgb, var(--fondo) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--texto) 12%, transparent);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
 }
 
 /* Etiquetas de sección: mono, versalitas y mucho tracking. */

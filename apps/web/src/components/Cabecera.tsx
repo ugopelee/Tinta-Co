@@ -1,89 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { estudio } from "@tinta/compartido/estudio";
-
-// El panel es otra aplicación, en su propio dominio.
-const URL_CRM = process.env.NEXT_PUBLIC_URL_CRM ?? "";
+import { MenuCuenta, type Sesion } from "@/components/MenuCuenta";
 
 const enlaces = [
-  { href: "#servicios", texto: "Servicios", soloEscritorio: true },
-  { href: "#catalogo", texto: "Catálogo", soloEscritorio: true },
-  { href: "#reserva", texto: "Reservar", soloEscritorio: false },
+  { href: "#servicios", texto: "Servicios" },
+  { href: "#catalogo", texto: "Catálogo" },
+  { href: "#reserva", texto: "Reservar" },
 ];
 
-export function Cabecera() {
-  const [oculta, setOculta] = useState(false);
-  const [despegada, setDespegada] = useState(false);
-  const ultimaPosicion = useRef(0);
-
-  useEffect(() => {
-    let pendiente = 0;
-
-    const revisar = () => {
-      const y = window.scrollY;
-      const anterior = ultimaPosicion.current;
-
-      // Se esconde al bajar (pasada la altura del hero) y vuelve al subir.
-      setOculta(y > 240 && y > anterior);
-      setDespegada(y > 24);
-
-      ultimaPosicion.current = y;
-      pendiente = 0;
-    };
-
-    const alMoverse = () => {
-      if (!pendiente) pendiente = requestAnimationFrame(revisar);
-    };
-
-    window.addEventListener("scroll", alMoverse, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", alMoverse);
-      if (pendiente) cancelAnimationFrame(pendiente);
-    };
-  }, []);
-
+/**
+ * La navegación vive dentro del panel de cristal de la portada, no pegada a
+ * la ventana: es lo que hace que la portada se lea como una pieza.
+ */
+export function Cabecera({ sesion }: { sesion: Sesion | null }) {
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-        oculta ? "-translate-y-full" : "translate-y-0"
-      } ${
-        despegada
-          ? "border-b border-borde/60 bg-fondo/70 backdrop-blur-xl"
-          : "border-b border-transparent"
-      }`}
-    >
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link
-          href="/"
-          className="titular text-xl tracking-tight transition-opacity duration-300 hover:opacity-70 sm:text-2xl"
-        >
-          {estudio.nombre}
-        </Link>
+    <nav className="flex items-center justify-between gap-4">
+      <Link
+        href="/"
+        className="titular text-xl transition-opacity duration-300 hover:opacity-70"
+      >
+        {estudio.nombre}
+      </Link>
 
-        <div className="flex items-center gap-5 text-sm sm:gap-7">
-          {enlaces.map((enlace) => (
-            <a
-              key={enlace.href}
-              href={enlace.href}
-              className={`enlace-sutil -my-2 py-2 text-tenue transition-colors duration-300 hover:text-texto ${
-                enlace.soloEscritorio ? "hidden sm:inline-block" : "inline-block"
-              }`}
-            >
-              {enlace.texto}
-            </a>
-          ))}
-          {URL_CRM && (
-            <a
-              href={URL_CRM}
-              className="etiqueta rounded-full border border-borde px-4 py-2 text-tenue transition-all duration-300 hover:border-acento hover:text-texto"
-            >
-              Acceder
-            </a>
-          )}
-        </div>
-      </nav>
-    </header>
+      <div className="hidden items-center gap-8 md:flex">
+        {enlaces.map((enlace) => (
+          <a
+            key={enlace.href}
+            href={enlace.href}
+            className="enlace-sutil -my-2 py-2 text-sm text-tenue transition-colors duration-300 hover:text-texto"
+          >
+            {enlace.texto}
+          </a>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {sesion ? (
+          <MenuCuenta sesion={sesion} />
+        ) : (
+          <Link
+            href="/acceder"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-tenue backdrop-blur transition-all duration-300 hover:border-white/30 hover:text-texto"
+          >
+            Acceder
+          </Link>
+        )}
+
+        <a
+          href="#reserva"
+          className="boton-barrido hidden rounded-full bg-texto px-5 py-2.5 text-sm font-medium text-fondo transition-colors duration-300 sm:block"
+        >
+          {estudio.hero.cta}
+        </a>
+      </div>
+    </nav>
   );
 }
