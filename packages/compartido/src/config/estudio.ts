@@ -29,6 +29,21 @@ export const estudio = {
     acentoSuave: "#e0745e",
   },
 
+  /**
+   * Variante clara para el panel. Neutros cálidos, no grises puros: el hueso
+   * de la marca pide que el blanco tire a crema.
+   */
+  paletaClara: {
+    fondo: "#f4f1ed",
+    superficie: "#ffffff",
+    superficieAlta: "#eceae4",
+    borde: "#dcd6ce",
+    texto: "#17161a",
+    tenue: "#6a675f",
+    acento: "#b23e2a",
+    acentoSuave: "#8f3122",
+  },
+
   hero: {
     titulo: "Tinta que aguanta el paso del tiempo",
     /** El titular se apila en tres líneas; la del medio va en tono apagado. */

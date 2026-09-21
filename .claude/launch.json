@@ -4,8 +4,20 @@
     {
       "name": "tinta-co",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "tinta-co-crm",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:crm"
+      ],
+      "port": 3001
     }
   ]
 }

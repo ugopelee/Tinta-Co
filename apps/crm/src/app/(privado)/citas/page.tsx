@@ -15,17 +15,17 @@ export default async function Citas() {
   const citas = (data ?? []) as CitaTablero[];
 
   return (
-    <div className="px-6 py-8 lg:px-10">
-      <div className="mb-8">
-        <h1 className="titular text-3xl">Citas</h1>
-        <p className="mt-2 text-sm text-tenue">
+    <div className="px-4 py-6 lg:px-6 lg:py-7">
+      <header className="mb-6">
+        <h1 className="titular text-xl lg:text-[1.375rem]">Citas</h1>
+        <p className="mt-1 text-sm text-tenue">
           Arrastra una cita para cambiar su estado, o usa el desplegable de cada
           tarjeta.
         </p>
-      </div>
+      </header>
 
       {error ? (
-        <p className="rounded-xl border border-borde bg-superficie p-8 text-tenue">
+        <p className="tarjeta p-8 text-sm text-tenue">
           No se han podido cargar las citas.
         </p>
       ) : (

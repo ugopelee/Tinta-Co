@@ -8,7 +8,14 @@ export type NombreIcono =
   | "flecha"
   | "reloj"
   | "nota"
-  | "euro";
+  | "euro"
+  | "buscar"
+  | "sol"
+  | "luna"
+  | "plegar"
+  | "casa"
+  | "grafico"
+  | "tarjeta";
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: "M3 3h7v8H3zM14 3h7v5h-7zM14 11h7v10h-7zM3 14h7v7H3z",
@@ -23,6 +30,13 @@ const TRAZOS: Record<NombreIcono, string> = {
   reloj: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3.5 2",
   nota: "M5 3h9l5 5v13H5zM14 3v5h5M8 13h8M8 17h5",
   euro: "M17 5.5A6.5 6.5 0 0 0 7.5 12a6.5 6.5 0 0 0 9.5 6.5M4 10h8M4 14h8",
+  buscar: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20.5 20.5 16 16",
+  sol: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.1 5.1l1.4 1.4M17.5 17.5l1.4 1.4M18.9 5.1l-1.4 1.4M6.5 17.5l-1.4 1.4",
+  luna: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z",
+  plegar: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1ZM10 5v14",
+  casa: "M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z",
+  grafico: "M3 21h18M7 21v-6M12 21V8M17 21v-9",
+  tarjeta: "M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1ZM3 11h18M7 15h3",
 };
 
 /** Iconos de trazo, dibujados a mano para no arrastrar una librería. */

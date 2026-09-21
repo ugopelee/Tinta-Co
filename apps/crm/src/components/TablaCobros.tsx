@@ -67,7 +67,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                 (columna) => (
                   <th
                     key={columna}
-                    className="etiqueta px-5 py-3 font-normal text-tenue"
+                    className="etiqueta px-5 py-2.5 font-medium text-tenue"
                   >
                     {columna}
                   </th>

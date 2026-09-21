@@ -28,6 +28,25 @@ function trazoSegmento(
   return `M${x},${y + alto} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + ancho - r},${y} Q${x + ancho},${y} ${x + ancho},${y + r} L${x + ancho},${y + alto} Z`;
 }
 
+/**
+ * Trama diagonal para las barras: separa las series aunque se impriman en
+ * blanco y negro, y da textura sin recurrir a degradados.
+ */
+function Rayas({ id, color }: { id: string; color: string }) {
+  return (
+    <pattern
+      id={id}
+      width="7"
+      height="7"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)"
+    >
+      <rect width="7" height="7" fill={color} opacity="0.4" />
+      <rect width="3.5" height="7" fill={color} />
+    </pattern>
+  );
+}
+
 export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
   const [activo, setActivo] = useState<number | null>(null);
 
@@ -67,6 +86,16 @@ export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
             .map((punto, indice) => `${punto.etiqueta}: ${totales[indice]}`)
             .join(". ")}`}
         >
+          <defs>
+            {estadosCita.map((estado) => (
+              <Rayas
+                key={estado.id}
+                id={`rayas-${estado.id}`}
+                color={estado.color}
+              />
+            ))}
+          </defs>
+
           {referencias.map((valor) => {
             const y = MARGEN.arriba + areaAlto - (valor / maximo) * areaAlto;
             return (
@@ -78,6 +107,7 @@ export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
                   y2={y}
                   stroke="var(--borde)"
                   strokeWidth={1}
+                  strokeDasharray={valor === 0 ? undefined : "2 5"}
                 />
                 <text
                   x={MARGEN.izquierda - 8}
@@ -85,7 +115,6 @@ export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
                   textAnchor="end"
                   fill="var(--tenue)"
                   fontSize={10}
-                  fontFamily="var(--font-mono-ui)"
                 >
                   {valor}
                 </text>
@@ -134,7 +163,7 @@ export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
                         Math.max(1, altura - HUECO),
                         esUltima,
                       )}
-                      fill={estadosCita[capa].color}
+                      fill={`url(#rayas-${estadosCita[capa].id})`}
                       opacity={activo === null || resaltada ? 1 : 0.35}
                       style={{ transition: "opacity .25s ease" }}
                     />
@@ -146,10 +175,10 @@ export function GraficoCitas({ datos }: { datos: PuntoMes[] }) {
                   y={ALTO - 12}
                   textAnchor="middle"
                   fill={resaltada ? "var(--texto)" : "var(--tenue)"}
-                  fontSize={10}
-                  fontFamily="var(--font-mono-ui)"
+                  fontSize={9.5}
+                  letterSpacing={0.8}
                 >
-                  {punto.etiqueta}
+                  {punto.etiqueta.toUpperCase()}
                 </text>
               </g>
             );

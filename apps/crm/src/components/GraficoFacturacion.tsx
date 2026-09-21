@@ -30,6 +30,22 @@ const euros = (valor: number) =>
     maximumFractionDigits: 0,
   });
 
+/** Misma trama diagonal que el gráfico de citas, para leerlos igual. */
+function Rayas({ id, color }: { id: string; color: string }) {
+  return (
+    <pattern
+      id={id}
+      width="7"
+      height="7"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)"
+    >
+      <rect width="7" height="7" fill={color} opacity="0.4" />
+      <rect width="3.5" height="7" fill={color} />
+    </pattern>
+  );
+}
+
 export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
   const [activo, setActivo] = useState<number | null>(null);
 
@@ -68,6 +84,11 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
             .map((mes) => `${mes.etiqueta}: ${euros(mes.cobrado)} cobrado`)
             .join(". ")}`}
         >
+          <defs>
+            <Rayas id="rayas-cobrado" color={COBRADO} />
+            <Rayas id="rayas-pendiente" color={PENDIENTE} />
+          </defs>
+
           {[0, maximo / 2, maximo].map((valor) => {
             const y = MARGEN.arriba + areaAlto - (valor / maximo) * areaAlto;
             return (
@@ -79,6 +100,7 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
                   y2={y}
                   stroke="var(--borde)"
                   strokeWidth={1}
+                  strokeDasharray={valor === 0 ? undefined : "2 5"}
                 />
                 <text
                   x={MARGEN.izquierda - 8}
@@ -86,7 +108,6 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
                   textAnchor="end"
                   fill="var(--tenue)"
                   fontSize={10}
-                  fontFamily="var(--font-mono-ui)"
                 >
                   {Math.round(valor)}
                 </text>
@@ -125,7 +146,7 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
                       Math.max(1, altoCobrado - (mes.pendiente > 0 ? HUECO : 0)),
                       mes.pendiente === 0,
                     )}
-                    fill={COBRADO}
+                    fill="url(#rayas-cobrado)"
                     opacity={activo === null || resaltada ? 1 : 0.35}
                     style={{ transition: "opacity .25s ease" }}
                   />
@@ -140,7 +161,7 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
                       Math.max(1, altoPendiente - HUECO),
                       true,
                     )}
-                    fill={PENDIENTE}
+                    fill="url(#rayas-pendiente)"
                     opacity={activo === null || resaltada ? 1 : 0.35}
                     style={{ transition: "opacity .25s ease" }}
                   />
@@ -151,10 +172,10 @@ export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
                   y={ALTO - 10}
                   textAnchor="middle"
                   fill={resaltada ? "var(--texto)" : "var(--tenue)"}
-                  fontSize={10}
-                  fontFamily="var(--font-mono-ui)"
+                  fontSize={9.5}
+                  letterSpacing={0.8}
                 >
-                  {mes.etiqueta}
+                  {mes.etiqueta.toUpperCase()}
                 </text>
               </g>
             );

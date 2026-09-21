@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { metodosPago, type Cita } from "@tinta/compartido/tipos";
+import { Bloque } from "@/components/Bloque";
 import {
   GraficoFacturacion,
   type MesFacturado,
@@ -99,13 +100,12 @@ export default async function Facturacion() {
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="px-5 py-6 lg:px-8 lg:py-8">
-      <header className="mb-7">
-        <p className="etiqueta text-tenue">Facturación</p>
-        <h1 className="titular mt-2 text-2xl lg:text-3xl">
+    <div className="px-4 py-6 lg:px-6 lg:py-7">
+      <header className="mb-6">
+        <h1 className="titular text-xl lg:text-[1.375rem]">
           {euros(totalCobrado)} cobrados
         </h1>
-        <p className="mt-2 text-sm text-tenue">
+        <p className="mt-1 text-sm text-tenue">
           De {cobradas.length} {cobradas.length === 1 ? "cita" : "citas"} a{" "}
           {clientesPagadores}{" "}
           {clientesPagadores === 1 ? "cliente" : "clientes"} distintos.
@@ -114,60 +114,53 @@ export default async function Facturacion() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
+          icono="euro"
           etiqueta="Total cobrado"
           valor={totalCobrado}
           sufijo="€"
-          serie={serie.map((mes) => mes.cobrado)}
-          color="#57a86f"
           variacion={null}
           nota="histórico"
         />
         <TarjetaIndicador
+          icono="reloj"
           etiqueta="Pendiente de cobro"
           valor={porCobrar}
           sufijo="€"
-          serie={serie.map((mes) => mes.pendiente)}
-          color="#bd8a2e"
           variacion={null}
           nota="citas comprometidas"
+          subirEsMalo
         />
         <TarjetaIndicador
+          icono="tarjeta"
           etiqueta="Ticket medio"
           valor={ticketMedio}
           sufijo="€"
-          serie={serie.map((mes) => mes.cobrado)}
-          color="#5b8dd9"
           variacion={null}
           nota="por cita cobrada"
         />
         <TarjetaIndicador
+          icono="personas"
           etiqueta="Clientes que han pagado"
           valor={clientesPagadores}
-          serie={serie.map((mes) => (mes.cobrado > 0 ? 1 : 0))}
-          color="#c2452f"
           variacion={null}
           nota="distintos"
         />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.7fr_1fr]">
-        <section className="rounded-xl border border-borde bg-superficie p-5 lg:p-6">
-          <div className="mb-5">
-            <h2 className="text-base font-medium">Facturación por mes</h2>
-            <p className="mt-1 text-xs text-tenue">
-              Lo cobrado se imputa al mes del cobro
-            </p>
-          </div>
+        <Bloque
+          icono="grafico"
+          titulo="Facturación por mes"
+          nota="Lo cobrado se imputa al mes del cobro"
+        >
           <GraficoFacturacion datos={serie} />
-        </section>
+        </Bloque>
 
-        <section className="rounded-xl border border-borde bg-superficie p-5 lg:p-6">
-          <h2 className="text-base font-medium">Por método de pago</h2>
-
+        <Bloque icono="tarjeta" titulo="Por método de pago">
           {porMetodo.length === 0 ? (
-            <p className="mt-5 text-sm text-tenue">Todavía no hay cobros.</p>
+            <p className="py-6 text-sm text-tenue">Todavía no hay cobros.</p>
           ) : (
-            <ul className="mt-5 space-y-4">
+            <ul className="space-y-4 pt-1">
               {porMetodo.map((fila) => {
                 const porcentaje = Math.round((fila.total / totalCobrado) * 100);
                 return (
@@ -189,23 +182,23 @@ export default async function Facturacion() {
               })}
             </ul>
           )}
-        </section>
+        </Bloque>
       </div>
 
-      <section className="mt-4 overflow-hidden rounded-xl border border-borde bg-superficie">
-        <div className="border-b border-borde px-5 py-4">
-          <h2 className="text-base font-medium">Cobros</h2>
-          <p className="mt-1 text-xs text-tenue">
-            Toca el importe para cambiarlo y el estado para marcar el cobro.
-          </p>
-        </div>
-
-        {citas.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-tenue">Todavía no hay citas.</p>
-        ) : (
-          <TablaCobros citas={citas} />
-        )}
-      </section>
+      <div className="mt-4">
+        <Bloque
+          icono="euro"
+          titulo="Cobros"
+          nota="Toca el importe para cambiarlo y el estado para marcar el cobro"
+          ajustado
+        >
+          {citas.length === 0 ? (
+            <p className="px-5 py-8 text-sm text-tenue">Todavía no hay citas.</p>
+          ) : (
+            <TablaCobros citas={citas} />
+          )}
+        </Bloque>
+      </div>
     </div>
   );
 }

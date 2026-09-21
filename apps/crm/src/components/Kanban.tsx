@@ -44,23 +44,19 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {estadosCita.map((columna) => (
-          <div
-            key={columna.id}
-            className="rounded-xl border border-borde bg-superficie p-5"
-          >
-            <div className="flex items-center gap-2">
+          <div key={columna.id} className="tarjeta p-5">
+            <div className="flex items-center gap-2.5">
               <span
+                aria-hidden
                 className="h-2 w-2 rounded-full"
                 style={{ background: columna.color }}
               />
-              <p className="text-xs uppercase tracking-widest text-tenue">
-                {columna.nombre}
-              </p>
+              <p className="text-sm text-tenue">{columna.nombre}</p>
             </div>
-            <p className="mt-3 titular text-3xl">
+            <p className="titular cifra mt-3 text-[2rem] leading-none">
               {citasVisibles.filter((cita) => cita.estado === columna.id).length}
             </p>
           </div>
@@ -73,7 +69,7 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-4">
         {estadosCita.map((columna) => {
           const deLaColumna = citasVisibles
             .filter((cita) => cita.estado === columna.id)
@@ -94,15 +90,22 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
                 const cita = citasVisibles.find((otra) => otra.id === id);
                 if (cita) mover(cita, columna.id);
               }}
-              className={`flex min-h-40 flex-col gap-3 rounded-xl border p-4 transition-colors duration-200 ${
+              className={`flex min-h-40 flex-col gap-2.5 rounded-xl border p-3 transition-colors duration-200 ${
                 columnaActiva === columna.id
                   ? "border-acento bg-superficie-alta"
                   : "border-borde bg-superficie/50"
               }`}
             >
-              <header className="flex items-center justify-between">
-                <h2 className="text-sm font-medium">{columna.nombre}</h2>
-                <span className="text-xs text-tenue">{deLaColumna.length}</span>
+              <header className="flex items-center gap-2 px-1 py-1">
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: columna.color }}
+                />
+                <h2 className="etiqueta text-tenue">{columna.nombre}</h2>
+                <span className="cifra ml-auto text-xs text-tenue">
+                  {deLaColumna.length}
+                </span>
               </header>
 
               {deLaColumna.length === 0 && (
@@ -150,15 +153,15 @@ function Tarjeta({
         onArrastrar(cita.id);
       }}
       onDragEnd={() => onArrastrar(null)}
-      className={`cursor-grab rounded-lg border border-borde bg-superficie-alta p-4 transition-all duration-200 hover:border-acento/60 active:cursor-grabbing ${
+      className={`cursor-grab rounded-lg border border-borde bg-superficie-alta p-3.5 transition-all duration-200 hover:border-acento/60 active:cursor-grabbing ${
         arrastrando ? "opacity-40" : ""
       }`}
     >
-      <p className="font-medium">{cita.nombre}</p>
+      <p className="text-sm font-medium">{cita.nombre}</p>
       <p className="mt-1 truncate text-xs text-tenue">{cita.email}</p>
 
       {referencia && (
-        <p className="mt-3 text-sm text-acento-suave">{referencia}</p>
+        <p className="mt-2.5 text-sm text-acento-suave">{referencia}</p>
       )}
 
       <dl className="mt-3 space-y-1 text-xs text-tenue">

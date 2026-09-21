@@ -16,48 +16,34 @@
 
 /* --- Tipografía ------------------------------------------------------ */
 
-/* Bodoni es una romana de contraste alto: a tamaño grande pide tracking
-   negativo, y su eje óptico afina los remates. */
+/* Un panel no es una portada: aquí la jerarquía la hacen el tamaño y el
+   peso, nunca el cambio de familia. Una sola grotesca en todo el producto. */
 .titular {
   font-family: var(--font-titulo), system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+  font-weight: 600;
+  letter-spacing: -0.018em;
 }
 
-.titular em {
-  font-style: italic;
-  font-weight: 400;
-}
-
-/* Etiquetas de sección: mono, versalitas y mucho tracking. */
+/* Rótulos de columna y de grupo. Versalitas discretas: el tracking ancho
+   de la web se lee como cartel y en una tabla estorba. */
 .etiqueta {
-  font-family: var(--font-mono-ui), ui-monospace, monospace;
   font-size: 0.6875rem;
-  letter-spacing: 0.26em;
+  font-weight: 500;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 
-.parrafo {
-  text-wrap: pretty;
-  line-height: 1.7;
-}
-
-/* Cifras de ancho fijo: no bailan mientras el contador sube. */
+/* Cifras de ancho fijo: no bailan al cambiar de valor. */
 .cifra {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
-}
-
-html {
-  color-scheme: dark;
-  scroll-behavior: smooth;
 }
 
 body {
   background: var(--fondo);
   color: var(--texto);
   font-family: var(--font-cuerpo), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
@@ -65,29 +51,73 @@ body {
   color: #fff;
 }
 
-/* Grano sutil sobre el fondo: rompe el plano liso sin pesar nada. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
 }
 
-/* Viñeta: oscurece los bordes y centra la mirada. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse at 50% 40%,
-    transparent 45%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
+/* Barras de desplazamiento al tono del panel, no las del sistema. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--borde) transparent;
+}
+
+@layer components {
+  /* El contenedor que se repite en todo el panel. */
+  .tarjeta {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: 0.875rem;
+  }
+
+  /* Botón secundario de cabecera de tarjeta: sin relleno hasta que se pasa
+     el ratón por encima. */
+  .boton-fantasma {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8125rem;
+    color: var(--tenue);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .boton-fantasma:hover {
+    color: var(--texto);
+    border-color: var(--borde);
+    background: var(--superficie-alta);
+  }
+}
+
+/* --- Barra lateral plegable ------------------------------------------ */
+
+/* El estado vive en el <html> y lo escribe un guion previo al pintado, así
+   que el ancho no parpadea en la primera carga. */
+@media (min-width: 1024px) {
+  .barra {
+    width: 16.5rem;
+    transition: width 0.28s cubic-bezier(0.22, 0.7, 0.3, 1);
+  }
+
+  :root[data-barra="plegada"] .barra {
+    width: 4.5rem;
+  }
+
+  :root[data-barra="plegada"] .barra-texto {
+    display: none;
+  }
+
+  :root[data-barra="plegada"] .barra-centrar {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* Subrayado que crece desde la izquierda al pasar el ratón. */
@@ -105,102 +135,26 @@ body::after {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.35s cubic-bezier(0.22, 0.7, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 0.7, 0.3, 1);
 }
 
 .enlace-sutil:hover::after {
   transform: scaleX(1);
 }
 
-/* Relleno que sube al pasar el ratón por un botón. */
-.boton-barrido {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.boton-barrido::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--acento-suave);
-  transform: translateY(101%);
-  transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.26, 1);
-}
-
-.boton-barrido:hover::before,
-.boton-barrido:focus-visible::before {
-  transform: translateY(0);
-}
-
-/* Banda de palabras en bucle. */
-@keyframes desplazar {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.marquesina {
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 10%,
-    #000 90%,
-    transparent
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 10%,
-    #000 90%,
-    transparent
-  );
-}
-
-.marquesina > div {
-  animation: desplazar var(--duracion-marquesina, 38s) linear infinite;
-}
-
-.marquesina:hover > div {
-  animation-play-state: paused;
-}
-
-/* Halo que aparece bajo la tarjeta de diseño al pasar por encima. */
-.carta-flash::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  background: radial-gradient(
-    120% 80% at 50% 0%,
-    color-mix(in srgb, var(--acento) 22%, transparent),
-    transparent 60%
-  );
-}
-
-.carta-flash:hover::after {
-  opacity: 1;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  .marquesina > div {
-    animation: none;
-  }
-
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Con la barra plegada no caben el logotipo y el botón en una línea. */
+@media (min-width: 1024px) {
+  :root[data-barra="plegada"] .barra-cabecera {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }

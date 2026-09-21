@@ -1,79 +1,57 @@
-/** Barras diminutas: dan la tendencia de un vistazo sin ejes ni etiquetas. */
-function Chispa({ serie, color }: { serie: number[]; color: string }) {
-  const maximo = Math.max(1, ...serie);
-  const ancho = 64;
-  const alto = 28;
-  const paso = ancho / serie.length;
+import { Icono, type NombreIcono } from "@/components/Icono";
 
-  return (
-    <svg
-      viewBox={`0 0 ${ancho} ${alto}`}
-      aria-hidden
-      className="h-7 w-16 shrink-0"
-    >
-      {serie.map((valor, indice) => {
-        const altura = Math.max(2, (valor / maximo) * alto);
-        return (
-          <rect
-            key={indice}
-            x={indice * paso + 1}
-            y={alto - altura}
-            width={paso - 2}
-            height={altura}
-            rx={1.5}
-            fill={color}
-            opacity={indice === serie.length - 1 ? 1 : 0.45}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
+/**
+ * Indicador de cabecera: rótulo con icono, cifra y variación. Sin gráfico
+ * en miniatura a propósito — cuatro sparklines seguidas compiten con el
+ * gráfico grande de abajo y no aportan ninguna lectura nueva.
+ */
 export function TarjetaIndicador({
+  icono,
   etiqueta,
   valor,
   sufijo = "",
-  serie,
-  color,
   variacion,
   nota,
+  subirEsMalo = false,
 }: {
+  icono: NombreIcono;
   etiqueta: string;
   valor: number;
   sufijo?: string;
-  serie: number[];
-  color: string;
   variacion: number | null;
   nota: string;
+  /** En «sin responder» o «pendiente de cobro», subir no es una buena noticia. */
+  subirEsMalo?: boolean;
 }) {
   const sube = (variacion ?? 0) >= 0;
+  const bien = subirEsMalo ? !sube : sube;
 
   return (
-    <article className="group rounded-xl border border-borde bg-superficie p-5 transition-colors duration-300 hover:border-white/15">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-sm text-tenue">{etiqueta}</p>
-        <Chispa serie={serie} color={color} />
+    <article className="tarjeta p-5 transition-colors duration-300 hover:border-tenue/40">
+      <div className="flex items-center gap-2.5">
+        <Icono nombre={icono} className="h-4 w-4 shrink-0 text-tenue" />
+        <p className="truncate text-sm text-tenue">{etiqueta}</p>
       </div>
 
-      <p className="titular cifra mt-3 text-3xl">
-        {valor.toLocaleString("es-ES")}
-        <span className="ml-1 text-lg text-tenue">{sufijo}</span>
-      </p>
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="titular cifra text-[2rem] leading-none">
+          {valor.toLocaleString("es-ES")}
+          <span className="ml-0.5 text-xl text-tenue">{sufijo}</span>
+        </p>
 
-      <div className="mt-3 flex items-center gap-2 text-xs">
         {variacion !== null && (
           <span
-            className="flex items-center gap-1"
-            style={{ color: sube ? "#57a86f" : "#c2452f" }}
+            className="flex items-center gap-1 text-xs"
+            style={{ color: bien ? "#57a86f" : "#c2452f" }}
           >
-            <span aria-hidden>{sube ? "▲" : "▼"}</span>
+            <span aria-hidden>{sube ? "↑" : "↓"}</span>
             {sube ? "+" : ""}
             {variacion}%
           </span>
         )}
-        <span className="text-tenue">{nota}</span>
       </div>
+
+      <p className="mt-2 text-xs text-tenue">{nota}</p>
     </article>
   );
 }

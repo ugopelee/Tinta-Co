@@ -2,6 +2,7 @@ import Link from "next/link";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosCita, tiposActividad } from "@tinta/compartido/estudio";
 import type { Actividad, Cita } from "@tinta/compartido/tipos";
+import { Bloque } from "@/components/Bloque";
 import { GraficoCitas, type PuntoMes } from "@/components/GraficoCitas";
 import { TarjetaIndicador } from "@/components/TarjetaIndicador";
 import { Pastilla } from "@/components/Pastilla";
@@ -99,92 +100,85 @@ export default async function Panel() {
   const sinResponder = porEstado("solicitada");
 
   return (
-    <div className="px-5 py-6 lg:px-8 lg:py-8">
-      <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <div className="px-4 py-6 lg:px-6 lg:py-7">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="etiqueta text-tenue">Panel · Resumen</p>
-          <h1 className="titular mt-2 text-2xl lg:text-3xl">
+          <h1 className="titular text-xl lg:text-[1.375rem]">
             {sinResponder > 0
               ? `Tienes ${sinResponder} ${sinResponder === 1 ? "solicitud" : "solicitudes"} por responder`
               : "Todo al día"}
           </h1>
+          <p className="mt-1 text-sm text-tenue">
+            {citas.length} {citas.length === 1 ? "cita" : "citas"} registradas ·{" "}
+            {clientes.length} {clientes.length === 1 ? "cliente" : "clientes"}
+          </p>
         </div>
 
         <Link
           href="/citas"
-          className="group flex items-center gap-2 rounded-lg border border-borde bg-superficie px-4 py-2.5 text-sm transition-all duration-300 hover:border-acento"
+          className="group flex items-center gap-2 rounded-lg bg-acento px-4 py-2.5 text-sm font-medium text-white transition-opacity duration-200 hover:opacity-90"
         >
           Abrir tablero
           <Icono
             nombre="flecha"
-            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
           />
         </Link>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
+          icono="calendario"
           etiqueta="Citas este mes"
           valor={esteMes}
-          serie={totalesMes}
-          color="#5b8dd9"
           variacion={variacion(esteMes, mesAnterior)}
-          nota="vs mes anterior"
+          nota="frente al mes anterior"
         />
         <TarjetaIndicador
+          icono="reloj"
           etiqueta="Sin responder"
           valor={sinResponder}
-          serie={serie.map((mes) => mes.valores[0])}
-          color="#bd8a2e"
           variacion={null}
           nota="esperando respuesta"
+          subirEsMalo
         />
         <TarjetaIndicador
+          icono="personas"
           etiqueta="Clientes"
           valor={clientes.length}
-          serie={serieClientes}
-          color="#57a86f"
           variacion={variacion(
             serieClientes[serieClientes.length - 1],
             serieClientes[serieClientes.length - 2] ?? 0,
           )}
-          nota="altas nuevas"
+          nota="altas nuevas este mes"
         />
         <TarjetaIndicador
+          icono="grafico"
           etiqueta="Tasa de realización"
           valor={conversion}
           sufijo="%"
-          serie={serie.map((mes) => mes.valores[2])}
-          color="#c2452f"
           variacion={null}
           nota={`${realizadas} de ${citas.length} citas`}
         />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.7fr_1fr]">
-        <section className="rounded-xl border border-borde bg-superficie p-5 lg:p-6">
-          <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
-            <div>
-              <h2 className="text-base font-medium">Citas por mes</h2>
-              <p className="mt-1 text-xs text-tenue">
-                Últimos seis meses, desglosadas por estado
-              </p>
-            </div>
-            <p className="cifra titular text-2xl">{citas.length}</p>
-          </div>
-
+        <Bloque
+          icono="grafico"
+          titulo="Citas por mes"
+          nota="Últimos seis meses, desglosadas por estado"
+          accion={{ href: "/citas", texto: "Ver tablero" }}
+        >
           <GraficoCitas datos={serie} />
-        </section>
+        </Bloque>
 
-        <section className="rounded-xl border border-borde bg-superficie p-5 lg:p-6">
-          <h2 className="text-base font-medium">Actividad reciente</h2>
-
+        <Bloque icono="nota" titulo="Actividad reciente">
           {actividades.length === 0 ? (
-            <p className="mt-5 text-sm text-tenue">
+            <p className="py-6 text-sm text-tenue">
               Todavía no se ha registrado nada.
             </p>
           ) : (
-            <ul className="mt-5 space-y-1">
+            <ul className="-mx-2 space-y-0.5">
               {actividades.map((actividad) => (
                 <li
                   key={actividad.id}
@@ -209,81 +203,78 @@ export default async function Panel() {
               ))}
             </ul>
           )}
-        </section>
+        </Bloque>
       </div>
 
-      <section className="mt-4 overflow-hidden rounded-xl border border-borde bg-superficie">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-borde px-5 py-4">
-          <h2 className="text-base font-medium">Próximas citas confirmadas</h2>
-          <Link
-            href="/citas"
-            className="enlace-sutil text-sm text-tenue transition-colors hover:text-texto"
-          >
-            Ver todas
-          </Link>
-        </div>
-
-        {proximas.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-tenue">
-            No hay ninguna cita confirmada por delante.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem] text-sm">
-              <thead>
-                <tr className="border-b border-borde text-left">
-                  {["Cliente", "Estilo", "Zona", "Fecha", "Estado"].map(
-                    (columna) => (
-                      <th
-                        key={columna}
-                        className="etiqueta px-5 py-3 font-normal text-tenue"
-                      >
-                        {columna}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {proximas.map((cita) => (
-                  <tr
-                    key={cita.id}
-                    className="border-b border-borde/60 transition-colors duration-200 last:border-b-0 hover:bg-superficie-alta"
-                  >
-                    <td className="px-5 py-3.5">
-                      {cita.cliente_id ? (
-                        <Link
-                          href={`/clientes/${cita.cliente_id}`}
-                          className="enlace-sutil"
+      <div className="mt-4">
+        <Bloque
+          icono="calendario"
+          titulo="Próximas citas confirmadas"
+          accion={{ href: "/citas", texto: "Ver todas" }}
+          ajustado
+        >
+          {proximas.length === 0 ? (
+            <p className="px-5 py-8 text-sm text-tenue">
+              No hay ninguna cita confirmada por delante.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[40rem] text-sm">
+                <thead>
+                  <tr className="border-b border-borde text-left">
+                    {["Cliente", "Estilo", "Zona", "Fecha", "Estado"].map(
+                      (columna) => (
+                        <th
+                          key={columna}
+                          className="etiqueta px-5 py-2.5 font-medium text-tenue"
                         >
-                          {cita.nombre}
-                        </Link>
-                      ) : (
-                        cita.nombre
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-tenue">
-                      {cita.estilo_interes ?? "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-tenue">
-                      {cita.zona_cuerpo ?? "—"}
-                    </td>
-                    <td className="cifra px-5 py-3.5 text-tenue">
-                      {new Date(cita.fecha_deseada!).toLocaleDateString("es-ES", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Pastilla estado={cita.estado} />
-                    </td>
+                          {columna}
+                        </th>
+                      ),
+                    )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody>
+                  {proximas.map((cita) => (
+                    <tr
+                      key={cita.id}
+                      className="border-b border-borde/60 transition-colors duration-200 last:border-b-0 hover:bg-superficie-alta"
+                    >
+                      <td className="px-5 py-3">
+                        {cita.cliente_id ? (
+                          <Link
+                            href={`/clientes/${cita.cliente_id}`}
+                            className="enlace-sutil"
+                          >
+                            {cita.nombre}
+                          </Link>
+                        ) : (
+                          cita.nombre
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-tenue">
+                        {cita.estilo_interes ?? "—"}
+                      </td>
+                      <td className="px-5 py-3 text-tenue">
+                        {cita.zona_cuerpo ?? "—"}
+                      </td>
+                      <td className="cifra px-5 py-3 text-tenue">
+                        {new Date(cita.fecha_deseada!).toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </td>
+                      <td className="px-5 py-3">
+                        <Pastilla estado={cita.estado} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Bloque>
+      </div>
     </div>
   );
 }

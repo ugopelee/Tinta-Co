@@ -83,36 +83,40 @@ function Seccion({
 }) {
   return (
     <section>
-      <div className="flex items-baseline gap-3">
-        <h2 className="titular text-2xl">{titulo}</h2>
-        <span className="etiqueta text-tenue">{perfiles.length}</span>
+      <div className="flex items-center gap-2.5">
+        <h2 className="text-[0.9375rem] font-medium">{titulo}</h2>
+        <span className="cifra rounded-full border border-borde px-2 py-0.5 text-xs text-tenue">
+          {perfiles.length}
+        </span>
       </div>
-      <p className="parrafo mt-2 max-w-xl text-sm text-tenue">{descripcion}</p>
+      <p className="mt-1 max-w-xl text-sm leading-relaxed text-tenue">
+        {descripcion}
+      </p>
 
       {perfiles.length === 0 ? (
-        <p className="mt-6 rounded-xl border border-dashed border-borde px-5 py-8 text-center text-sm text-tenue">
+        <p className="mt-4 rounded-xl border border-dashed border-borde px-5 py-8 text-center text-sm text-tenue">
           {vacio}
         </p>
       ) : (
-        <ul className="mt-6 overflow-hidden rounded-xl border border-borde">
+        <ul className="tarjeta mt-4 overflow-hidden">
           {perfiles.map((perfil) => {
             const esPropietario = perfil.rol === "propietario";
 
             return (
               <li
                 key={perfil.id}
-                className="flex flex-wrap items-center justify-between gap-4 border-b border-borde bg-superficie px-5 py-4 transition-colors duration-500 last:border-b-0"
+                className="flex flex-wrap items-center justify-between gap-4 border-b border-borde px-4 py-3.5 transition-colors duration-300 last:border-b-0 hover:bg-superficie-alta"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
-                    <p className="font-medium">
+                    <p className="text-sm font-medium">
                       {perfil.nombre ?? "Sin nombre"}
                     </p>
                     {perfil.id === idPropio && (
                       <span className="etiqueta text-acento">tú</span>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-sm text-tenue">
+                  <p className="mt-0.5 truncate text-xs text-tenue">
                     {perfil.email}
                   </p>
                   <p className="mt-1 text-xs text-tenue/70">
@@ -129,7 +133,7 @@ function Seccion({
                   type="button"
                   onClick={() => onAlternar(perfil)}
                   disabled={perfil.id === idPropio}
-                  className="rounded-full border border-borde px-4 py-2 text-sm transition-colors duration-300 hover:border-acento hover:text-texto disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-borde px-3.5 py-2 text-sm text-tenue transition-colors duration-200 hover:border-acento hover:text-texto disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {esPropietario ? "Sacar del equipo" : "Añadir al equipo"}
                 </button>

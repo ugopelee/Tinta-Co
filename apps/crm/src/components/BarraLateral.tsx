@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { estudio } from "@tinta/compartido/estudio";
 import { cerrarSesion } from "@/app/acciones";
 import { Icono, type NombreIcono } from "@/components/Icono";
+import {
+  alternarBarra,
+  barraPorDefecto,
+  leerBarra,
+  suscribirBarra,
+} from "@/lib/preferencias";
 
 const URL_WEB = process.env.NEXT_PUBLIC_URL_WEB ?? "/";
 
@@ -13,9 +19,9 @@ type Enlace = { href: string; texto: string; icono: NombreIcono };
 
 const GRUPOS: { titulo: string; enlaces: Enlace[] }[] = [
   {
-    titulo: "Estudio",
+    titulo: "Vistas",
     enlaces: [
-      { href: "/", texto: "Panel", icono: "panel" },
+      { href: "/", texto: "Resumen", icono: "panel" },
       { href: "/citas", texto: "Citas", icono: "calendario" },
       { href: "/clientes", texto: "Clientes", icono: "personas" },
       { href: "/facturacion", texto: "Facturación", icono: "euro" },
@@ -26,6 +32,10 @@ const GRUPOS: { titulo: string; enlaces: Enlace[] }[] = [
 const ENLACES_PROPIETARIO: Enlace[] = [
   { href: "/cuentas", texto: "Cuentas", icono: "llave" },
 ];
+
+/** Misma caja para enlaces, botones y formularios de la barra. */
+const FILA =
+  "barra-centrar group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200";
 
 export function BarraLateral({
   nombre,
@@ -38,9 +48,14 @@ export function BarraLateral({
 }) {
   const ruta = usePathname();
   const [abierta, setAbierta] = useState(false);
+  const plegada = useSyncExternalStore(
+    suscribirBarra,
+    leerBarra,
+    barraPorDefecto,
+  );
 
   const grupos = esPropietario
-    ? [...GRUPOS, { titulo: "Administración", enlaces: ENLACES_PROPIETARIO }]
+    ? [...GRUPOS, { titulo: "Gestión", enlaces: ENLACES_PROPIETARIO }]
     : GRUPOS;
 
   const iniciales = nombre
@@ -51,8 +66,13 @@ export function BarraLateral({
 
   return (
     <>
-      <div className="flex items-center justify-between border-b border-borde px-5 py-4 lg:hidden">
-        <span className="titular text-lg">{estudio.nombre}</span>
+      <div className="flex items-center justify-between border-b border-borde px-4 py-3 lg:hidden">
+        <span className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-acento text-sm font-semibold text-white">
+            T
+          </span>
+          <span className="titular text-[0.95rem]">{estudio.nombre}</span>
+        </span>
         <button
           type="button"
           onClick={() => setAbierta((valor) => !valor)}
@@ -64,27 +84,42 @@ export function BarraLateral({
       </div>
 
       <aside
-        className={`${
+        className={`barra ${
           abierta ? "block" : "hidden"
-        } border-b border-borde bg-superficie/40 lg:sticky lg:top-0 lg:block lg:h-screen lg:w-[16.5rem] lg:shrink-0 lg:border-b-0 lg:border-r`}
+        } border-b border-borde lg:sticky lg:top-0 lg:block lg:h-screen lg:shrink-0 lg:border-b-0 lg:border-r`}
       >
-        <div className="flex h-full flex-col p-4">
-          <div className="hidden items-center gap-3 px-2 py-2 lg:flex">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-acento text-sm font-semibold text-white">
-              T
+        <div className="flex h-full flex-col p-3">
+          <div className="barra-cabecera hidden items-center justify-between gap-2 px-1 py-2 lg:flex">
+            {/* La marca se queda aunque se pliegue: es la referencia de dónde
+                está uno. Lo que desaparece es el nombre escrito. */}
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-acento text-sm font-semibold text-white">
+                T
+              </span>
+              <span className="barra-texto min-w-0">
+                <span className="titular block truncate text-[0.95rem] leading-tight">
+                  {estudio.nombre}
+                </span>
+                <span className="block text-xs text-tenue">Panel</span>
+              </span>
             </span>
-            <div className="min-w-0">
-              <p className="titular truncate text-[0.95rem] leading-none">
-                {estudio.nombre}
-              </p>
-              <p className="mt-1 text-xs text-tenue">Panel del estudio</p>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => alternarBarra(!plegada)}
+              aria-expanded={!plegada}
+              title={plegada ? "Desplegar el menú" : "Plegar el menú"}
+              aria-label={plegada ? "Desplegar el menú" : "Plegar el menú"}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-tenue transition-colors duration-200 hover:bg-superficie-alta hover:text-texto"
+            >
+              <Icono nombre="plegar" className="h-[17px] w-[17px]" />
+            </button>
           </div>
 
-          <nav className="mt-4 space-y-6 lg:mt-6">
+          <nav className="mt-3 space-y-5">
             {grupos.map((grupo) => (
               <div key={grupo.titulo}>
-                <p className="etiqueta mb-2 px-3 text-tenue/60">
+                <p className="barra-texto etiqueta mb-1.5 px-3 text-tenue/70">
                   {grupo.titulo}
                 </p>
                 <ul className="space-y-0.5">
@@ -100,28 +135,20 @@ export function BarraLateral({
                           href={enlace.href}
                           onClick={() => setAbierta(false)}
                           aria-current={activo ? "page" : undefined}
-                          className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
+                          title={enlace.texto}
+                          className={`${FILA} ${
                             activo
                               ? "bg-superficie-alta text-texto"
                               : "text-tenue hover:bg-superficie hover:text-texto"
                           }`}
                         >
-                          {/* Marca del activo: crece desde el centro. */}
-                          <span
-                            aria-hidden
-                            className={`absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-acento transition-transform duration-300 ${
-                              activo ? "scale-y-100" : "scale-y-0"
-                            }`}
-                          />
                           <Icono
                             nombre={enlace.icono}
-                            className={`h-[18px] w-[18px] transition-colors duration-200 ${
-                              activo
-                                ? "text-acento"
-                                : "text-tenue group-hover:text-texto"
+                            className={`h-[18px] w-[18px] shrink-0 transition-colors duration-200 ${
+                              activo ? "text-acento" : "group-hover:text-texto"
                             }`}
                           />
-                          {enlace.texto}
+                          <span className="barra-texto">{enlace.texto}</span>
                         </Link>
                       </li>
                     );
@@ -131,33 +158,38 @@ export function BarraLateral({
             ))}
           </nav>
 
-          <div className="mt-auto space-y-1 pt-6">
+          <div className="mt-auto pt-6">
             <a
               href={URL_WEB}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-tenue transition-colors duration-200 hover:bg-superficie hover:text-texto"
+              title="Ver la web"
+              className={`${FILA} text-tenue hover:bg-superficie hover:text-texto`}
             >
-              <Icono nombre="enlace" className="h-[18px] w-[18px]" />
-              Ver la web
+              <Icono nombre="enlace" className="h-[18px] w-[18px] shrink-0" />
+              <span className="barra-texto">Ver la web</span>
             </a>
 
-            <div className="mt-3 flex items-center gap-3 rounded-xl border border-borde bg-superficie px-3 py-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-superficie-alta text-[0.7rem]">
+            <form action={cerrarSesion}>
+              <button
+                type="submit"
+                title="Cerrar sesión"
+                className={`${FILA} w-full text-tenue hover:bg-superficie hover:text-acento`}
+              >
+                <Icono nombre="salir" className="h-[18px] w-[18px] shrink-0" />
+                <span className="barra-texto">Cerrar sesión</span>
+              </button>
+            </form>
+
+            <div className="barra-centrar mt-2 flex items-center gap-3 rounded-lg border border-borde bg-superficie px-3 py-2.5">
+              <span
+                title={email}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-superficie-alta text-[0.7rem]"
+              >
                 {iniciales || "·"}
               </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm">{nombre}</p>
-                <p className="truncate text-xs text-tenue">{email}</p>
-              </div>
-              <form action={cerrarSesion}>
-                <button
-                  type="submit"
-                  title="Cerrar sesión"
-                  aria-label="Cerrar sesión"
-                  className="rounded-lg p-1.5 text-tenue transition-colors hover:bg-superficie-alta hover:text-acento"
-                >
-                  <Icono nombre="salir" className="h-[18px] w-[18px]" />
-                </button>
-              </form>
+              <span className="barra-texto min-w-0 flex-1">
+                <span className="block truncate text-sm">{nombre}</span>
+                <span className="block truncate text-xs text-tenue">{email}</span>
+              </span>
             </div>
           </div>
         </div>

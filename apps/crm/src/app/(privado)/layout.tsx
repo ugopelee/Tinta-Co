@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import type { Perfil } from "@tinta/compartido/tipos";
 import { BarraLateral } from "@/components/BarraLateral";
+import { BarraSuperior } from "@/components/BarraSuperior";
 
 export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
   const supabase = await crearClienteServidor();
@@ -29,7 +30,11 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
         email={perfil.email}
         esPropietario
       />
-      <main className="min-w-0 flex-1">{children}</main>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <BarraSuperior />
+        <main className="min-w-0 flex-1">{children}</main>
+      </div>
     </div>
   );
 }
