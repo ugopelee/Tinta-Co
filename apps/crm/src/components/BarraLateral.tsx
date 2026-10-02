@@ -22,6 +22,7 @@ export type Contadores = {
   clientes: number;
   cobros: number;
   sinResponder: number;
+  vacaciones: number;
 };
 
 type Enlace = {
@@ -46,6 +47,19 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
       { href: "/catalogo", texto: "Catálogo flash", icono: "catalogo" },
       { href: "/clientes", texto: "Clientes", icono: "personas" },
       { href: "/consentimientos", texto: "Consentimientos", icono: "consentimiento" },
+    ],
+  },
+  {
+    titulo: "Equipo",
+    enlaces: [
+      { href: "/equipo", texto: "Personas", icono: "equipo" },
+      {
+        href: "/equipo/ausencias",
+        texto: "Vacaciones",
+        icono: "ausencias",
+        contador: "vacaciones",
+      },
+      { href: "/equipo/fichajes", texto: "Fichajes", icono: "fichaje" },
     ],
   },
   {
@@ -220,10 +234,17 @@ export function BarraLateral({
                 )}
                 <ul className="space-y-0.5">
                   {grupo.enlaces.map((enlace) => {
+                    // «Personas» (/equipo) no se enciende en sus subpáginas
+                    // hermanas, que tienen enlace propio.
                     const activo =
                       enlace.href === "/"
                         ? ruta === "/"
-                        : ruta.startsWith(enlace.href);
+                        : enlace.href === "/equipo"
+                          ? ruta === "/equipo" ||
+                            (ruta.startsWith("/equipo/") &&
+                              !ruta.startsWith("/equipo/ausencias") &&
+                              !ruta.startsWith("/equipo/fichajes"))
+                          : ruta.startsWith(enlace.href);
                     const cuenta = enlace.contador
                       ? contadores[enlace.contador]
                       : null;

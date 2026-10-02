@@ -175,6 +175,42 @@ restaurante (captura de referencia), con las funciones de Tinta&Co:
 - Apartados propuestos y aún no hechos: plantillas de respuesta y
   horarios/disponibilidad.
 
+### Recursos humanos (02/10/2026)
+
+Módulo de RRHH, réplica en el CRM de lo que se montó en Odoo para SGE.
+Migración: `supabase/migrations/20261002120000_modulo_rrhh.sql` (se pega
+entera en el editor SQL de Supabase). Tablas `empleados`,
+`tareas_incorporacion`, `fichajes`, `vacaciones`, `evaluaciones`,
+`nominas`; buckets `nominas` (privado, PDF) y `fotos-equipo` (público).
+
+- **Rol nuevo `empleado`**. El layout `(privado)` lo manda a `/portal`
+  (grupo `(empleado)`), donde solo ve lo suyo: fichar, su checklist,
+  pedir vacaciones, sus evaluaciones y firmar sus nóminas. En `/cuentas`
+  aparece pero no se puede ascender a propietario desde ahí.
+- **Alta = cuenta**: `altaEmpleado` (`app/acciones-equipo.ts`) crea la
+  ficha, sube la foto, genera la checklist desde `equipo.incorporacion`
+  (`estudio.ts`) y llama a la función SQL `crear_cuenta_empleado`, que crea
+  el usuario de Auth ya confirmado con una contraseña aleatoria. La
+  contraseña se enseña una sola vez; si se pierde, «Nueva contraseña» en
+  la ficha (`restablecer_clave_empleado`).
+- **Incorporación**: al cerrarse la última tarea, el trigger
+  `revisar_incorporacion` pasa al empleado de `incorporacion` a `activo`.
+  Las tareas con `de_empleado` las marca el propio empleado
+  (`completar_mi_tarea`).
+- **Fichajes**: función `fichar()` (entrada si no hay nada abierto, salida
+  si lo hay) con la hora del servidor; índice único que impide dos
+  entradas abiertas.
+- **Vacaciones**: el empleado inserta (RLS obliga a `pendiente`); el
+  propietario aprueba o rechaza en `/equipo/ausencias`. Cuentan los días
+  laborables; el cupo anual es `equipo.diasVacaciones` (22).
+- **Evaluación trimestral** 1–5, una por trimestre (`unique`), mismo
+  formato «2026-T3» que Informes.
+- **Nóminas**: el propietario sube el PDF (se comprueba la cabecera
+  `%PDF-`, máx. 5 MB; `bodySizeLimit` subido a 6 MB en `next.config.ts`).
+  `/nominas/[id]` redirige a un enlace firmado de 60 s con la sesión de
+  quien pulsa. El empleado firma dibujando en un lienzo (`FirmaNomina`);
+  se guarda el PNG con `firmar_nomina`, que no deja firmar dos veces.
+
 ### Piezas del panel (`apps/crm/src/app/(privado)/page.tsx`)
 
 | Componente | Qué hace |
