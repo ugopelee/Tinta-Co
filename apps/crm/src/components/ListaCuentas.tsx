@@ -129,6 +129,12 @@ function Seccion({
                   </p>
                 </div>
 
+                {/* Las cuentas del equipo nacen y se gestionan desde su ficha
+                    en Equipo: convertirlas aquí en propietario sería un
+                    atajo para que un empleado viera todo el panel. */}
+                {perfil.rol === "empleado" ? (
+                  <span className="insignia text-xs">Empleado · se gestiona en Equipo</span>
+                ) : (
                 <button
                   type="button"
                   onClick={() => onAlternar(perfil)}
@@ -137,6 +143,7 @@ function Seccion({
                 >
                   {esPropietario ? "Sacar del equipo" : "Añadir al equipo"}
                 </button>
+                )}
               </li>
             );
           })}

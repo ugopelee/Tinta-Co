@@ -20,11 +20,14 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
 
   const perfil = data as Perfil | null;
 
+  // El equipo tiene su propio portal; el resto de cuentas, ni eso.
+  if (perfil?.rol === "empleado") redirect("/portal");
+
   // Registrarse no da acceso: los datos son solo para propietarios.
   if (perfil?.rol !== "propietario") redirect("/sin-acceso");
 
   // Cifras de la barra: solo cuentas, sin traerse las filas.
-  const [citas, clientes, sinResponder, cobros] = await Promise.all([
+  const [citas, clientes, sinResponder, cobros, vacaciones] = await Promise.all([
     supabase.from("citas").select("id", { count: "exact", head: true }),
     supabase.from("clientes").select("id", { count: "exact", head: true }),
     supabase
@@ -37,6 +40,10 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
       .eq("estado", "realizada")
       .eq("pagado", false)
       .in("tipo", tiposEncargo),
+    supabase
+      .from("vacaciones")
+      .select("id", { count: "exact", head: true })
+      .eq("estado", "pendiente"),
   ]);
 
   const contadores = {
@@ -44,6 +51,7 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
     clientes: clientes.count ?? 0,
     sinResponder: sinResponder.count ?? 0,
     cobros: cobros.count ?? 0,
+    vacaciones: vacaciones.count ?? 0,
   };
 
   return (

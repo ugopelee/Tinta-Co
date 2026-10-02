@@ -1,5 +1,7 @@
 import type {
   EstadoCita,
+  EstadoEmpleado,
+  EstadoVacaciones,
   TipoActividad,
   TipoEvento,
   TipoOportunidad,
@@ -9,7 +11,7 @@ export type Perfil = {
   id: string;
   email: string;
   nombre: string | null;
-  rol: "propietario" | "artista";
+  rol: "propietario" | "artista" | "empleado";
   created_at: string;
 };
 
@@ -102,5 +104,72 @@ export type Consentimiento = {
   menor: boolean;
   tutor: string | null;
   notas: string | null;
+  created_at: string;
+};
+
+/** Ficha de una persona del equipo. `perfil_id` es su cuenta del CRM. */
+export type Empleado = {
+  id: string;
+  perfil_id: string | null;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  puesto: string;
+  departamento: string | null;
+  foto_url: string | null;
+  fecha_alta: string;
+  estado: EstadoEmpleado;
+  created_at: string;
+};
+
+export type TareaIncorporacion = {
+  id: string;
+  empleado_id: string;
+  titulo: string;
+  descripcion: string | null;
+  orden: number;
+  de_empleado: boolean;
+  hecha: boolean;
+  hecha_at: string | null;
+  created_at: string;
+};
+
+/** Una entrada y su salida. Sin salida, la persona sigue dentro. */
+export type Fichaje = {
+  id: string;
+  empleado_id: string;
+  entrada: string;
+  salida: string | null;
+};
+
+export type SolicitudVacaciones = {
+  id: string;
+  empleado_id: string;
+  desde: string;
+  hasta: string;
+  motivo: string | null;
+  estado: EstadoVacaciones;
+  respuesta: string | null;
+  respondida_at: string | null;
+  created_at: string;
+};
+
+export type Evaluacion = {
+  id: string;
+  empleado_id: string;
+  trimestre: string;
+  nota: number;
+  comentario: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Nomina = {
+  id: string;
+  empleado_id: string;
+  periodo: string;
+  archivo: string;
+  firma: string | null;
+  firmada_at: string | null;
   created_at: string;
 };
