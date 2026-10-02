@@ -3,19 +3,19 @@ import type { ReactNode } from "react";
 import { Icono, type NombreIcono } from "@/components/Icono";
 
 /**
- * La caja que se repite en todo el panel: cabecera con icono, título y, si
- * hace falta, un enlace a la vista completa. `ajustado` quita el relleno del
- * cuerpo para que las tablas lleguen al borde.
+ * La caja que se repite en todo el panel: título en negrita con su nota
+ * gris debajo y, si hace falta, un enlace a la vista completa. `ajustado`
+ * quita el relleno del cuerpo para que las tablas lleguen al borde.
  */
 export function Bloque({
-  icono,
   titulo,
   nota,
   accion,
   ajustado = false,
   children,
 }: {
-  icono: NombreIcono;
+  /** Se conserva por compatibilidad; la cabecera ya no pinta icono. */
+  icono?: NombreIcono;
   titulo: string;
   nota?: string;
   accion?: { href: string; texto: string };
@@ -25,22 +25,22 @@ export function Bloque({
   return (
     <section className="tarjeta flex flex-col overflow-hidden">
       <div
-        className={`flex flex-wrap items-center justify-between gap-3 px-5 ${
-          ajustado ? "border-b border-borde py-3.5" : "pb-4 pt-5"
+        className={`flex flex-wrap items-start justify-between gap-3 px-5 pt-5 ${
+          ajustado ? "pb-3" : "pb-4"
         }`}
       >
-        <div className="flex items-center gap-2.5">
-          <Icono nombre={icono} className="h-[17px] w-[17px] text-tenue" />
-          <div>
-            <h2 className="text-[0.9375rem] font-medium leading-tight">
-              {titulo}
-            </h2>
-            {nota && <p className="mt-0.5 text-xs text-tenue">{nota}</p>}
-          </div>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold leading-tight tracking-tight">
+            {titulo}
+          </h2>
+          {nota && <p className="mt-1 text-[0.8125rem] text-tenue">{nota}</p>}
         </div>
 
         {accion && (
-          <Link href={accion.href} className="boton-fantasma group">
+          <Link
+            href={accion.href}
+            className="group inline-flex items-center gap-1.5 rounded-full bg-superficie-alta px-3 py-1.5 text-[0.8125rem] font-medium transition-colors duration-200 hover:bg-borde"
+          >
             {accion.texto}
             <Icono
               nombre="flecha"

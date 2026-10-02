@@ -7,7 +7,8 @@
     "./tipos": "./src/tipos.ts",
     "./formularios": "./src/formularios.ts",
     "./supabase/servidor": "./src/supabase/server.ts",
-    "./supabase/navegador": "./src/supabase/client.ts"
+    "./supabase/navegador": "./src/supabase/client.ts",
+    "./marca": "./src/Marca.tsx"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

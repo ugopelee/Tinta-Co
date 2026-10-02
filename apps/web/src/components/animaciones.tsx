@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type RefObject,
   type ReactNode,
 } from "react";
 
@@ -95,7 +96,9 @@ export function Revelar({
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "none" : "translateY(26px)",
-        filter: visible ? "blur(0)" : "blur(6px)",
+        // "none" y no blur(0): cualquier filtro en el padre anula el
+        // backdrop-filter de los paneles de cristal que lleve dentro.
+        filter: visible ? "none" : "blur(6px)",
         transition: `opacity .9s cubic-bezier(.22,.8,.26,1) ${retardo}ms, transform .9s cubic-bezier(.22,.8,.26,1) ${retardo}ms, filter .9s cubic-bezier(.22,.8,.26,1) ${retardo}ms`,
       }}
     >
@@ -433,4 +436,53 @@ export function Marquesina({
       {tanda}
     </div>
   );
+}
+
+/**
+ * Progreso 0 → 1 de una sección alta con un escenario `sticky` dentro: 0
+ * cuando su borde superior toca el de la ventana, 1 cuando el inferior llega
+ * abajo. Llama a `alCambiar` una vez por fotograma de scroll y nunca
+ * provoca renders: quien escucha decide qué merece estado de React.
+ */
+export function useProgresoFijado(
+  referencia: RefObject<HTMLElement | null>,
+  alCambiar: (progreso: number) => void,
+) {
+  const ultimo = useRef(alCambiar);
+  useEffect(() => {
+    ultimo.current = alCambiar;
+  });
+
+  useEffect(() => {
+    const nodo = referencia.current;
+    if (!nodo) return;
+
+    let pendiente = 0;
+    const actualizar = () => {
+      pendiente = 0;
+      const caja = nodo.getBoundingClientRect();
+      const recorrido = caja.height - window.innerHeight;
+      const progreso = recorrido > 0 ? -caja.top / recorrido : 0;
+      ultimo.current(Math.min(1, Math.max(0, progreso)));
+    };
+    const alMoverse = () => {
+      if (!pendiente) pendiente = requestAnimationFrame(actualizar);
+    };
+
+    actualizar();
+    window.addEventListener("scroll", alMoverse, { passive: true });
+    window.addEventListener("resize", alMoverse);
+    return () => {
+      window.removeEventListener("scroll", alMoverse);
+      window.removeEventListener("resize", alMoverse);
+      if (pendiente) cancelAnimationFrame(pendiente);
+    };
+  }, [referencia]);
+}
+
+/** Lleva el scroll al punto de una sección fijada que da ese progreso. */
+export function irAProgreso(nodo: HTMLElement, progreso: number) {
+  const caja = nodo.getBoundingClientRect();
+  const recorrido = caja.height - window.innerHeight;
+  window.scrollTo({ top: window.scrollY + caja.top + recorrido * progreso, behavior: "smooth" });
 }

@@ -23,11 +23,11 @@ export function SelectorTema() {
       onClick={() => aplicarTema(siguiente)}
       title={`Cambiar a modo ${siguiente}`}
       aria-label={`Cambiar a modo ${siguiente}`}
-      className="flex h-9 w-9 items-center justify-center rounded-lg border border-borde text-tenue transition-colors duration-200 hover:bg-superficie-alta hover:text-texto"
+      className="flex h-8 w-8 items-center justify-center rounded-full text-tenue transition-colors duration-200 hover:bg-superficie-alta hover:text-texto"
     >
       <Icono
         nombre={tema === "oscuro" ? "sol" : "luna"}
-        className="h-[17px] w-[17px]"
+        className="h-4 w-4"
       />
     </button>
   );

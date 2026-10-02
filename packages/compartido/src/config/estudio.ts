@@ -15,7 +15,16 @@ export const estudio = {
     telefono: "+34 600 123 456",
     direccion: "Calle del Pez 14, bajo — Madrid",
     horario: "Martes a sábado · 11:00 a 20:00",
+    /** Días de apertura (0 = domingo), los mismos que dice `horario`. */
+    diasAbiertos: [2, 3, 4, 5, 6],
     instagram: "@tintaco.studio",
+  },
+
+  /** A quién escribe el equipo cuando el panel falla. No es el email público. */
+  soporte: {
+    email: "soporte@tintaco.studio",
+    horario: "Lunes a viernes · 10:00 a 18:00",
+    respuesta: "Respondemos en menos de un día laborable.",
   },
 
   paleta: {
@@ -30,18 +39,44 @@ export const estudio = {
   },
 
   /**
-   * Variante clara para el panel. Neutros cálidos, no grises puros: el hueso
-   * de la marca pide que el blanco tire a crema.
+   * Paletas del panel (CRM). No comparten nada con la web: un panel se usa
+   * horas seguidas y pide lienzo gris claro, tarjetas blancas sin borde y
+   * negro como color de acción. La lima es el único color de acento y va
+   * siempre de relleno con texto oscuro encima (como texto no se lee).
+   * `acento` queda para lo que quema: errores y avisos.
    */
-  paletaClara: {
-    fondo: "#f4f1ed",
+  panelClaro: {
+    fondo: "#efeeeb",
     superficie: "#ffffff",
-    superficieAlta: "#eceae4",
-    borde: "#dcd6ce",
-    texto: "#17161a",
-    tenue: "#6a675f",
-    acento: "#b23e2a",
-    acentoSuave: "#8f3122",
+    superficieAlta: "#f5f4f1",
+    borde: "#e6e4df",
+    bordeTarjeta: "transparent",
+    texto: "#141414",
+    tenue: "#6f6e69",
+    acento: "#f0362b",
+    acentoSuave: "#d42a20",
+    verde: "#12b955",
+    amarillo: "#ffa814",
+    azul: "#2a76ff",
+    lima: "#cdf25e",
+    sobreLima: "#1c2905",
+  },
+
+  panelOscuro: {
+    fondo: "#0f0f10",
+    superficie: "#18181a",
+    superficieAlta: "#212124",
+    borde: "#2c2c30",
+    bordeTarjeta: "#232326",
+    texto: "#f2f1ee",
+    tenue: "#95948f",
+    acento: "#ff4a3d",
+    acentoSuave: "#ff7a6e",
+    verde: "#22d468",
+    amarillo: "#ffb52e",
+    azul: "#4a8dff",
+    lima: "#cdf25e",
+    sobreLima: "#1c2905",
   },
 
   hero: {
@@ -214,21 +249,106 @@ export const estudio = {
       "Al enviar el formulario guardamos tus datos para gestionar la cita. No los compartimos con nadie.",
     exito: "Solicitud recibida. Te escribimos en menos de 48 horas.",
   },
+
+  /** Textos del formulario cuando lo que se pide es tatuar en un evento. */
+  eventos: {
+    entradilla:
+      "Bodas, fiestas, eventos de empresa o festivales: montamos una estación de tatuaje flash in situ con uno o varios artistas.",
+    exito: "Propuesta recibida. Te escribimos en menos de 48 horas con presupuesto.",
+  },
+
+  /** Sección de la portada para lo que no es tatuarse: negocio y alianzas. */
+  colabora: {
+    entradilla:
+      "¿Fabricas tinta o material, eres artista y quieres venir de invitado, tienes una marca o un medio? Si crees que podemos hacer algo juntos, escríbenos.",
+    exito: "Mensaje recibido. Lo lee una persona del estudio y te responde en unos días.",
+  },
 } as const;
 
 /**
- * Estados del tablero, en orden de flujo. Los colores están validados como
- * paleta categórica sobre fondo oscuro: separables también con daltonismo y
- * todos con contraste suficiente. Si tocas uno, revalida el conjunto.
+ * Todo lo que entra por la web es una oportunidad. Hay dos familias:
+ * - `encargo`: alguien quiere tatuarse (cita en el estudio o evento). Tiene
+ *   ficha de cliente, fecha y cobro.
+ * - `propuesta`: alguien quiere hacer negocio con el estudio (proveedor,
+ *   colaboración…). No es cliente ni se cobra: se conversa.
+ */
+export const tiposOportunidad = [
+  { id: "cita", nombre: "Cita", plural: "Citas", familia: "encargo", ejemplo: "" },
+  { id: "evento", nombre: "Evento", plural: "Eventos", familia: "encargo", ejemplo: "" },
+  {
+    id: "proveedor",
+    nombre: "Proveedor",
+    plural: "Proveedores",
+    familia: "propuesta",
+    ejemplo: "Tinta, agujas, higiene, mobiliario…",
+  },
+  {
+    id: "colaboracion",
+    nombre: "Colaboración",
+    plural: "Colaboraciones",
+    familia: "propuesta",
+    ejemplo: "Artista invitado, marca, colección conjunta…",
+  },
+  {
+    id: "otro",
+    nombre: "Otra propuesta",
+    plural: "Otras propuestas",
+    familia: "propuesta",
+    ejemplo: "Prensa, rodajes, patrocinios o lo que se te ocurra.",
+  },
+] as const;
+
+export type FamiliaOportunidad = (typeof tiposOportunidad)[number]["familia"];
+
+export const tiposPropuesta = tiposOportunidad.filter(
+  (tipo) => tipo.familia === "propuesta",
+);
+
+/** Para filtrar en las consultas lo que tiene cliente, fecha y cobro. */
+export const tiposEncargo = tiposOportunidad
+  .filter((tipo) => tipo.familia === "encargo")
+  .map((tipo) => tipo.id);
+
+export const esPropuesta = (tipo: string) =>
+  tiposPropuesta.some((opcion) => opcion.id === tipo);
+
+export type TipoOportunidad = (typeof tiposOportunidad)[number]["id"];
+
+export const tiposEvento = [
+  { id: "boda", nombre: "Boda" },
+  { id: "fiesta", nombre: "Fiesta privada" },
+  { id: "empresa", nombre: "Evento de empresa" },
+  { id: "festival", nombre: "Festival o feria" },
+  { id: "otro", nombre: "Otro" },
+] as const;
+
+export type TipoEvento = (typeof tiposEvento)[number]["id"];
+
+/**
+ * Estados del tablero, en orden de flujo. Colores saturados (ámbar, azul,
+ * verde, rojo): van de relleno o de aro, nunca como color de texto, así que
+ * pueden ir vivos sin perder lectura. Separables también con daltonismo
+ * porque varían de tono y de luminosidad a la vez.
  */
 export const estadosCita = [
-  { id: "solicitada", nombre: "Solicitada", color: "#bd8a2e" },
-  { id: "confirmada", nombre: "Confirmada", color: "#5b8dd9" },
-  { id: "realizada", nombre: "Realizada", color: "#57a86f" },
-  { id: "cancelada", nombre: "Cancelada", color: "#c2452f" },
+  { id: "solicitada", nombre: "Solicitada", color: "#ffa814" },
+  { id: "confirmada", nombre: "Confirmada", color: "#2a76ff" },
+  { id: "realizada", nombre: "Realizada", color: "#12b955" },
+  { id: "cancelada", nombre: "Cancelada", color: "#f0362b" },
 ] as const;
 
 export type EstadoCita = (typeof estadosCita)[number]["id"];
+
+/**
+ * Una propuesta recorre los mismos estados de la tabla, pero «realizada» no
+ * significa nada para un proveedor. Mismo id y color, otras palabras.
+ */
+export const nombresEstadoPropuesta: Record<EstadoCita, string> = {
+  solicitada: "Nueva",
+  confirmada: "En conversación",
+  realizada: "Acordada",
+  cancelada: "Descartada",
+};
 
 /** Tipos de entrada del historial de un cliente. */
 export const tiposActividad = [

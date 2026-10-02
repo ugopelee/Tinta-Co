@@ -10,7 +10,7 @@ export default function SinAcceso() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md text-center">
-        <p className="etiqueta text-acento">Sin permisos</p>
+        <p className="chip-lima">Sin permisos</p>
         <h1 className="titular mt-5 text-3xl">Este panel es del propietario</h1>
         <p className="parrafo mt-5 text-tenue">
           Tu cuenta existe, pero las reservas y las fichas de clientes de{" "}

@@ -6,7 +6,7 @@ import { registrarse } from "@/app/acciones";
 import { formularioInicial } from "@tinta/compartido/formularios";
 
 const claseCampo =
-  "w-full rounded-lg border border-borde bg-fondo px-4 py-3 text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
+  "w-full rounded-xl border border-borde bg-superficie px-4 py-3 text-texto outline-none transition-colors duration-300 placeholder:text-tenue/70 focus:border-texto focus:ring-2 focus:ring-texto/10";
 
 function Boton() {
   const { pending } = useFormStatus();
@@ -15,7 +15,7 @@ function Boton() {
     <button
       type="submit"
       disabled={pending}
-      className="boton-barrido w-full rounded-lg bg-acento px-6 py-3 font-medium text-white transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60"
+      className="boton w-full py-3 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Creando cuenta…" : "Crear cuenta"}
     </button>

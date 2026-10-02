@@ -124,7 +124,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                         if (evento.key === "Enter") evento.currentTarget.blur();
                         if (evento.key === "Escape") setEditando(null);
                       }}
-                      className="w-24 rounded-lg border border-acento bg-fondo px-2.5 py-1.5 text-sm outline-none"
+                      className="w-24 rounded-lg border border-texto bg-superficie px-2.5 py-1.5 text-sm outline-none"
                     />
                   ) : (
                     <button
@@ -152,14 +152,14 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                     aria-pressed={cita.pagado}
                     className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-all duration-300 ${
                       cita.pagado
-                        ? "border-[#57a86f]/40 bg-[#57a86f]/10 text-[#57a86f]"
+                        ? "border-verde/40 bg-verde/12 text-texto"
                         : "border-borde text-tenue hover:border-tenue hover:text-texto"
                     }`}
                   >
                     <span
                       aria-hidden
                       className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
-                        cita.pagado ? "bg-[#57a86f]" : "bg-tenue"
+                        cita.pagado ? "bg-verde" : "bg-tenue"
                       }`}
                     />
                     {cita.pagado ? "Cobrado" : "Pendiente"}
@@ -179,7 +179,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                         })
                       }
                       aria-label={`Método de pago de ${cita.nombre}`}
-                      className="rounded-lg border border-borde bg-superficie px-2.5 py-1.5 text-xs text-tenue outline-none transition-colors focus:border-acento"
+                      className="rounded-lg border border-borde bg-superficie px-2.5 py-1.5 text-xs text-tenue outline-none transition-colors focus:border-texto"
                     >
                       {metodosPago.map((metodo) => (
                         <option key={metodo.id} value={metodo.id}>

@@ -7,7 +7,7 @@ import { formularioInicial } from "@tinta/compartido/formularios";
 import { tiposActividad } from "@tinta/compartido/estudio";
 
 const claseCampo =
-  "w-full rounded-lg border border-borde bg-fondo px-3 py-2 text-sm text-texto outline-none transition-colors duration-200 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
+  "w-full rounded-xl border border-borde bg-superficie px-3 py-2 text-sm text-texto outline-none transition-colors duration-200 placeholder:text-tenue/70 focus:border-texto focus:ring-2 focus:ring-texto/10";
 
 function Boton() {
   const { pending } = useFormStatus();
@@ -16,7 +16,7 @@ function Boton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-acento px-5 py-2.5 text-sm font-medium text-white transition-colors duration-300 hover:bg-acento-suave disabled:cursor-not-allowed disabled:opacity-60"
+      className="boton disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Guardando…" : "Añadir al historial"}
     </button>

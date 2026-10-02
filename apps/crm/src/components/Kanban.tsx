@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
-import { estadosCita, type EstadoCita } from "@tinta/compartido/estudio";
+import {
+  estadosCita,
+  tiposEvento,
+  type EstadoCita,
+} from "@tinta/compartido/estudio";
 import { moverCita } from "@/app/acciones";
 import type { Cita } from "@tinta/compartido/tipos";
 
@@ -45,14 +49,14 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {estadosCita.map((columna) => (
           <div key={columna.id} className="tarjeta p-5">
             <div className="flex items-center gap-2.5">
               <span
                 aria-hidden
-                className="h-2 w-2 rounded-full"
-                style={{ background: columna.color }}
+                className="h-2.5 w-2.5 rounded-full border-2"
+                style={{ borderColor: columna.color }}
               />
               <p className="text-sm text-tenue">{columna.nombre}</p>
             </div>
@@ -69,7 +73,7 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-3 lg:grid-cols-4">
         {estadosCita.map((columna) => {
           const deLaColumna = citasVisibles
             .filter((cita) => cita.estado === columna.id)
@@ -90,27 +94,25 @@ export function Kanban({ citas }: { citas: CitaTablero[] }) {
                 const cita = citasVisibles.find((otra) => otra.id === id);
                 if (cita) mover(cita, columna.id);
               }}
-              className={`flex min-h-40 flex-col gap-2.5 rounded-xl border p-3 transition-colors duration-200 ${
-                columnaActiva === columna.id
-                  ? "border-acento bg-superficie-alta"
-                  : "border-borde bg-superficie/50"
+              className={`tarjeta flex min-h-40 flex-col gap-2 p-3 transition-shadow duration-200 ${
+                columnaActiva === columna.id ? "ring-2 ring-texto" : ""
               }`}
             >
               <header className="flex items-center gap-2 px-1 py-1">
                 <span
                   aria-hidden
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: columna.color }}
+                  className="h-2.5 w-2.5 rounded-full border-2"
+                  style={{ borderColor: columna.color }}
                 />
-                <h2 className="etiqueta text-tenue">{columna.nombre}</h2>
-                <span className="cifra ml-auto text-xs text-tenue">
+                <h2 className="text-sm font-semibold">{columna.nombre}</h2>
+                <span className="insignia cifra ml-auto !bg-superficie-alta text-tenue">
                   {deLaColumna.length}
                 </span>
               </header>
 
               {deLaColumna.length === 0 && (
-                <p className="rounded-lg border border-dashed border-borde px-3 py-6 text-center text-xs text-tenue">
-                  Sin citas
+                <p className="rounded-[0.875rem] border border-dashed border-borde px-3 py-6 text-center text-xs text-tenue">
+                  Vacío
                 </p>
               )}
 
@@ -142,7 +144,10 @@ function Tarjeta({
   onArrastrar: (id: string | null) => void;
   onCambiarEstado: (estado: EstadoCita) => void;
 }) {
-  const referencia = cita.disenos?.nombre ?? cita.estilo_interes;
+  const esEvento = cita.tipo === "evento";
+  const referencia = esEvento
+    ? tiposEvento.find((opcion) => opcion.id === cita.tipo_evento)?.nombre ?? "Evento"
+    : cita.disenos?.nombre ?? cita.estilo_interes;
 
   return (
     <article
@@ -153,19 +158,34 @@ function Tarjeta({
         onArrastrar(cita.id);
       }}
       onDragEnd={() => onArrastrar(null)}
-      className={`cursor-grab rounded-lg border border-borde bg-superficie-alta p-3.5 transition-all duration-200 hover:border-acento/60 active:cursor-grabbing ${
+      className={`fila cursor-grab p-3.5 transition-all duration-200 hover:shadow-[0_4px_16px_rgb(0_0_0/0.06)] active:cursor-grabbing ${
         arrastrando ? "opacity-40" : ""
       }`}
     >
-      <p className="text-sm font-medium">{cita.nombre}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold">{cita.nombre}</p>
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-medium ${
+            esEvento ? "bg-texto text-fondo" : "bg-superficie text-tenue"
+          }`}
+        >
+          {esEvento ? "Evento" : "Cita"}
+        </span>
+      </div>
       <p className="mt-1 truncate text-xs text-tenue">{cita.email}</p>
 
       {referencia && (
-        <p className="mt-2.5 text-sm text-acento-suave">{referencia}</p>
+        <p className="mt-2.5 text-sm font-medium">{referencia}</p>
       )}
 
       <dl className="mt-3 space-y-1 text-xs text-tenue">
         {cita.zona_cuerpo && <dd>{cita.zona_cuerpo}</dd>}
+        {cita.lugar && <dd>{cita.lugar}</dd>}
+        {cita.asistentes && (
+          <dd>
+            {cita.asistentes.toLocaleString("es-ES")} invitados
+          </dd>
+        )}
         {cita.fecha_deseada && (
           <dd>
             {new Date(cita.fecha_deseada).toLocaleDateString("es-ES", {
@@ -192,7 +212,7 @@ function Tarjeta({
 
         {/* Alternativa al arrastre: táctil y accesible por teclado. */}
         <label className="sr-only" htmlFor={`estado-${cita.id}`}>
-          Estado de la cita de {cita.nombre}
+          Estado de la oportunidad de {cita.nombre}
         </label>
         <select
           id={`estado-${cita.id}`}
@@ -200,7 +220,7 @@ function Tarjeta({
           onChange={(evento) =>
             onCambiarEstado(evento.target.value as EstadoCita)
           }
-          className="rounded border border-borde bg-superficie px-2 py-1 text-xs text-tenue outline-none focus:border-acento"
+          className="rounded-full bg-superficie px-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-texto/15"
         >
           {estadosCita.map((columna) => (
             <option key={columna.id} value={columna.id}>

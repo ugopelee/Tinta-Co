@@ -113,7 +113,7 @@ function Seccion({
                       {perfil.nombre ?? "Sin nombre"}
                     </p>
                     {perfil.id === idPropio && (
-                      <span className="etiqueta text-acento">tú</span>
+                      <span className="rounded-full bg-lima px-2 py-0.5 text-[0.7rem] font-semibold text-sobre-lima">tú</span>
                     )}
                   </div>
                   <p className="mt-0.5 truncate text-xs text-tenue">
@@ -133,7 +133,7 @@ function Seccion({
                   type="button"
                   onClick={() => onAlternar(perfil)}
                   disabled={perfil.id === idPropio}
-                  className="rounded-lg border border-borde px-3.5 py-2 text-sm text-tenue transition-colors duration-200 hover:border-acento hover:text-texto disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-borde px-3.5 py-2 text-sm text-tenue transition-colors duration-200 hover:border-texto hover:text-texto disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {esPropietario ? "Sacar del equipo" : "Añadir al equipo"}
                 </button>

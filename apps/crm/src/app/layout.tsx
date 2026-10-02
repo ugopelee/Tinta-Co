@@ -1,20 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Instrument_Sans, Plus_Jakarta_Sans } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { estudio } from "@tinta/compartido/estudio";
 import "./globals.css";
 
-const cuerpo = Instrument_Sans({
+// Una sola grotesca neutra para todo el panel: la jerarquía la hacen el
+// tamaño y el peso. Inter tiene cifras tabulares y se lee bien pequeña.
+const cuerpo = Inter({
   variable: "--font-cuerpo",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-// Misma familia que la web: un panel se lee mejor con una grotesca que con
-// una romana de contraste alto.
-const titulo = Plus_Jakarta_Sans({
-  variable: "--font-titulo",
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const mono = Geist_Mono({
@@ -35,8 +29,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: estudio.paleta.fondo },
-    { media: "(prefers-color-scheme: light)", color: estudio.paletaClara.fondo },
+    { media: "(prefers-color-scheme: dark)", color: estudio.panelOscuro.fondo },
+    { media: "(prefers-color-scheme: light)", color: estudio.panelClaro.fondo },
   ],
 };
 
@@ -49,10 +43,10 @@ function aVariables(paleta: Record<string, string>) {
     .join("");
 }
 
-// Oscuro por defecto; el atributo data-tema conmuta al claro.
+// Claro por defecto; el atributo data-tema conmuta al oscuro.
 const paletaCss = `
-:root{${aVariables(estudio.paleta)}color-scheme:dark}
-:root[data-tema="claro"]{${aVariables(estudio.paletaClara)}color-scheme:light}
+:root{${aVariables(estudio.panelClaro)}color-scheme:light}
+:root[data-tema="oscuro"]{${aVariables(estudio.panelOscuro)}color-scheme:dark}
 `;
 
 /**
@@ -63,7 +57,7 @@ const paletaCss = `
 const guionPreferencias = `
 try{
   var t = localStorage.getItem("tema");
-  if(!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "claro" : "oscuro";
+  if(!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
   document.documentElement.dataset.tema = t;
   document.documentElement.dataset.barra = localStorage.getItem("barra") || "abierta";
 }catch(e){}
@@ -73,7 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${cuerpo.variable} ${titulo.variable} ${mono.variable} h-full antialiased`}
+      className={`${cuerpo.variable} ${mono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

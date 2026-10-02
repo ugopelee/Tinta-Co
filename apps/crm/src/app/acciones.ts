@@ -7,6 +7,7 @@ import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosCita, tiposActividad, type EstadoCita } from "@tinta/compartido/estudio";
 import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
+import { googleDisponible } from "@/lib/google";
 
 /**
  * El proxy no basta para proteger las server actions: se ejecutan como POST
@@ -136,6 +137,12 @@ export async function cambiarRolCuenta(
  * otro registro, así que no es un atajo para conseguir acceso.
  */
 export async function entrarConGoogle() {
+  // El botón solo se pinta si el proveedor está activo, pero lo volvemos a
+  // comprobar: entre pintar la pantalla y pulsar pueden pasar horas.
+  if (!(await googleDisponible())) {
+    redirect("/login?error=google");
+  }
+
   const supabase = await crearClienteServidor();
   const cabeceras = await headers();
 
@@ -153,31 +160,7 @@ export async function entrarConGoogle() {
     redirect("/login?error=google");
   }
 
-  // signInWithOAuth solo construye la URL; no comprueba que el proveedor esté
-  // configurado. Sin esto, al redirigir, Supabase devuelve un JSON de error en
-  // crudo al navegador. Preguntamos primero y damos un mensaje entendible.
-  const destino = await comprobarProveedor(data.url);
-  redirect(destino);
-}
-
-async function comprobarProveedor(url: string) {
-  try {
-    const respuesta = await fetch(url, { redirect: "manual" });
-
-    // Un proveedor activo responde con una redirección a Google.
-    if (respuesta.status >= 300 && respuesta.status < 400) return url;
-
-    const cuerpo = await respuesta.text();
-    if (cuerpo.includes("provider is not enabled")) {
-      return "/login?error=google_sin_configurar";
-    }
-
-    console.error("Respuesta inesperada de Supabase OAuth:", cuerpo.slice(0, 300));
-    return "/login?error=google";
-  } catch (fallo) {
-    console.error("No se ha podido contactar con Supabase OAuth:", fallo);
-    return "/login?error=google";
-  }
+  redirect(data.url);
 }
 
 export async function cerrarSesion() {
@@ -213,6 +196,7 @@ export async function moverCita(id: string, estado: EstadoCita, posicion: number
   }
 
   revalidatePath("/");
+  revalidatePath("/oportunidades");
   return { ok: true as const, mensaje: "" };
 }
 
@@ -292,4 +276,164 @@ export async function anadirActividad(
 
   revalidatePath(`/clientes/${clienteId}`);
   return { estado: "ok", mensaje: "Actividad añadida." };
+}
+
+/* --- Catálogo flash ---------------------------------------------------- */
+
+/**
+ * Crea o edita un diseño. RLS (`es_propietario()`) ya impide que alguien sin
+ * rol toque la tabla; aquí se valida la forma de los datos.
+ */
+export async function guardarDiseno(
+  _anterior: ResultadoFormulario,
+  datos: FormData,
+): Promise<ResultadoFormulario> {
+  const supabase = await conSesion();
+  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha caducado." };
+
+  const id = String(datos.get("id") ?? "");
+  const nombre = String(datos.get("nombre") ?? "").trim();
+  const textoPrecio = String(datos.get("precio") ?? "").trim().replace(",", ".");
+  const precio = textoPrecio ? Number(textoPrecio) : null;
+  const imagen = String(datos.get("imagen_url") ?? "").trim();
+
+  if (!nombre) return { estado: "error", mensaje: "El nombre es obligatorio." };
+  if (precio !== null && (!Number.isFinite(precio) || precio < 0 || precio > 100000)) {
+    return { estado: "error", mensaje: "El precio no es válido." };
+  }
+  // Solo rutas de la web o direcciones https: nada de `javascript:` en un src.
+  if (imagen && !imagen.startsWith("/") && !imagen.startsWith("https://")) {
+    return { estado: "error", mensaje: "La imagen debe ser una ruta de la web (/fotos/…) o una URL https." };
+  }
+
+  const fila = {
+    nombre,
+    precio,
+    estilo: String(datos.get("estilo") ?? "").trim() || null,
+    tamano_aprox: String(datos.get("tamano_aprox") ?? "").trim() || null,
+    descripcion: String(datos.get("descripcion") ?? "").trim() || null,
+    imagen_url: imagen || null,
+  };
+
+  let error;
+  if (id) {
+    ({ error } = await supabase.from("disenos").update(fila).eq("id", id));
+  } else {
+    // Los nuevos van al final del catálogo y empiezan retirados: así no salen
+    // en la web hasta que alguien los revisa y los publica.
+    const { data: ultimo } = await supabase
+      .from("disenos")
+      .select("orden")
+      .order("orden", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    ({ error } = await supabase
+      .from("disenos")
+      .insert({ ...fila, disponible: false, orden: (ultimo?.orden ?? 0) + 1 }));
+  }
+
+  if (error) {
+    console.error("Error al guardar el diseño:", error);
+    return { estado: "error", mensaje: "No se ha podido guardar el diseño." };
+  }
+
+  revalidatePath("/catalogo");
+  return { estado: "ok", mensaje: id ? "Cambios guardados." : "Diseño creado (sin publicar)." };
+}
+
+export async function cambiarDisponible(id: string, disponible: boolean) {
+  const supabase = await conSesion();
+  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+
+  const { error } = await supabase.from("disenos").update({ disponible }).eq("id", id);
+
+  if (error) {
+    console.error("Error al cambiar la disponibilidad:", error);
+    return { ok: false as const, mensaje: "No se ha podido cambiar." };
+  }
+
+  revalidatePath("/catalogo");
+  return { ok: true as const, mensaje: "" };
+}
+
+export async function eliminarDiseno(id: string) {
+  const supabase = await conSesion();
+  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+
+  // Un diseño con reservas es historia de clientes: se retira, no se borra.
+  const { count } = await supabase
+    .from("citas")
+    .select("id", { count: "exact", head: true })
+    .eq("diseno_id", id);
+
+  if (count) {
+    return { ok: false as const, mensaje: "Tiene reservas: retíralo en vez de borrarlo." };
+  }
+
+  const { error } = await supabase.from("disenos").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error al eliminar el diseño:", error);
+    return { ok: false as const, mensaje: "No se ha podido eliminar." };
+  }
+
+  revalidatePath("/catalogo");
+  return { ok: true as const, mensaje: "" };
+}
+
+/* --- Consentimientos --------------------------------------------------- */
+
+/**
+ * Registra una ficha de salud y su consentimiento. No se editan ni se borran
+ * desde el panel: una firma es un documento, así que una corrección es una
+ * firma nueva y la anterior queda en el historial.
+ */
+export async function registrarConsentimiento(
+  _anterior: ResultadoFormulario,
+  datos: FormData,
+): Promise<ResultadoFormulario> {
+  const supabase = await conSesion();
+  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha caducado." };
+
+  const clienteId = String(datos.get("cliente_id") ?? "");
+  const citaId = String(datos.get("cita_id") ?? "") || null;
+  const fecha = String(datos.get("fecha_firma") ?? "").trim();
+  const menor = datos.get("menor") === "on";
+  const tutor = String(datos.get("tutor") ?? "").trim();
+  const texto = (campo: string) => String(datos.get(campo) ?? "").trim() || null;
+
+  if (!clienteId) return { estado: "error", mensaje: "Falta el cliente." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return { estado: "error", mensaje: "La fecha de firma no es válida." };
+  }
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
+  if (fecha > hoy) return { estado: "error", mensaje: "La fecha de firma no puede ser futura." };
+  if (menor && !tutor) {
+    return { estado: "error", mensaje: "Si es menor, indica quién firma como tutor legal." };
+  }
+
+  const { error } = await supabase.from("consentimientos").insert({
+    cliente_id: clienteId,
+    cita_id: citaId,
+    fecha_firma: fecha,
+    firmado: datos.get("firmado") === "on",
+    alergias: texto("alergias"),
+    medicacion: texto("medicacion"),
+    condiciones: texto("condiciones"),
+    embarazo: datos.get("embarazo") === "on",
+    menor,
+    tutor: menor ? tutor : null,
+    notas: texto("notas"),
+  });
+
+  if (error) {
+    console.error("Error al registrar el consentimiento:", error);
+    return { estado: "error", mensaje: "No se ha podido guardar el consentimiento." };
+  }
+
+  revalidatePath(`/clientes/${clienteId}`);
+  revalidatePath("/consentimientos");
+  revalidatePath("/agenda");
+  revalidatePath("/");
+  return { estado: "ok", mensaje: "Consentimiento registrado." };
 }

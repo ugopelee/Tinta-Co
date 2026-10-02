@@ -31,9 +31,9 @@ function guardar(clave: string, valor: string) {
 export const suscribirTema = suscribirA("data-tema");
 
 export const leerTema = (): Tema =>
-  (document.documentElement.dataset.tema as Tema | undefined) ?? "oscuro";
+  (document.documentElement.dataset.tema as Tema | undefined) ?? "claro";
 
-export const temaPorDefecto = (): Tema => "oscuro";
+export const temaPorDefecto = (): Tema => "claro";
 
 export function aplicarTema(nuevo: Tema) {
   document.documentElement.dataset.tema = nuevo;

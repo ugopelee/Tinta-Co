@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Pantallas bajas (portátiles): la barra lateral se compacta para caber
+   entera sin desplazarse. */
+@custom-variant bajo (@media (max-height: 820px));
+@custom-variant enano (@media (max-height: 700px));
+
 @theme inline {
   --color-fondo: var(--fondo);
   --color-superficie: var(--superficie);
@@ -9,27 +14,31 @@
   --color-tenue: var(--tenue);
   --color-acento: var(--acento);
   --color-acento-suave: var(--acento-suave);
+  --color-verde: var(--verde);
+  --color-amarillo: var(--amarillo);
+  --color-azul: var(--azul);
+  --color-lima: var(--lima);
+  --color-sobre-lima: var(--sobre-lima);
   --font-sans: var(--font-cuerpo);
-  --font-display: var(--font-titulo);
+  --font-display: var(--font-cuerpo);
   --font-mono: var(--font-mono-ui);
 }
 
 /* --- Tipografía ------------------------------------------------------ */
 
 /* Un panel no es una portada: aquí la jerarquía la hacen el tamaño y el
-   peso, nunca el cambio de familia. Una sola grotesca en todo el producto. */
+   peso, nunca el cambio de familia. Tracking cerrado en lo grande, como en
+   los titulares de producto. */
 .titular {
-  font-family: var(--font-titulo), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.028em;
 }
 
-/* Rótulos de columna y de grupo. Versalitas discretas: el tracking ancho
-   de la web se lee como cartel y en una tabla estorba. */
+/* Rótulos de grupo y de columna: versalitas pequeñas y grises. */
 .etiqueta {
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.055em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -47,12 +56,12 @@ body {
 }
 
 ::selection {
-  background: var(--acento);
-  color: #fff;
+  background: var(--lima);
+  color: var(--sobre-lima);
 }
 
 :focus-visible {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--texto);
   outline-offset: 2px;
   border-radius: 0.35rem;
 }
@@ -64,11 +73,112 @@ body {
 }
 
 @layer components {
-  /* El contenedor que se repite en todo el panel. */
+  /* El contenedor que se repite en todo el panel: blanco sobre el lienzo
+     gris, sin borde en claro (lo separa el contraste) y radio generoso. */
   .tarjeta {
     background: var(--superficie);
-    border: 1px solid var(--borde);
+    border: 1px solid var(--borde-tarjeta);
+    border-radius: 1.25rem;
+  }
+
+  /* Fila de lista dentro de una tarjeta: caja gris suave, sin líneas. */
+  .fila {
+    background: var(--superficie-alta);
     border-radius: 0.875rem;
+    transition: background-color 0.2s ease;
+  }
+
+  a.fila:hover,
+  button.fila:hover {
+    background: color-mix(in srgb, var(--superficie-alta) 55%, var(--borde));
+  }
+
+  /* Control segmentado: pista gris con la opción elegida en negro. */
+  .segmentos {
+    display: inline-flex;
+    gap: 0.125rem;
+    border-radius: 9999px;
+    background: var(--superficie-alta);
+    padding: 0.25rem;
+  }
+
+  .segmento {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    color: var(--tenue);
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .segmento:hover {
+    color: var(--texto);
+  }
+
+  .segmento[aria-pressed="true"],
+  .segmento[aria-current="page"] {
+    background: var(--texto);
+    color: var(--fondo);
+    font-weight: 500;
+  }
+
+  /* Botón principal: píldora negra. */
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    background: var(--texto);
+    color: var(--fondo);
+    padding: 0.625rem 1.125rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition:
+      opacity 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .boton:hover {
+    opacity: 0.86;
+  }
+
+  .boton:active {
+    transform: scale(0.98);
+  }
+
+  .boton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* Chip de estado vivo, la lima de la referencia. */
+  .chip-lima {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background: var(--lima);
+    color: var(--sobre-lima);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  /* Insignia blanca dentro de una fila gris. */
+  .insignia {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    background: var(--superficie);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
   }
 
   /* Botón secundario de cabecera de tarjeta: sin relleno hasta que se pasa
@@ -101,7 +211,7 @@ body {
    que el ancho no parpadea en la primera carga. */
 @media (min-width: 1024px) {
   .barra {
-    width: 16.5rem;
+    width: 16rem;
     transition: width 0.28s cubic-bezier(0.22, 0.7, 0.3, 1);
   }
 

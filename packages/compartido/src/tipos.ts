@@ -1,4 +1,9 @@
-import type { EstadoCita, TipoActividad } from "./config/estudio";
+import type {
+  EstadoCita,
+  TipoActividad,
+  TipoEvento,
+  TipoOportunidad,
+} from "./config/estudio";
 
 export type Perfil = {
   id: string;
@@ -30,8 +35,17 @@ export type Cliente = {
   created_at: string;
 };
 
+/**
+ * Una fila de `citas`: cita de estudio, encargo para un evento o propuesta de
+ * negocio (proveedor, colaboración…). Ver `tiposOportunidad`.
+ */
 export type Cita = {
   id: string;
+  tipo: TipoOportunidad;
+  empresa: string | null;
+  tipo_evento: TipoEvento | null;
+  lugar: string | null;
+  asistentes: number | null;
   cliente_id: string | null;
   nombre: string;
   email: string;
@@ -68,5 +82,25 @@ export type Actividad = {
   titulo: string;
   descripcion: string | null;
   fecha: string;
+  created_at: string;
+};
+
+/**
+ * Consentimiento informado y ficha de salud. Uno por firma: el más reciente
+ * de cada cliente es el que cuenta. Ver `estadoConsentimiento` en el CRM.
+ */
+export type Consentimiento = {
+  id: string;
+  cliente_id: string;
+  cita_id: string | null;
+  fecha_firma: string;
+  firmado: boolean;
+  alergias: string | null;
+  medicacion: string | null;
+  condiciones: string | null;
+  embarazo: boolean;
+  menor: boolean;
+  tutor: string | null;
+  notas: string | null;
   created_at: string;
 };

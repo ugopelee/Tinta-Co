@@ -50,12 +50,12 @@ export function MenuCuenta({ sesion }: { sesion: Sesion }) {
         onClick={() => setAbierto((valor) => !valor)}
         aria-expanded={abierto}
         aria-haspopup="menu"
-        className="flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 py-1.5 pl-1.5 pr-4 text-tenue backdrop-blur transition-all duration-300 hover:border-white/30 hover:text-texto"
+        className="group flex items-center gap-2.5 rounded-full border border-white/[0.16] bg-[#141418]/85 py-1.5 pl-1.5 pr-1.5 font-menu text-white/80 backdrop-blur-xl transition-colors duration-300 hover:border-white/30 hover:text-white 2xl:pr-4"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[0.7rem] text-texto">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[0.68rem] font-semibold tracking-[0.04em] text-[#141418]">
           {iniciales || "·"}
         </span>
-        <span className="hidden max-w-[8rem] truncate text-sm sm:inline">
+        <span className="hidden max-w-[9rem] truncate text-[0.78rem] font-semibold 2xl:inline">
           {sesion.nombre}
         </span>
       </button>

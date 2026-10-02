@@ -1,21 +1,23 @@
 import { estudio } from "@tinta/compartido/estudio";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import type { Diseno } from "@tinta/compartido/tipos";
-import {
-  BarraProgreso,
-  Contador,
-  DesvanecerAlSalir,
-  Filete,
-  Parallax,
-  Revelar,
-  TextoRevelado,
-} from "@/components/animaciones";
-import { Cabecera } from "@/components/Cabecera";
-import type { Sesion } from "@/components/MenuCuenta";
-import { GaleriaDisenos } from "@/components/GaleriaDisenos";
-import { MarcaDeAgua } from "@/components/MarcaDeAgua";
-import { Servicios } from "@/components/Servicios";
+import { Revelar } from "@/components/animaciones";
+import { Catalogo } from "@/components/Catalogo";
+import { EnlaceMagnetico, HoraMadrid } from "@/components/detalles";
+import { Encabezado } from "@/components/Encabezado";
+import { Estudio } from "@/components/Estudio";
+import { FondoVivo } from "@/components/FondoVivo";
 import { FormularioReserva } from "@/components/FormularioReserva";
+import type { Sesion } from "@/components/MenuCuenta";
+import { Navegacion } from "@/components/Navegacion";
+import { PapelRasgado } from "@/components/PapelRasgado";
+import { LienzoPuntos } from "@/components/puntos/LienzoPuntos";
+import { Servicios } from "@/components/Servicios";
+import { VolverArriba } from "@/components/VolverArriba";
+import { fotosEstudio } from "@/lib/flash";
+
+/** Oficios del estudio, al pie de la portada. */
+const OFICIOS = ["flash de autor", "piezas a medida", "piercing", "retoques", "eventos"];
 
 export default async function Landing() {
   const supabase = await crearClienteServidor();
@@ -33,19 +35,24 @@ export default async function Landing() {
   const sesion = await leerSesion();
 
   return (
-    <div className="relative z-10">
-      <BarraProgreso />
-      <Cabecera sesion={sesion} />
+    <>
+      {/* Un único lienzo para toda la página: cada sección le pide su forma
+          con data-forma y su sitio con data-lado. */}
+      <LienzoPuntos />
+      <Navegacion sesion={sesion} />
+      <VolverArriba />
+      <FondoVivo />
 
-      <main>
-        <Hero disenos={disenos} />
-        <Cifras />
+      <main className="relative z-10">
+        <Portada />
+        <Estudio />
         <Servicios />
         <Catalogo disenos={disenos} />
+        <Reserva disenos={disenos} />
       </main>
 
       <Pie />
-    </div>
+    </>
   );
 }
 
@@ -71,250 +78,211 @@ async function leerSesion(): Promise<Sesion | null> {
   };
 }
 
-function Hero({ disenos }: { disenos: Diseno[] }) {
+/**
+ * La portada es una hoja de papel de calco con el titular. Al bajar se
+ * rasga y detrás aparece la piel tatuada, con el resto de la portada encima.
+ */
+function Portada() {
+  const [lineaA, lineaB, lineaC] = estudio.hero.lineas;
+  // "Tinta que aguanta el paso del tiempo": la cola marcada en `enfasis`
+  // va en cursiva y en el tono de la sección.
+  const tituloEnfasis = estudio.hero.enfasis.join(" ");
+  const tituloSinEnfasis = estudio.hero.titulo.replace(tituloEnfasis, "").trim();
+
   return (
-    <section>
-      <DesvanecerAlSalir className="relative overflow-hidden px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-36">
-        {/* Niebla del fondo: dos focos que se cruzan, como en una sesión nocturna. */}
-        <Parallax
-          intensidad={0.16}
-          className="pointer-events-none absolute inset-0"
-        >
-          <div
-            aria-hidden
-            className="absolute left-1/4 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[150px]"
-            style={{ background: "var(--acento)" }}
-          />
-          <div
-            aria-hidden
-            className="absolute -right-40 bottom-0 h-[34rem] w-[34rem] rounded-full opacity-20 blur-[140px]"
-            style={{ background: "var(--acento-suave)" }}
-          />
-        </Parallax>
-
-        {/* El monograma del estudio, tan bajo que se lee como textura. */}
-        <MarcaDeAgua className="pointer-events-none absolute -right-24 top-1/2 h-[46rem] w-auto -translate-y-1/2 text-texto opacity-[0.035] sm:right-[6%]" />
-
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-stretch lg:gap-14">
-          <div className="flex flex-col justify-between lg:pt-4">
-            <h1 className="titular text-[clamp(2.75rem,7vw,5.5rem)] leading-[1.02]">
-              {estudio.hero.lineas.map((linea, indice) => (
-                <Revelar key={linea} retardo={120 + indice * 130}>
-                  <span
-                    className={`block ${
-                      indice === estudio.hero.lineaApagada
-                        ? "titular-apagado"
-                        : ""
-                    }`}
-                  >
-                    {linea}
-                  </span>
-                </Revelar>
-              ))}
+    <PapelRasgado
+      id="inicio"
+      data-forma="esfera"
+      data-lado="oculto"
+      data-fondo="#08080a"
+      data-tono="#e0745e"
+      rotulo={`${lineaA} ${lineaB}`.toUpperCase()}
+      palabra={`${lineaC}.`}
+      pieIzquierda="ESTUDIO DE TATUAJE · MADRID"
+      pieDerecha="BAJA PARA ABRIR ↓"
+      recorrido="130svh"
+      foto={fotosEstudio.espalda}
+      altFoto="una espalda entera tatuada"
+      sobrePapel={
+        <div className="absolute inset-x-0 bottom-[14svh] flex flex-wrap justify-center gap-3 px-5 md:bottom-[16svh]">
+          <a
+            href="#reserva"
+            className="rounded-full bg-[#17161a] px-6 py-3 text-sm text-[#ebe6dc] transition-[transform,background-color] duration-150 ease-out hover:bg-[#c2452f] active:scale-[0.97]"
+          >
+            {estudio.hero.cta}
+          </a>
+          <a
+            href="#catalogo"
+            className="rounded-full border border-[#17161a]/25 px-6 py-3 text-sm text-[#17161a] transition-[transform,border-color] duration-150 ease-out hover:border-[#17161a]/60 active:scale-[0.97]"
+          >
+            {estudio.hero.ctaSecundario}
+          </a>
+        </div>
+      }
+    >
+      {/* La foto es oscura en los lados y clara en el centro: un velo desde
+          la izquierda asienta el titular sin apagar la espalda. */}
+      <div
+        aria-hidden
+        // Termina en el mismo negro que la orla de la portada y el arranque
+        // de Estudio: los tres empalman sin costura.
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(8_8_10/0.82)_0%,rgb(8_8_10/0.45)_38%,transparent_62%),linear-gradient(0deg,rgb(8_8_10)_0%,rgb(8_8_10/0.55)_30%,transparent_58%)]"
+      />
+      <div className="contenedor relative flex h-full flex-col justify-end pb-8 md:pb-10">
+        <div className="grid items-end gap-x-10 gap-y-8 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <p className="flex items-center gap-3 font-mono text-[0.68rem] uppercase tracking-[0.16em] text-texto/60">
+              <span className="text-acento-suave">Nº 01</span>
+              <span className="h-px w-10 bg-white/25" />
+              Estudio de tatuaje en Madrid
+            </p>
+            <h1 className="titular-portada mt-6 text-[clamp(3rem,7.4vw,7.25rem)]">
+              {tituloSinEnfasis} <em className="text-acento-suave">{tituloEnfasis}</em>.
             </h1>
-
-            <Revelar retardo={560}>
-              <p className="parrafo mt-8 max-w-sm text-sm text-tenue sm:text-base">
-                {estudio.hero.entradilla}
-              </p>
-            </Revelar>
-
-            <Revelar retardo={680}>
-              <div className="mt-10 flex flex-wrap items-end gap-10">
-                <div>
-                  <p className="flex items-baseline gap-2">
-                    <span aria-hidden className="text-acento">
-                      ★
-                    </span>
-                    <span className="cifra text-2xl">4,9</span>
-                  </p>
-                  <p className="mt-1 text-xs text-tenue">
-                    de {estudio.cifras[1].valor.toLocaleString("es-ES")} piezas
-                  </p>
-                </div>
-                <div>
-                  <p className="cifra text-2xl">{estudio.cifras[0].valor}</p>
-                  <p className="mt-1 text-xs text-tenue">años tatuando</p>
-                </div>
-                <div>
-                  <p className="cifra text-2xl">{estudio.cifras[2].valor}</p>
-                  <p className="mt-1 text-xs text-tenue">artistas</p>
-                </div>
-              </div>
-            </Revelar>
           </div>
 
-          <Revelar retardo={420} className="h-full">
-            <div
-              id="reserva"
-              className="cristal-denso flex h-full scroll-mt-28 flex-col rounded-2xl p-6 sm:p-7"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="titular text-2xl">{estudio.reserva.titulo}</h2>
-                  <p className="mt-1.5 text-sm text-tenue">
-                    {estudio.reserva.entradilla}
-                  </p>
-                </div>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-sm text-tenue">
-                  ✦
-                </span>
-              </div>
-
-              <div className="mt-7">
-                <FormularioReserva disenos={disenos} />
-              </div>
-            </div>
-          </Revelar>
-        </div>
-      </DesvanecerAlSalir>
-    </section>
-  );
-}
-
-function Cifras() {
-  return (
-    <section className="border-y border-borde px-6 py-16">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-10 lg:grid-cols-4">
-        {estudio.cifras.map((cifra, indice) => (
-          <Revelar key={cifra.etiqueta} retardo={indice * 90}>
-            <p className="titular cifra text-4xl sm:text-5xl">
-              <Contador valor={cifra.valor} sufijo={cifra.sufijo} />
+          <div className="max-w-sm lg:col-span-4 lg:pb-3">
+            <p className="text-[0.95rem] leading-[1.6] text-texto/70 [text-wrap:pretty]">
+              {estudio.hero.entradilla}
             </p>
-            <Filete
-              className="mt-4 h-px w-full bg-borde"
-              retardo={indice * 90 + 200}
-            />
-            <p className="etiqueta mt-4 text-tenue">{cifra.etiqueta}</p>
-          </Revelar>
-        ))}
+            <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <EnlaceMagnetico
+                href="#reserva"
+                className="inline-flex h-11 items-center gap-2.5 rounded-[3px] bg-texto px-5 text-[0.85rem] font-medium text-fondo transition-colors hover:bg-acento-suave"
+              >
+                {estudio.hero.cta}
+                <span aria-hidden>→</span>
+              </EnlaceMagnetico>
+              <a
+                href="#catalogo"
+                className="enlace-sutil text-[0.85rem] text-texto/75 transition-colors hover:text-texto"
+              >
+                {estudio.hero.ctaSecundario}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <dl className="mt-12 grid grid-cols-3 border-t border-white/[0.12] pt-5 md:mt-16 md:grid-cols-4">
+          {[
+            { valor: "4,9", etiqueta: "Valoración media" },
+            {
+              // es-ES no separa los miles con cuatro cifras ("4200"); de-DE pone el punto.
+              valor: `${estudio.cifras[1].valor.toLocaleString("de-DE")}${estudio.cifras[1].sufijo}`,
+              etiqueta: estudio.cifras[1].etiqueta,
+            },
+            { valor: String(estudio.cifras[0].valor), etiqueta: estudio.cifras[0].etiqueta },
+          ].map((cifra) => (
+            <div key={cifra.etiqueta} className="flex flex-col-reverse gap-1.5">
+              <dt className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-texto/45">
+                {cifra.etiqueta}
+              </dt>
+              <dd className="font-serif text-[clamp(1.6rem,2.4vw,2.1rem)] leading-none tabular-nums">
+                {cifra.valor}
+              </dd>
+            </div>
+          ))}
+          <div className="hidden self-end text-right font-mono text-[0.62rem] uppercase leading-[1.9] tracking-[0.14em] text-texto/45 md:block">
+            {OFICIOS.join(" · ")}
+          </div>
+        </dl>
       </div>
-    </section>
+    </PapelRasgado>
   );
 }
 
-function Catalogo({ disenos }: { disenos: Diseno[] }) {
+function Reserva({ disenos }: { disenos: Diseno[] }) {
   return (
     <section
-      id="catalogo"
-      className="relative scroll-mt-24 overflow-hidden bg-fondo py-24 sm:py-32"
+      id="reserva"
+      data-fondo="#08150f"
+      data-tono="#5fd3a0"
+      data-forma="onda"
+      data-lado="fondo"
+      className="relative scroll-mt-10 pb-[22svh] pt-28 md:pt-40"
     >
-      {/* Trama de puntos y marcas de plano: textura de taller, no de web. */}
-      <div aria-hidden className="trama-puntos absolute inset-0" />
-      {[
-        "left-[12%] top-[18%]",
-        "right-[16%] top-[26%]",
-        "left-[22%] bottom-[14%]",
-        "right-[8%] bottom-[22%]",
-      ].map((posicion) => (
-        <span
-          key={posicion}
-          aria-hidden
-          className={`cruceta absolute ${posicion} h-3 w-3`}
-        />
-      ))}
-
-      <div className="relative">
-        <div className="mx-auto max-w-7xl px-6">
-          <TituloSeccion
-            etiqueta="Catálogo flash"
-            titulo="Piezas listas para tatuar"
-            descripcion="Cada diseño se tatúa una sola vez. Pasa el ratón para detener la tira y toca una pieza para llevarla al formulario."
+      <div className="contenedor grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] lg:gap-20">
+        <div>
+          <Encabezado
+            etiqueta="Escríbenos"
+            titulo="Cuéntanos"
+            cursiva="tu idea."
+            descripcion="Una cita, un evento o una propuesta para el estudio: todo entra por aquí y lo lee una persona. Respondemos en menos de 48 horas."
           />
+
+          <Revelar retardo={240}>
+            <ul className="mt-12 space-y-4 text-sm text-tenue">
+              <li className="flex items-center gap-3">
+                <span className="punto-vivo" />
+                Agenda abierta · respuesta en menos de 48 h
+              </li>
+              <li>
+                <a
+                  href={`mailto:${estudio.contacto.email}`}
+                  className="enlace-sutil transition-colors hover:text-texto"
+                >
+                  {estudio.contacto.email}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`tel:${estudio.contacto.telefono.replace(/\s/g, "")}`}
+                  className="enlace-sutil transition-colors hover:text-texto"
+                >
+                  {estudio.contacto.telefono}
+                </a>
+              </li>
+            </ul>
+          </Revelar>
         </div>
 
-        {disenos.length === 0 ? (
-          <p className="mx-auto mt-16 max-w-7xl px-6 text-tenue">
-            Estamos preparando el próximo set de flash. Vuelve pronto.
-          </p>
-        ) : (
-          <Revelar retardo={200}>
-            <div className="mt-16">
-              <GaleriaDisenos disenos={disenos} />
-            </div>
-          </Revelar>
-        )}
+        <Revelar retardo={160}>
+          <div id="formulario-reserva" className="cristal scroll-mt-24 rounded-[2rem] p-6 md:p-8">
+            <FormularioReserva disenos={disenos} />
+          </div>
+        </Revelar>
       </div>
     </section>
   );
 }
+
 
 function Pie() {
   return (
-    <footer className="border-t border-borde px-6 py-20">
-      <div className="mx-auto max-w-6xl">
-        <Revelar>
-          <p className="titular text-[clamp(2.5rem,10vw,6rem)] leading-none text-superficie-alta">
-            {estudio.nombre}
+    <footer
+      id="contacto"
+      data-fondo="#08080a"
+      data-tono="#e0745e"
+      data-forma="onda"
+      data-lado="fondo"
+      className="relative z-10 overflow-hidden pb-28 md:pb-10"
+    >
+      <div className="contenedor">
+        <div className="grid gap-6 border-t border-white/10 pt-8 text-sm text-tenue md:grid-cols-4">
+          <p>{estudio.contacto.direccion}</p>
+          <p>{estudio.contacto.horario}</p>
+          <p>
+            Madrid · <HoraMadrid />
           </p>
-        </Revelar>
-
-        <Filete className="mt-16 h-px w-full bg-borde" />
-
-        <div className="mt-10 grid gap-10 sm:grid-cols-3">
-          <div className="text-sm text-tenue">
-            <p className="etiqueta mb-3 text-texto">Estudio</p>
-            <p>{estudio.contacto.direccion}</p>
-            <p className="mt-2">{estudio.contacto.horario}</p>
-          </div>
-
-          <div className="text-sm text-tenue">
-            <p className="etiqueta mb-3 text-texto">Contacto</p>
-            <a
-              href={`mailto:${estudio.contacto.email}`}
-              className="enlace-sutil block w-fit transition-colors hover:text-texto"
-            >
-              {estudio.contacto.email}
+          <div className="flex gap-5 md:justify-end">
+            <span>{estudio.contacto.instagram}</span>
+            <a href="#inicio" className="enlace-sutil transition-colors hover:text-texto">
+              Arriba ↑
             </a>
-            <a
-              href={`tel:${estudio.contacto.telefono.replace(/\s/g, "")}`}
-              className="enlace-sutil mt-2 block w-fit transition-colors hover:text-texto"
-            >
-              {estudio.contacto.telefono}
-            </a>
-          </div>
-
-          <div className="text-sm text-tenue">
-            <p className="etiqueta mb-3 text-texto">Redes</p>
-            <p>{estudio.contacto.instagram}</p>
           </div>
         </div>
 
-        <p className="etiqueta mt-12 text-tenue/60">
-          © {new Date().getFullYear()} {estudio.nombre}
+        <p
+          aria-hidden
+          className="serif-cursiva pointer-events-none mt-10 select-none bg-gradient-to-b from-white/[0.14] to-transparent bg-clip-text text-center text-[clamp(4rem,19vw,17rem)] leading-[0.8] text-transparent"
+        >
+          {estudio.nombre}
+        </p>
+
+        <p className="mt-6 text-center text-xs text-tenue/60">
+          © {new Date().getFullYear()} {estudio.nombre}. Hecho a mano en Madrid.
         </p>
       </div>
     </footer>
-  );
-}
-
-function TituloSeccion({
-  etiqueta,
-  titulo,
-  descripcion,
-}: {
-  etiqueta: string;
-  titulo: string;
-  descripcion?: string;
-}) {
-  return (
-    <div className="max-w-2xl">
-      <Revelar>
-        <div className="mb-6 flex items-center gap-4">
-          <Filete className="h-px w-10 bg-acento" retardo={150} />
-          <p className="etiqueta text-acento">{etiqueta}</p>
-        </div>
-      </Revelar>
-
-      <h2 className="titular text-[clamp(2rem,5vw,3.75rem)] leading-[1.02]">
-        <TextoRevelado texto={titulo} paso={45} />
-      </h2>
-
-      {descripcion && (
-        <Revelar retardo={280}>
-          <p className="parrafo mt-6 text-tenue">{descripcion}</p>
-        </Revelar>
-      )}
-    </div>
   );
 }

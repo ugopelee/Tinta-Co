@@ -4,27 +4,21 @@
  */
 export default function Cargando() {
   return (
-    <div className="animate-pulse px-4 py-6 lg:px-6 lg:py-7">
-      <div className="mb-6">
-        <div className="h-6 w-56 rounded bg-superficie-alta" />
-        <div className="mt-2 h-4 w-72 rounded bg-superficie" />
+    <div className="animate-pulse">
+      <div className="mb-5">
+        <div className="h-4 w-28 rounded-full bg-superficie" />
+        <div className="mt-2 h-9 w-72 rounded-full bg-superficie" />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((casilla) => (
-          <div
-            key={casilla}
-            className="tarjeta p-5"
-          >
-            <div className="h-3 w-24 rounded bg-superficie-alta" />
-            <div className="mt-4 h-8 w-16 rounded bg-superficie-alta" />
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.7fr_1fr]">
-        <div className="tarjeta h-72" />
-        <div className="tarjeta h-72" />
+      <div className="grid gap-3 xl:grid-cols-[1.15fr_1fr]">
+        <div className="space-y-3">
+          <div className="tarjeta h-64" />
+          <div className="tarjeta h-80" />
+        </div>
+        <div className="space-y-3">
+          <div className="tarjeta h-72" />
+          <div className="tarjeta h-48" />
+        </div>
       </div>
     </div>
   );

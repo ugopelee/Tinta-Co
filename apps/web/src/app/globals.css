@@ -10,48 +10,46 @@
   --color-acento: var(--acento);
   --color-acento-suave: var(--acento-suave);
   --font-sans: var(--font-cuerpo);
-  --font-display: var(--font-titulo);
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-mono-ui);
+  --font-menu: var(--font-menu-ui), system-ui, sans-serif;
+  --ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* --- Tipografía ------------------------------------------------------ */
 
-/* Titulares de peso alto y tracking muy cerrado: a tamaños grandes las
-   letras deben tocarse casi, que es lo que da la sensación de cartel. */
+/* Titulares finos y apretados: a tamaño grande el peso normal ya pesa. */
 .titular {
-  font-family: var(--font-titulo), system-ui, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-cuerpo), system-ui, sans-serif;
+  font-weight: 400;
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
 
-/* Una línea del titular en tono apagado rompe el bloque y crea jerarquía
-   sin cambiar de tamaño. */
+/* La palabra en serif cursiva de cada titular. */
+.serif-cursiva {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
 .titular-apagado {
-  color: color-mix(in srgb, var(--texto) 34%, transparent);
+  color: color-mix(in srgb, var(--texto) 40%, transparent);
 }
 
-/* Paneles de cristal esmerilado sobre el fondo. */
-.cristal {
-  background: color-mix(in srgb, var(--texto) 4%, transparent);
-  border: 1px solid color-mix(in srgb, var(--texto) 10%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.cristal-denso {
-  background: color-mix(in srgb, var(--fondo) 55%, transparent);
-  border: 1px solid color-mix(in srgb, var(--texto) 12%, transparent);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-}
-
-/* Etiquetas de sección: mono, versalitas y mucho tracking. */
+/* Rótulo de sección: versalitas muy abiertas. */
 .etiqueta {
-  font-family: var(--font-mono-ui), ui-monospace, monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.26em;
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
+  color: var(--tenue);
+}
+
+.mono {
+  font-family: var(--font-mono-ui), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
 }
 
 .parrafo {
@@ -59,10 +57,9 @@
   line-height: 1.7;
 }
 
-/* Cifras de ancho fijo: no bailan mientras el contador sube. */
 .cifra {
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
 }
 
 html {
@@ -74,39 +71,59 @@ body {
   background: var(--fondo);
   color: var(--texto);
   font-family: var(--font-cuerpo), system-ui, sans-serif;
+  overflow-x: clip;
 }
 
 ::selection {
-  background: var(--acento);
-  color: #fff;
+  background: var(--acento-suave);
+  color: #0a0a0c;
 }
 
-/* Grano sutil sobre el fondo: rompe el plano liso sin pesar nada. */
+/* Grano sutil por encima de todo: quita el aspecto de pantalla plana. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 70;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Viñeta: oscurece los bordes y centra la mirada. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse at 50% 40%,
-    transparent 45%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
+/* --- Piezas ---------------------------------------------------------- */
+
+.contenedor {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
 }
 
-/* Subrayado que crece desde la izquierda al pasar el ratón. */
+@media (min-width: 768px) {
+  .contenedor {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* Cristal: navegación, menús y la tarjeta del formulario. */
+.cristal {
+  background: color-mix(in srgb, var(--fondo) 62%, transparent);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Retícula de puntos, como la primera escena de la referencia. Apagada
+   hacia los bordes para no competir con el lienzo. */
+.reticula {
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.08) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+}
+
+/* Subrayado que crece desde la izquierda. */
 .enlace-sutil {
   position: relative;
 }
@@ -121,14 +138,14 @@ body::after {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.35s cubic-bezier(0.22, 0.7, 0.3, 1);
+  transition: transform 0.4s var(--ease-salida);
 }
 
 .enlace-sutil:hover::after {
   transform: scaleX(1);
 }
 
-/* Relleno que sube al pasar el ratón por un botón. */
+/* Relleno que sube al pasar por un botón (formularios de cuenta). */
 .boton-barrido {
   position: relative;
   overflow: hidden;
@@ -142,7 +159,7 @@ body::after {
   z-index: -1;
   background: var(--acento-suave);
   transform: translateY(101%);
-  transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.26, 1);
+  transition: transform 0.5s var(--ease-salida);
 }
 
 .boton-barrido:hover::before,
@@ -150,133 +167,140 @@ body::after {
   transform: translateY(0);
 }
 
-/* Trama de puntos que deriva despacio: da textura sin competir con las
-   imágenes, y se apaga hacia los bordes. */
-.trama-puntos {
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--texto) 22%, transparent) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
-  animation: derivar 30s linear infinite;
-  -webkit-mask-image: radial-gradient(
-    ellipse at center,
-    #000 20%,
-    transparent 72%
-  );
-  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 72%);
+/* Borde que gira al pasar: un degradado cónico recortado al contorno. */
+@property --angulo {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }
 
-@keyframes derivar {
+.borde-giratorio {
+  position: relative;
+  isolation: isolate;
+}
+
+.borde-giratorio::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angulo),
+    transparent 0deg,
+    var(--acento-suave) 80deg,
+    var(--texto) 150deg,
+    transparent 210deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: girar-angulo 2.4s linear infinite;
+}
+
+.borde-giratorio:hover::before,
+.borde-giratorio:focus-visible::before {
+  opacity: 1;
+}
+
+@keyframes girar-angulo {
   to {
-    background-position: 24px 24px;
+    --angulo: 360deg;
   }
 }
 
-/* Marcas de plano técnico en las esquinas de la retícula. */
-.cruceta::before,
-.cruceta::after {
+/* Cursor fino de la máquina de escribir. */
+.cursor-bloque {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.9em;
+  margin-left: 0.06em;
+  vertical-align: -0.1em;
+  background: var(--acento-suave);
+  animation: parpadeo 1.05s steps(1) infinite;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Punto vivo: late como un indicador de grabación. */
+.punto-vivo {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--acento-suave);
+}
+
+.punto-vivo::after {
   content: "";
   position: absolute;
-  background: color-mix(in srgb, var(--texto) 28%, transparent);
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid var(--acento-suave);
+  animation: latir 2s var(--ease-salida) infinite;
 }
 
-.cruceta::before {
-  left: 50%;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  transform: translateX(-50%);
+@keyframes latir {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
-.cruceta::after {
-  top: 50%;
-  left: 0;
-  height: 1px;
-  width: 100%;
-  transform: translateY(-50%);
+/* Línea que baja y se recoge: el aviso de "sigue bajando". */
+.linea-bajar {
+  animation: linea-bajar 2.2s var(--ease-salida) infinite;
 }
 
-/* Entrada del nombre de servicio al cambiar de pestaña. */
+@keyframes linea-bajar {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* Entrada de un texto que cambia (descripción del servicio elegido). */
 @keyframes surgir {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.985);
+    transform: translateY(8px);
+    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: blur(0);
   }
 }
 
 .surgir {
-  animation: surgir 0.7s cubic-bezier(0.22, 0.8, 0.26, 1) both;
-}
-
-/* Banda de palabras en bucle. */
-@keyframes desplazar {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.marquesina {
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 10%,
-    #000 90%,
-    transparent
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 10%,
-    #000 90%,
-    transparent
-  );
-}
-
-.marquesina > div {
-  animation: desplazar var(--duracion-marquesina, 38s) linear infinite;
-}
-
-.marquesina:hover > div {
-  animation-play-state: paused;
-}
-
-/* Tira de piezas que avanza sola y se detiene al acercarte. */
-.galeria > div {
-  animation: desplazar var(--duracion-galeria, 70s) linear infinite;
-}
-
-.galeria:hover > div,
-.galeria:focus-within > div {
-  animation-play-state: paused;
-}
-
-/* Halo que aparece bajo la tarjeta de diseño al pasar por encima. */
-.carta-flash::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  background: radial-gradient(
-    120% 80% at 50% 0%,
-    color-mix(in srgb, var(--acento) 22%, transparent),
-    transparent 60%
-  );
-}
-
-.carta-flash:hover::after {
-  opacity: 1;
+  animation: surgir 0.7s var(--ease-salida) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -284,16 +308,27 @@ body::after {
     scroll-behavior: auto;
   }
 
-  .marquesina > div,
-  .galeria > div,
-  .trama-puntos,
-  .surgir {
-    animation: none;
-  }
-
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
+}
+
+/* Titular de la portada: serif de contraste a cuerpo de cartel, prieta
+   como una cabecera impresa. La cursiva es la misma familia, no otra. */
+.titular-portada {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  font-feature-settings: "kern", "liga", "dlig";
+}
+
+.titular-portada em {
+  font-style: italic;
+  letter-spacing: -0.035em;
 }

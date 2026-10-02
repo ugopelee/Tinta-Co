@@ -9,18 +9,12 @@ export function Pastilla({ estado }: { estado: EstadoCita }) {
   if (!definicion) return null;
 
   return (
-    <span
-      className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-2.5 py-1 text-xs"
-      style={{
-        color: definicion.color,
-        background: `color-mix(in srgb, ${definicion.color} 12%, transparent)`,
-        border: `1px solid color-mix(in srgb, ${definicion.color} 28%, transparent)`,
-      }}
-    >
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-superficie-alta px-2.5 py-1 text-xs font-medium">
+      {/* Aro hueco del color del estado, como la leyenda de un plano. */}
       <span
         aria-hidden
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: definicion.color }}
+        className="h-2.5 w-2.5 rounded-full border-2"
+        style={{ borderColor: definicion.color }}
       />
       {definicion.nombre}
     </span>

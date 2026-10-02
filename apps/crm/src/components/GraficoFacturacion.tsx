@@ -1,6 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Leyenda,
+  TarjetaTooltip,
+  cursorColumna,
+  ejeX,
+  ejeY,
+  rejilla,
+  tramoApilado,
+  type Serie,
+} from "@/components/graficos";
 
 export type MesFacturado = {
   etiqueta: string;
@@ -8,20 +18,14 @@ export type MesFacturado = {
   pendiente: number;
 };
 
-const ANCHO = 680;
-const ALTO = 220;
-const MARGEN = { arriba: 16, derecha: 8, abajo: 32, izquierda: 44 };
-const RADIO = 3;
-const HUECO = 2;
+// Lo que ya está en caja va en negro, el color fuerte del panel; lo que
+// falta por cobrar, en la lima de acento, encima.
+const SERIES: Serie[] = [
+  { clave: "cobrado", nombre: "Cobrado", color: "var(--texto)" },
+  { clave: "pendiente", nombre: "Pendiente", color: "var(--lima)" },
+];
 
-const COBRADO = "#57a86f";
-const PENDIENTE = "#bd8a2e";
-
-function trazo(x: number, y: number, ancho: number, alto: number, redondea: boolean) {
-  if (!redondea) return `M${x},${y}h${ancho}v${alto}h${-ancho}Z`;
-  const r = Math.min(RADIO, alto, ancho / 2);
-  return `M${x},${y + alto} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + ancho - r},${y} Q${x + ancho},${y} ${x + ancho},${y + r} L${x + ancho},${y + alto} Z`;
-}
+const TRAMOS = tramoApilado(SERIES.map((serie) => serie.clave));
 
 const euros = (valor: number) =>
   valor.toLocaleString("es-ES", {
@@ -30,191 +34,77 @@ const euros = (valor: number) =>
     maximumFractionDigits: 0,
   });
 
-/** Misma trama diagonal que el gráfico de citas, para leerlos igual. */
-function Rayas({ id, color }: { id: string; color: string }) {
-  return (
-    <pattern
-      id={id}
-      width="7"
-      height="7"
-      patternUnits="userSpaceOnUse"
-      patternTransform="rotate(45)"
-    >
-      <rect width="7" height="7" fill={color} opacity="0.4" />
-      <rect width="3.5" height="7" fill={color} />
-    </pattern>
-  );
-}
+/** Eje compacto: «1,2 mil €» ocupa menos que «1.200 €» y se lee igual. */
+const eurosCortos = (valor: number) =>
+  valor >= 1000
+    ? `${(valor / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })}k`
+    : String(valor);
 
 export function GraficoFacturacion({ datos }: { datos: MesFacturado[] }) {
-  const [activo, setActivo] = useState<number | null>(null);
-
-  const areaAncho = ANCHO - MARGEN.izquierda - MARGEN.derecha;
-  const areaAlto = ALTO - MARGEN.arriba - MARGEN.abajo;
-
-  const totales = datos.map((mes) => mes.cobrado + mes.pendiente);
-  const maximo = Math.max(1, ...totales);
-  const paso = areaAncho / Math.max(1, datos.length);
-  const anchoBarra = Math.min(44, Math.max(10, paso - 22));
+  const cobradoPeriodo = datos.reduce((suma, mes) => suma + mes.cobrado, 0);
+  const actual = datos.at(-1)?.cobrado ?? 0;
+  const anterior = datos.at(-2)?.cobrado ?? 0;
+  // El mes en curso está a medias: comparado vacío daría siempre «-100 %».
+  const variacion =
+    anterior && actual ? Math.round(((actual - anterior) / anterior) * 100) : null;
 
   return (
     <figure className="m-0">
-      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-        {[
-          { nombre: "Cobrado", color: COBRADO },
-          { nombre: "Pendiente", color: PENDIENTE },
-        ].map((serie) => (
-          <span key={serie.nombre} className="flex items-center gap-2">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm text-tenue">Cobrado en seis meses</p>
+          <p className="titular cifra mt-1 text-[2rem] leading-none">
+            {euros(cobradoPeriodo)}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          {variacion !== null && (
             <span
-              aria-hidden
-              className="h-2 w-2 rounded-full"
-              style={{ background: serie.color }}
-            />
-            <span className="text-tenue">{serie.nombre}</span>
-          </span>
-        ))}
+              className={
+                variacion >= 0
+                  ? "chip-lima cifra"
+                  : "cifra rounded-full bg-acento/10 px-3 py-1 text-[0.8125rem] font-medium text-acento"
+              }
+            >
+              {variacion >= 0 ? "+" : ""}
+              {variacion}% vs. mes anterior
+            </span>
+          )}
+          <Leyenda series={SERIES} />
+        </div>
       </div>
 
-      <div className="relative">
-        <svg
-          viewBox={`0 0 ${ANCHO} ${ALTO}`}
-          className="h-auto w-full"
-          role="img"
-          aria-label={`Facturación por mes. ${datos
-            .map((mes) => `${mes.etiqueta}: ${euros(mes.cobrado)} cobrado`)
-            .join(". ")}`}
-        >
-          <defs>
-            <Rayas id="rayas-cobrado" color={COBRADO} />
-            <Rayas id="rayas-pendiente" color={PENDIENTE} />
-          </defs>
-
-          {[0, maximo / 2, maximo].map((valor) => {
-            const y = MARGEN.arriba + areaAlto - (valor / maximo) * areaAlto;
-            return (
-              <g key={valor}>
-                <line
-                  x1={MARGEN.izquierda}
-                  x2={ANCHO - MARGEN.derecha}
-                  y1={y}
-                  y2={y}
-                  stroke="var(--borde)"
-                  strokeWidth={1}
-                  strokeDasharray={valor === 0 ? undefined : "2 5"}
-                />
-                <text
-                  x={MARGEN.izquierda - 8}
-                  y={y + 4}
-                  textAnchor="end"
-                  fill="var(--tenue)"
-                  fontSize={10}
-                >
-                  {Math.round(valor)}
-                </text>
-              </g>
-            );
-          })}
-
-          {datos.map((mes, indice) => {
-            const x = MARGEN.izquierda + indice * paso + (paso - anchoBarra) / 2;
-            const resaltada = activo === indice;
-            const altoCobrado = (mes.cobrado / maximo) * areaAlto;
-            const altoPendiente = (mes.pendiente / maximo) * areaAlto;
-            const base = MARGEN.arriba + areaAlto;
-
-            return (
-              <g
-                key={mes.etiqueta}
-                onMouseEnter={() => setActivo(indice)}
-                onMouseLeave={() => setActivo(null)}
-              >
-                <rect
-                  x={MARGEN.izquierda + indice * paso}
-                  y={MARGEN.arriba}
-                  width={paso}
-                  height={areaAlto}
-                  fill={resaltada ? "var(--superficie-alta)" : "transparent"}
-                  opacity={0.5}
-                />
-
-                {mes.cobrado > 0 && (
-                  <path
-                    d={trazo(
-                      x,
-                      base - altoCobrado,
-                      anchoBarra,
-                      Math.max(1, altoCobrado - (mes.pendiente > 0 ? HUECO : 0)),
-                      mes.pendiente === 0,
-                    )}
-                    fill="url(#rayas-cobrado)"
-                    opacity={activo === null || resaltada ? 1 : 0.35}
-                    style={{ transition: "opacity .25s ease" }}
-                  />
-                )}
-
-                {mes.pendiente > 0 && (
-                  <path
-                    d={trazo(
-                      x,
-                      base - altoCobrado - altoPendiente,
-                      anchoBarra,
-                      Math.max(1, altoPendiente - HUECO),
-                      true,
-                    )}
-                    fill="url(#rayas-pendiente)"
-                    opacity={activo === null || resaltada ? 1 : 0.35}
-                    style={{ transition: "opacity .25s ease" }}
-                  />
-                )}
-
-                <text
-                  x={MARGEN.izquierda + indice * paso + paso / 2}
-                  y={ALTO - 10}
-                  textAnchor="middle"
-                  fill={resaltada ? "var(--texto)" : "var(--tenue)"}
-                  fontSize={9.5}
-                  letterSpacing={0.8}
-                >
-                  {mes.etiqueta.toUpperCase()}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-
-        {activo !== null && totales[activo] > 0 && (
-          <div
-            className="pointer-events-none absolute top-2 min-w-[9rem] rounded-lg border border-borde bg-fondo/95 px-3 py-2 text-xs shadow-xl backdrop-blur"
-            style={{
-              left: `${((activo + 0.5) / datos.length) * 100}%`,
-              transform: "translateX(-50%)",
-            }}
-          >
-            <p className="mb-1.5 text-tenue">{datos[activo].etiqueta}</p>
-            <p className="flex items-center gap-2 leading-5">
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: COBRADO }}
+      <div
+        className="h-64"
+        role="img"
+        aria-label={`Facturación por mes. ${datos
+          .map((mes) => `${mes.etiqueta}: ${euros(mes.cobrado)} cobrado, ${euros(mes.pendiente)} pendiente`)
+          .join(". ")}`}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={datos} barCategoryGap="32%" margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
+            <CartesianGrid {...rejilla} />
+            <XAxis dataKey="etiqueta" {...ejeX} tickFormatter={(mes: string) => mes.charAt(0).toUpperCase() + mes.slice(1)} />
+            <YAxis {...ejeY} tickFormatter={eurosCortos} />
+            <Tooltip
+              cursor={cursorColumna}
+              content={(props) => <TarjetaTooltip {...props} series={SERIES} formato={euros} />}
+            />
+            {SERIES.map((serie) => (
+              <Bar
+                key={serie.clave}
+                dataKey={serie.clave}
+                name={serie.nombre}
+                stackId="caja"
+                fill={serie.color}
+                shape={TRAMOS[serie.clave]}
+                maxBarSize={44}
+                animationDuration={700}
+                animationEasing="ease-out"
               />
-              <span className="text-tenue">Cobrado</span>
-              <span className="cifra ml-auto">{euros(datos[activo].cobrado)}</span>
-            </p>
-            {datos[activo].pendiente > 0 && (
-              <p className="flex items-center gap-2 leading-5">
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: PENDIENTE }}
-                />
-                <span className="text-tenue">Pendiente</span>
-                <span className="cifra ml-auto">
-                  {euros(datos[activo].pendiente)}
-                </span>
-              </p>
-            )}
-          </div>
-        )}
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </figure>
   );

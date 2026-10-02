@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
+import { tiposEncargo } from "@tinta/compartido/estudio";
 import { metodosPago, type Cita } from "@tinta/compartido/tipos";
 import { Bloque } from "@/components/Bloque";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@/components/GraficoFacturacion";
 import { TarjetaIndicador } from "@/components/TarjetaIndicador";
 import { TablaCobros } from "@/components/TablaCobros";
+import { Encabezado } from "@/components/Encabezado";
 
 export const metadata: Metadata = { title: "Facturación" };
 
@@ -60,6 +62,7 @@ export default async function Facturacion() {
   const { data } = await supabase
     .from("citas")
     .select("*")
+    .in("tipo", tiposEncargo)
     .order("created_at", { ascending: false });
 
   const citas = (data ?? []) as Cita[];
@@ -100,19 +103,21 @@ export default async function Facturacion() {
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="px-4 py-6 lg:px-6 lg:py-7">
-      <header className="mb-6">
-        <h1 className="titular text-xl lg:text-[1.375rem]">
-          {euros(totalCobrado)} cobrados
-        </h1>
-        <p className="mt-1 text-sm text-tenue">
-          De {cobradas.length} {cobradas.length === 1 ? "cita" : "citas"} a{" "}
-          {clientesPagadores}{" "}
-          {clientesPagadores === 1 ? "cliente" : "clientes"} distintos.
-        </p>
-      </header>
+    <>
+      <Encabezado
+        miga="Caja · facturación"
+        titulo={`${euros(totalCobrado)} cobrados`}
+        nota={`De ${cobradas.length} ${cobradas.length === 1 ? "oportunidad" : "oportunidades"} a ${clientesPagadores} ${clientesPagadores === 1 ? "cliente" : "clientes"} distintos.`}
+      >
+        {porCobrar > 0 && (
+          <span className="chip-lima cifra">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-sobre-lima" />
+            {euros(porCobrar)} por cobrar
+          </span>
+        )}
+      </Encabezado>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
           icono="euro"
           etiqueta="Total cobrado"
@@ -127,7 +132,7 @@ export default async function Facturacion() {
           valor={porCobrar}
           sufijo="€"
           variacion={null}
-          nota="citas comprometidas"
+          nota="oportunidades comprometidas"
           subirEsMalo
         />
         <TarjetaIndicador
@@ -147,33 +152,33 @@ export default async function Facturacion() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.7fr_1fr]">
+      <div className="mt-3 grid gap-3 xl:grid-cols-[1.7fr_1fr]">
         <Bloque
           icono="grafico"
           titulo="Facturación por mes"
-          nota="Lo cobrado se imputa al mes del cobro"
+          nota="Lo cobrado se imputa al mes del cobro; lo pendiente, al de la cita"
         >
           <GraficoFacturacion datos={serie} />
         </Bloque>
 
         <Bloque icono="tarjeta" titulo="Por método de pago">
           {porMetodo.length === 0 ? (
-            <p className="py-6 text-sm text-tenue">Todavía no hay cobros.</p>
+            <p className="fila px-4 py-6 text-center text-sm text-tenue">Todavía no hay cobros.</p>
           ) : (
-            <ul className="space-y-4 pt-1">
+            <ul className="space-y-2">
               {porMetodo.map((fila) => {
                 const porcentaje = Math.round((fila.total / totalCobrado) * 100);
                 return (
-                  <li key={fila.nombre}>
+                  <li key={fila.nombre} className="fila px-4 py-3">
                     <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span>{fila.nombre}</span>
+                      <span className="font-medium">{fila.nombre}</span>
                       <span className="cifra text-tenue">
                         {euros(fila.total)} · {porcentaje}%
                       </span>
                     </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-superficie-alta">
+                    <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-superficie">
                       <div
-                        className="h-full rounded-full bg-acento transition-[width] duration-700"
+                        className="h-full rounded-full bg-texto transition-[width] duration-700"
                         style={{ width: `${porcentaje}%` }}
                       />
                     </div>
@@ -185,7 +190,7 @@ export default async function Facturacion() {
         </Bloque>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <Bloque
           icono="euro"
           titulo="Cobros"
@@ -193,12 +198,12 @@ export default async function Facturacion() {
           ajustado
         >
           {citas.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-tenue">Todavía no hay citas.</p>
+            <p className="px-5 py-8 text-sm text-tenue">Todavía no hay oportunidades.</p>
           ) : (
             <TablaCobros citas={citas} />
           )}
         </Bloque>
       </div>
-    </div>
+    </>
   );
 }
