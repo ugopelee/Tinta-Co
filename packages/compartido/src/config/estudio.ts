@@ -360,3 +360,85 @@ export const tiposActividad = [
 ] as const;
 
 export type TipoActividad = (typeof tiposActividad)[number]["id"];
+
+/**
+ * Recursos humanos. Lo que cambia de un estudio a otro (puestos, días de
+ * vacaciones, qué se hace al incorporar a alguien) vive aquí y no en el CRM.
+ */
+export const equipo = {
+  diasVacaciones: 22,
+  departamentos: ["Estudio", "Recepción", "Administración"],
+  puestos: [
+    "Tatuador/a",
+    "Anillador/a (piercing)",
+    "Aprendiz",
+    "Recepcionista",
+    "Gerente",
+  ],
+  /**
+   * Checklist que se crea sola al dar de alta a alguien. Cuando todas están
+   * hechas, el empleado pasa de «En incorporación» a «Activo».
+   */
+  incorporacion: [
+    {
+      titulo: "Entregar portátil y material de trabajo",
+      descripcion: "Portátil configurado, tableta de firmas y kit de higiene.",
+      deEmpleado: false,
+    },
+    {
+      titulo: "Crear correo corporativo",
+      descripcion: "Cuenta @tintaco con firma del estudio.",
+      deEmpleado: false,
+    },
+    {
+      titulo: "Entregar las credenciales del CRM",
+      descripcion: "Usuario y contraseña que se generan al dar el alta.",
+      deEmpleado: false,
+    },
+    {
+      titulo: "Enseñar el estudio y presentar al equipo",
+      descripcion: "Cabinas, esterilización, almacén y protocolo de limpieza.",
+      deEmpleado: false,
+    },
+    {
+      titulo: "Firmar contrato y documentación de alta",
+      descripcion: "Contrato, protección de datos y normas de higiene.",
+      deEmpleado: false,
+    },
+    {
+      titulo: "Leer el manual de bienvenida",
+      descripcion: "Lo marca el propio empleado desde su portal.",
+      deEmpleado: true,
+    },
+  ],
+} as const;
+
+export const estadosEmpleado = [
+  { id: "incorporacion", nombre: "En incorporación", color: "#ffa814" },
+  { id: "activo", nombre: "Activo", color: "#12b955" },
+  { id: "baja", nombre: "De baja", color: "#8a8a8a" },
+] as const;
+
+export type EstadoEmpleado = (typeof estadosEmpleado)[number]["id"];
+
+export const estadosVacaciones = [
+  { id: "pendiente", nombre: "Pendiente", color: "#ffa814" },
+  { id: "aprobada", nombre: "Aprobada", color: "#12b955" },
+  { id: "rechazada", nombre: "Rechazada", color: "#f0362b" },
+] as const;
+
+export type EstadoVacaciones = (typeof estadosVacaciones)[number]["id"];
+
+export const estadosNomina = {
+  firmada: { nombre: "Firmada", color: "#12b955" },
+  pendiente: { nombre: "Por firmar", color: "#ffa814" },
+} as const;
+
+/** Escala de la evaluación trimestral. */
+export const notasEvaluacion = [
+  { nota: 1, nombre: "Muy insuficiente" },
+  { nota: 2, nombre: "Insuficiente" },
+  { nota: 3, nombre: "Cumple" },
+  { nota: 4, nombre: "Supera expectativas" },
+  { nota: 5, nombre: "Excelente" },
+] as const;
