@@ -20,6 +20,9 @@ export type PasoProceso = { titulo: string; texto: string; foto: string };
  * las transformaciones en el DOM. La idea viene de un índice de portfolio que
  * se movía con la rueda del ratón; aquí la mueve el scroll de la página, que
  * en una landing es lo que el lector ya está haciendo, sin secuestrarle nada.
+ *
+ * Tras el último paso queda un tramo de salida: la rueda se aleja y se apaga
+ * antes de soltarse, para que ninguna foto suba por encima de lo siguiente.
  */
 
 /* Geometría, relativa al escenario y luego a la tarjeta. PASO frente a TAMBOR
@@ -38,6 +41,8 @@ const ARCO = 1.82;
 const CORTE = 1.6;
 /** Parte de cada tramo de scroll en que la rueda se queda quieta. */
 const PAUSA = 0.4;
+/** Parte del tramo de salida que tarda en apagarse; el resto, ya vacío. */
+const FUNDIDO = 0.75;
 
 const acotar = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const rad = (g: number) => (g * Math.PI) / 180;
@@ -76,6 +81,8 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
 
   const giro = useRef(0);
   const objetivo = useRef(0);
+  const salida = useRef(0);
+  const indice = useRef<HTMLOListElement>(null);
   const [activo, setActivo] = useState(0);
   const [medidas, setMedidas] = useState({ w: 0, h: 0 });
   const n = pasos.length;
@@ -110,8 +117,12 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
     };
   }, [medidas, n]);
 
+  // El anillo y cada paso ocupan un tramo; el último tramo es la salida.
+  const tramos = n + 2;
+
   useProgresoFijado(seccion, (p) => {
-    objetivo.current = giroDe(p, n);
+    objetivo.current = giroDe(Math.min(1, (p * tramos) / (n + 1)), n);
+    salida.current = acotar((p * tramos - (n + 1)) / FUNDIDO, 0, 1);
   });
 
   useEffect(() => {
@@ -131,17 +142,22 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
       const t = giro.current;
       const m = acotar(t, 0, 1);
       const pos = Math.max(0, t - 1);
+      const sal = salida.current;
+      const queda = 1 - sal * sal * (3 - 2 * sal);
 
       // El tambor retrocede para que su cara delantera quede en el plano del
       // cuadro; tiene que llegar con él, o el anillo se vería a mitad de tamaño.
-      if (rueda.current) rueda.current.style.transform = `translateZ(${-m * radioTambor}px)`;
+      // Al salir, además, se hunde en el fondo.
+      if (rueda.current) rueda.current.style.transform = `translateZ(${-m * radioTambor - (1 - queda) * radioTambor * 1.2}px)`;
 
       for (let i = 0; i < n; i++) {
         const d = i - pos;
         const tarjeta = tarjetas.current[i];
         if (tarjeta) {
           tarjeta.style.transform = colocar(d * (360 / n), d * PASO, radioAnillo, radioTambor, arco, m);
-          tarjeta.style.opacity = m > 0.5 && Math.abs(d) > CORTE ? "0" : "1";
+          // La opacidad va en cada tarjeta y no en la rueda: en la rueda
+          // aplanaría el 3D.
+          tarjeta.style.opacity = m > 0.5 && Math.abs(d) > CORTE ? "0" : String(queda);
           tarjeta.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
           const cara = tarjeta.firstElementChild as HTMLElement | null;
           if (cara) cara.style.transform = `scale(${escalaAnillo + (1 - escalaAnillo) * m})`;
@@ -152,7 +168,8 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
       }
 
       if (etiqueta.current) etiqueta.current.style.opacity = String(1 - m);
-      if (ficha.current) ficha.current.style.opacity = String(m);
+      if (ficha.current) ficha.current.style.opacity = String(m * queda);
+      if (indice.current) indice.current.style.opacity = String(queda);
       const cerca = acotar(Math.round(pos), 0, n - 1);
       setActivo((antes) => (antes === cerca ? antes : cerca));
       cuadro = requestAnimationFrame(pintar);
@@ -171,13 +188,13 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
 
   const ir = (i: number) => {
     // Centro del tramo del paso i (el anillo es el tramo 0).
-    if (seccion.current) irAProgreso(seccion.current, (i + 1.5) / (n + 1));
+    if (seccion.current) irAProgreso(seccion.current, (i + 1.5) / tramos);
   };
 
   const paso = pasos[activo];
 
   return (
-    <section ref={seccion} aria-label={rotulo} className="relative" style={{ height: `${100 + (n + 1) * 60}svh` }}>
+    <section ref={seccion} aria-label={rotulo} className="relative" style={{ height: `${100 + tramos * 60}svh` }}>
       <div
         ref={escenario}
         className="sticky top-0 h-[100svh] overflow-hidden"
@@ -246,7 +263,7 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
         </div>
 
         {!geo.estrecha && (
-          <ol className="absolute right-[3%] top-1/2 -translate-y-1/2 space-y-1.5 text-right text-sm">
+          <ol ref={indice} className="absolute right-[3%] top-1/2 -translate-y-1/2 space-y-1.5 text-right text-sm">
             {pasos.map((p, i) => (
               <li key={p.titulo}>
                 <button

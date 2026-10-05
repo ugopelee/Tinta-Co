@@ -12,8 +12,11 @@ const euros = (valor: number | null) =>
     ? ""
     : Number(valor).toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
+/** Las que caben en la hoja: el resto sigue en el formulario de reserva. */
+const MAX_PIEZAS = 4;
+
 /**
- * Una hoja de flash de seis piezas. La sección se queda fija y cada tramo de
+ * Una hoja de flash de cuatro piezas. La sección se queda fija y cada tramo de
  * scroll es una pieza: su calco aparece a la derecha y la aguja lo entinta
  * mientras bajas. Los datos cambian deslizándose por detrás de una máscara.
  */
@@ -23,6 +26,7 @@ export function Catalogo({ disenos }: { disenos: Diseno[] }) {
   const { piezas, imagenes, focos } = useMemo(() => {
     const piezas = disenos
       .filter((d) => d.imagen_url)
+      .slice(0, MAX_PIEZAS)
       .map((d) => ({
         id: d.id,
         nombre: d.nombre,
@@ -89,10 +93,15 @@ export function Catalogo({ disenos }: { disenos: Diseno[] }) {
 
           <div className="order-2 lg:order-1">
             <Revelar>
-              <h2 className="flex items-baseline gap-4">
-                <span className="etiqueta">Flash</span>
-                <span className="serif-cursiva text-lg text-texto/70">piezas listas para tatuar</span>
-              </h2>
+              <div className="flex items-baseline justify-between gap-4 border-b border-white/12 pb-4">
+                <h2 className="etiqueta">Flash disponible</h2>
+                <p className="cifra text-xs text-tenue">
+                  {String(indice + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+                </p>
+              </div>
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-tenue">
+                Diseños originales del estudio. Cada uno se tatúa una sola vez.
+              </p>
             </Revelar>
 
             {/* Nombre */}
@@ -138,7 +147,6 @@ export function Catalogo({ disenos }: { disenos: Diseno[] }) {
                   ↗
                 </span>
               </button>
-              <p className="text-xs text-tenue">Se tatúa una sola vez.</p>
             </div>
 
             {/* Índice: una barra por pieza que se llena con el scroll. */}
