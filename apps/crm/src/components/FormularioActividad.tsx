@@ -35,7 +35,7 @@ export function FormularioActividad({ clienteId }: { clienteId: string }) {
     <form ref={formulario} action={accion} className="space-y-4">
       <input type="hidden" name="cliente_id" value={clienteId} />
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto_auto]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
         <input
           name="titulo"
           required

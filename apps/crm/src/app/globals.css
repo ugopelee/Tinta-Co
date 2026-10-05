@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
-/* Pantallas bajas (portátiles): la barra lateral se compacta para caber
-   entera sin desplazarse. */
-@custom-variant bajo (@media (max-height: 820px));
-@custom-variant enano (@media (max-height: 700px));
+/* Pantallas bajas (portátiles): la barra lateral se compacta por escalones
+   para caber entera sin desplazarse. */
+@custom-variant bajo (@media (max-height: 940px));
+@custom-variant enano (@media (max-height: 840px));
+@custom-variant mini (@media (max-height: 680px));
 
 @theme inline {
   --color-fondo: var(--fondo);
@@ -70,6 +71,15 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--borde) transparent;
+}
+
+/* Desplaza si hiciera falta, pero sin pintar la barra. */
+.sin-barra {
+  scrollbar-width: none;
+}
+
+.sin-barra::-webkit-scrollbar {
+  display: none;
 }
 
 @layer components {
@@ -266,5 +276,15 @@ body {
   :root[data-barra="plegada"] .barra-cabecera {
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+/* En móvil, iOS amplía la página al enfocar un campo con letra de menos de
+   16px. A ese tamaño no lo hace. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
   }
 }

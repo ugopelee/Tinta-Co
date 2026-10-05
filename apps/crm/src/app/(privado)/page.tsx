@@ -204,7 +204,7 @@ export default async function Panel() {
         </Link>
       </Encabezado>
 
-      <div className="grid items-start gap-3 xl:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[1.15fr_1fr]">
         <div className="space-y-3">
           <TarjetaProximaCita cita={proxima} />
 

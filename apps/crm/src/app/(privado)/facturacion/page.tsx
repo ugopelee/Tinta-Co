@@ -117,7 +117,7 @@ export default async function Facturacion() {
         )}
       </Encabezado>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
           icono="euro"
           etiqueta="Total cobrado"
@@ -152,7 +152,7 @@ export default async function Facturacion() {
         />
       </div>
 
-      <div className="mt-3 grid gap-3 xl:grid-cols-[1.7fr_1fr]">
+      <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[1.7fr_1fr]">
         <Bloque
           icono="grafico"
           titulo="Facturación por mes"

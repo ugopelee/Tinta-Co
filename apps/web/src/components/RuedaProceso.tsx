@@ -13,7 +13,7 @@ export type PasoProceso = { titulo: string; texto: string; foto: string };
  * tangente al círculo. El primer tramo de scroll abre el anillo en un tambor
  * vertical: la foto de delante queda plana y a tamaño completo, y las de
  * arriba y abajo giran en perspectiva y se van por los bordes. Seguir bajando
- * trae el siguiente paso al frente.
+ * hace subir el siguiente paso desde abajo hasta el frente.
  *
  * Todo cuelga de un número, `giro`: 0 es el anillo, 1 el tambor con el primer
  * paso delante y cada entero más, un paso más. Un único bucle de rAF escribe
@@ -50,11 +50,15 @@ const rad = (g: number) => (g * Math.PI) / 180;
 /** Cuánto ha llevado el arco hacia la izquierda algo girado `grados` del frente. */
 const arcoEn = (grados: number, arco: number) => -arco * (1 - Math.cos(rad(grados)));
 
-/** Anillo y tambor en una sola cadena: `m` pasa de uno a otro. */
+/**
+ * Anillo y tambor en una sola cadena: `m` pasa de uno a otro. El primer paso
+ * arranca abajo del anillo y los siguientes esperan bajo el frente, así que
+ * al bajar por la página todo sube.
+ */
 function colocar(gradosAnillo: number, gradosTambor: number, radioAnillo: number, radioTambor: number, arco: number, m: number) {
   return (
     `translateX(${m * arcoEn(gradosTambor, arco)}px)` +
-    ` rotateZ(${(1 - m) * gradosAnillo}deg) translateY(${-(1 - m) * radioAnillo}px)` +
+    ` rotateZ(${(1 - m) * gradosAnillo}deg) translateY(${(1 - m) * radioAnillo}px)` +
     ` rotateX(${m * gradosTambor}deg) translateZ(${m * radioTambor}px)`
   );
 }
@@ -154,7 +158,7 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
         const d = i - pos;
         const tarjeta = tarjetas.current[i];
         if (tarjeta) {
-          tarjeta.style.transform = colocar(d * (360 / n), d * PASO, radioAnillo, radioTambor, arco, m);
+          tarjeta.style.transform = colocar(-d * (360 / n), -d * PASO, radioAnillo, radioTambor, arco, m);
           // La opacidad va en cada tarjeta y no en la rueda: en la rueda
           // aplanaría el 3D.
           tarjeta.style.opacity = m > 0.5 && Math.abs(d) > CORTE ? "0" : String(queda);

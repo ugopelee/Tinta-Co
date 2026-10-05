@@ -125,7 +125,7 @@ export default async function Informes({ searchParams }: PageProps<"/informes">)
         </a>
       </Encabezado>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
           icono="euro"
           etiqueta="Cobrado"
@@ -139,7 +139,7 @@ export default async function Informes({ searchParams }: PageProps<"/informes">)
         <TarjetaIndicador icono="personas" etiqueta="Clientes" valor={clientesDistintos} variacion={null} nota="distintos que han pagado" />
       </div>
 
-      <div className="mt-3 grid items-start gap-3 xl:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         <Bloque titulo="Por método de pago" nota="Cómo ha entrado el dinero">
           <DonutMetodos datos={porMetodo} />
         </Bloque>
@@ -167,7 +167,7 @@ export default async function Informes({ searchParams }: PageProps<"/informes">)
           </ul>
         </Bloque>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
           <Bloque titulo="Mejores clientes" nota="Por lo cobrado en el trimestre">
             {porCliente.length === 0 ? (
               <p className="fila px-4 py-6 text-center text-sm text-tenue">Nadie todavía.</p>

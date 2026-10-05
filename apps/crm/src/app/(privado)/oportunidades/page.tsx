@@ -80,7 +80,7 @@ export default async function Oportunidades({
         nota="Todo lo que llega desde la web: gente que quiere tatuarse y gente que quiere trabajar con el estudio."
       />
 
-      <nav aria-label="Bandeja" className="mb-4 grid gap-3 sm:grid-cols-2">
+      <nav aria-label="Bandeja" className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {FAMILIAS.map((opcion) => {
           const activa = opcion.id === familia;
           const suyas = todas.filter((cita) => familiaDe(cita) === opcion.id);

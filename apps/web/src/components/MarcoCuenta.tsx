@@ -15,7 +15,7 @@ export function MarcoCuenta({
   pie: ReactNode;
 }) {
   return (
-    <main className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
+    <main className="relative z-10 flex min-h-screen items-center justify-center overflow-hidden px-5 py-16 sm:px-6">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/3 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[140px]"
@@ -27,7 +27,7 @@ export function MarcoCuenta({
           {estudio.nombre}
         </Link>
 
-        <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl">
+        <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
           <h1 className="titular text-3xl">{titulo}</h1>
           <p className="parrafo mt-2 text-sm text-tenue">{entradilla}</p>
 

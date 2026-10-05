@@ -51,7 +51,7 @@ export default async function Equipo() {
       </Encabezado>
 
       {(pendientes.length > 0 || sinFirmar.length > 0) && (
-        <section className="mb-3 grid gap-2 rounded-[1.25rem] bg-texto p-5 text-fondo sm:grid-cols-2">
+        <section className="mb-3 grid grid-cols-1 gap-2 rounded-[1.25rem] bg-texto p-5 text-fondo sm:grid-cols-2">
           {pendientes.length > 0 && (
             <Link
               href="/equipo/ausencias"
@@ -82,7 +82,7 @@ export default async function Equipo() {
           Todavía no hay nadie en el equipo. Pulsa «Nueva persona» para dar la primera alta.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {activos.map((empleado) => (
             <li key={empleado.id}>
               <TarjetaEmpleado
@@ -100,7 +100,7 @@ export default async function Equipo() {
           <summary className="cursor-pointer list-none text-sm font-medium text-tenue hover:text-texto">
             De baja ({deBaja.length})
           </summary>
-          <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {deBaja.map((empleado) => (
               <li key={empleado.id}>
                 <TarjetaEmpleado empleado={empleado} tareas={[]} />

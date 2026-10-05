@@ -82,7 +82,7 @@ const ENLACES_PROPIETARIO: Enlace[] = [
 
 /** Misma caja para enlaces, botones y formularios de la barra. */
 const FILA =
-  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors bajo:py-1.5 enano:py-1 duration-200";
+  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 bajo:py-1.5 enano:py-1 enano:text-[0.8125rem] mini:py-[3px]";
 
 export function BarraLateral({
   nombre,
@@ -155,9 +155,9 @@ export function BarraLateral({
         } tarjeta mx-3 mb-3 lg:sticky lg:top-3 lg:mx-0 lg:mb-0 lg:block lg:h-[calc(100vh-1.5rem)] lg:shrink-0`}
       >
         <div className="flex h-full flex-col p-3 enano:p-2">
-          <div className="barra-cabecera hidden items-center justify-between gap-2 px-1 pb-3 pt-1 bajo:pb-2 lg:flex">
+          <div className="barra-cabecera hidden shrink-0 items-center justify-between gap-2 px-1 pb-3 pt-1 bajo:pb-2 enano:pt-0 lg:flex">
             <span className="flex min-w-0 items-center gap-2.5">
-              <Logo className="h-10 w-10 bajo:h-8 bajo:w-8" />
+              <Logo className="h-10 w-10 bajo:h-8 bajo:w-8 mini:h-7 mini:w-7" />
               <span className="barra-texto min-w-0 truncate text-[0.95rem] font-semibold tracking-tight">
                 {estudio.nombre}
               </span>
@@ -181,7 +181,7 @@ export function BarraLateral({
             href="/oportunidades"
             onClick={() => setAbierta(false)}
             title="Revisar solicitudes"
-            className="boton barra-centrar w-full py-3 bajo:py-2"
+            className="boton barra-centrar w-full shrink-0 py-3 bajo:py-2 mini:py-1.5"
           >
             {contadores.sinResponder > 0 ? (
               <span className="cifra flex h-5 min-w-5 items-center justify-center rounded-full bg-lima px-1.5 text-[0.7rem] font-semibold text-sobre-lima">
@@ -205,7 +205,7 @@ export function BarraLateral({
                 texto ? `/clientes?q=${encodeURIComponent(texto)}` : "/clientes",
               );
             }}
-            className="barra-texto relative mt-3 bajo:mt-2"
+            className="barra-texto relative mt-3 shrink-0 bajo:mt-2 mini:lg:hidden"
           >
             <Icono
               nombre="buscar"
@@ -224,11 +224,11 @@ export function BarraLateral({
             </kbd>
           </form>
 
-          <nav className="mt-4 min-h-0 space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:space-y-2">
+          <nav className="sin-barra mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:mt-2 enano:space-y-2 mini:space-y-1.5">
             {grupos.map((grupo, indice) => (
               <div key={grupo.titulo ?? indice}>
                 {grupo.titulo && (
-                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue">
+                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:hidden">
                     {grupo.titulo}
                   </p>
                 )}
@@ -289,7 +289,7 @@ export function BarraLateral({
             ))}
           </nav>
 
-          <div className="mt-auto shrink-0 space-y-0.5 pt-4 bajo:pt-3">
+          <div className="shrink-0 space-y-0.5 pt-4 bajo:pt-3 enano:pt-2">
             <Link
               href="/ayuda"
               onClick={() => setAbierta(false)}
@@ -314,7 +314,7 @@ export function BarraLateral({
               <span className="barra-texto flex-1">Ver la web</span>
             </a>
 
-            <div className="barra-centrar flex items-center gap-3 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2">
+            <div className="barra-centrar flex items-center gap-3 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2 enano:!mt-1.5">
               <span
                 title={email}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bajo:h-8 bajo:w-8 bg-texto text-xs font-semibold text-fondo"

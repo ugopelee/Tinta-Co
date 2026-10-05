@@ -110,10 +110,10 @@ export default async function Ayuda() {
         nota="Cómo funciona el panel, respuestas a las dudas de siempre y a quién escribir si algo falla."
       />
 
-      <div className="grid items-start gap-3 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[1.6fr_1fr]">
         <div className="space-y-3">
           <Bloque titulo="Guía rápida" nota="El recorrido de una oportunidad, de la web a la caja">
-            <ol className="grid gap-2 sm:grid-cols-2">
+            <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {GUIA.map((paso, indice) => (
                 <li key={paso.titulo} className="fila flex flex-col p-4">
                   <span className="cifra flex h-7 w-7 items-center justify-center rounded-full bg-texto text-xs font-semibold text-fondo">

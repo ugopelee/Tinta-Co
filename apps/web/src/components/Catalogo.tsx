@@ -84,7 +84,7 @@ export function Catalogo({ disenos }: { disenos: Diseno[] }) {
       style={{ height: `${total * 75 + 100}svh` }}
     >
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden">
-        <div className="contenedor grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-6 pb-8 pt-24 lg:grid-cols-2 lg:grid-rows-1 lg:items-center lg:gap-10 lg:pb-12 lg:pt-24">
+        <div className="contenedor grid grid-cols-1 min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-6 pb-8 pt-24 lg:grid-cols-2 lg:grid-rows-1 lg:items-center lg:gap-10 lg:pb-12 lg:pt-24">
           {/* Lámina: el dibujo en calco y la aguja. */}
           <div className="relative order-1 h-[34svh] lg:order-2 lg:h-[74svh]">
             <Esquinas />

@@ -29,7 +29,7 @@ export function FormularioNomina({ empleadoId, mesSugerido }: { empleadoId: stri
   return (
     <form key={vuelta} action={accion} className="fila grid gap-3 p-4">
       <input type="hidden" name="empleado_id" value={empleadoId} />
-      <div className="grid gap-3 sm:grid-cols-[14rem_1fr]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[14rem_1fr]">
         <label className="grid gap-1 text-xs text-tenue">
           Mes
           <input type="month" name="periodo" required defaultValue={mesSugerido} className={claseCampo} />

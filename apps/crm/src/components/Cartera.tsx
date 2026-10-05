@@ -84,7 +84,7 @@ export function Cartera({ citas }: { citas: ResumenCita[] }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador
           etiqueta="Oportunidades nuevas"
           valor={String(total)}

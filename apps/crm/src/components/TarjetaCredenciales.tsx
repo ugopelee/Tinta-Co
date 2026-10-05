@@ -27,7 +27,7 @@ export function TarjetaCredenciales({ credenciales, nombre }: { credenciales: Cr
         Acceso al CRM{nombre ? ` de ${nombre}` : ""}
       </div>
 
-      <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+      <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="rounded-[0.875rem] bg-fondo/10 px-4 py-3">
           <dt className="text-xs text-fondo/60">Usuario</dt>
           <dd className="mt-0.5 break-all font-mono text-sm">{credenciales.usuario}</dd>

@@ -25,7 +25,7 @@ export default async function PaginaLogin({
       : "/";
 
   return (
-    <main className="grid min-h-screen gap-3 p-3 lg:grid-cols-[1fr_1.1fr]">
+    <main className="grid grid-cols-1 min-h-screen gap-3 p-3 lg:grid-cols-[1fr_1.1fr]">
       {/* Columna de marca: da contexto de dónde estás entrando. */}
       <section className="relative hidden flex-col justify-between overflow-hidden rounded-[1.25rem] bg-texto p-10 text-fondo lg:flex">
         <div

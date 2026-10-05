@@ -59,7 +59,7 @@ export default async function Fichajes() {
         </span>
       </Encabezado>
 
-      <div className="grid gap-3 lg:grid-cols-[1fr_1.3fr]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1.3fr]">
         <Bloque titulo="Ahora" nota="Hoy y en lo que va de semana">
           {resumen.length === 0 ? (
             <p className="fila px-4 py-6 text-center text-sm text-tenue">No hay nadie en el equipo.</p>

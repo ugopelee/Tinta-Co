@@ -163,7 +163,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         {esEvento && <p className="surgir text-xs leading-relaxed text-tenue">{estudio.eventos.entradilla}</p>}
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={claseEtiqueta} htmlFor="nombre">
             Nombre *
@@ -243,7 +243,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
       </div>
 
       {esEvento && (
-        <div key="evento" className="surgir grid gap-4 sm:grid-cols-2">
+        <div key="evento" className="surgir grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={claseEtiqueta} htmlFor="tipo_evento">
               Tipo de evento *
@@ -286,7 +286,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
       )}
 
       {esCita && (
-        <div key="cita" className="surgir grid gap-4 sm:grid-cols-2">
+        <div key="cita" className="surgir grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={claseEtiqueta} htmlFor="diseno_id">
               Diseño del catálogo

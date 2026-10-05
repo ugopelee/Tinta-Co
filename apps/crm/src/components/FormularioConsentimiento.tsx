@@ -74,7 +74,7 @@ export function FormularioConsentimiento({
     <form action={accion} className="fila grid gap-3 p-4">
       <input type="hidden" name="cliente_id" value={clienteId} />
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-xs text-tenue">
           Fecha de firma
           <input type="date" name="fecha_firma" required defaultValue={hoy} max={hoy} className={claseCampo} />

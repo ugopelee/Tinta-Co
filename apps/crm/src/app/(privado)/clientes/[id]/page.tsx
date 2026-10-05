@@ -266,7 +266,7 @@ function ResumenSalud({ consentimiento }: { consentimiento: Consentimiento }) {
 
   return (
     <div className="space-y-2">
-      <dl className="grid gap-2 sm:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {datos.map((dato) => (
           <div
             key={dato.titulo}

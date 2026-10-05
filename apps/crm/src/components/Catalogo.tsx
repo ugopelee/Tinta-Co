@@ -96,7 +96,7 @@ export function Catalogo({ disenos, urlWeb }: { disenos: DisenoCatalogo[]; urlWe
           {filtro === "retirados" ? "No hay diseños retirados." : "No hay diseños en el catálogo."}
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {visibles.map((diseno) => (
             <li key={diseno.id}>
               <Tarjeta diseno={diseno} urlWeb={urlWeb} />

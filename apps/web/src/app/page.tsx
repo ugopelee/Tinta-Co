@@ -129,7 +129,7 @@ function Portada() {
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(8_8_10/0.82)_0%,rgb(8_8_10/0.45)_38%,transparent_62%),linear-gradient(0deg,rgb(8_8_10)_0%,rgb(8_8_10/0.55)_30%,transparent_58%)]"
       />
       <div className="contenedor relative flex h-full flex-col justify-end pb-8 md:pb-10">
-        <div className="grid items-end gap-x-10 gap-y-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 items-end gap-x-10 gap-y-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <p className="flex items-center gap-3 font-mono text-[0.68rem] uppercase tracking-[0.16em] text-texto/60">
               <span className="text-acento-suave">Nº 01</span>
@@ -201,7 +201,7 @@ function Reserva({ disenos }: { disenos: Diseno[] }) {
       data-lado="fondo"
       className="relative scroll-mt-10 pb-[22svh] pt-28 md:pt-40"
     >
-      <div className="contenedor grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] lg:gap-20">
+      <div className="contenedor grid grid-cols-1 gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] lg:gap-20">
         <div>
           <Encabezado
             etiqueta="Escríbenos"
@@ -258,7 +258,7 @@ function Pie() {
       className="relative z-10 overflow-hidden pb-28 md:pb-10"
     >
       <div className="contenedor">
-        <div className="grid gap-6 border-t border-white/10 pt-8 text-sm text-tenue md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 border-t border-white/10 pt-8 text-sm text-tenue md:grid-cols-4">
           <p>{estudio.contacto.direccion}</p>
           <p>{estudio.contacto.horario}</p>
           <p>

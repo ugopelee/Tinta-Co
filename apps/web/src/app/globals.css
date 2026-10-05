@@ -332,3 +332,13 @@ body::before {
   font-style: italic;
   letter-spacing: -0.035em;
 }
+
+/* En móvil, iOS amplía la página al enfocar un campo con letra de menos de
+   16px. A ese tamaño no lo hace. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

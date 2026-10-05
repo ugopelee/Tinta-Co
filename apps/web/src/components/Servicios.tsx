@@ -141,7 +141,7 @@ export function Servicios() {
                 aria-label={servicio.nombre}
                 className="flex shrink-0 items-center py-16 lg:w-screen lg:py-0"
               >
-                <div className="contenedor grid lg:grid-cols-2">
+                <div className="contenedor grid grid-cols-1 lg:grid-cols-2">
                   <div>
                     <Revelar>
                       <h3

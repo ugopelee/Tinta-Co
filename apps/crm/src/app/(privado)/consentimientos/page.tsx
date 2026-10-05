@@ -100,7 +100,7 @@ export default async function Consentimientos({ searchParams }: PageProps<"/cons
           <h2 className="titular mt-2 text-lg leading-snug">
             {sinFirma.length} {sinFirma.length === 1 ? "cita confirmada no tiene" : "citas confirmadas no tienen"} consentimiento vigente
           </h2>
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {sinFirma.map((cita) => (
               <li key={cita.id}>
                 <Link

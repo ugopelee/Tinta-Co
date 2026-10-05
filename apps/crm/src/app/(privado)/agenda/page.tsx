@@ -162,7 +162,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
         </nav>
       </Encabezado>
 
-      <div className="grid items-start gap-3 xl:grid-cols-[1fr_21rem]">
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[1fr_21rem]">
         <section className="tarjeta overflow-hidden p-3">
           <ul className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-2 pt-1 text-[0.8125rem] text-tenue">
             {estadosCita
@@ -183,10 +183,12 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
             </li>
           </ul>
 
-          <div className="overflow-x-auto">
-            <div className="grid min-w-[42rem] grid-cols-7 gap-1.5">
+          {/* En móvil el mes entero cabe en el ancho: cada cita queda en su
+              punto de color y el nombre se lee al tocarla. */}
+          <div>
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
               {DIAS_SEMANA.map((dia) => (
-                <p key={dia} className="etiqueta px-2 pb-1 text-tenue">
+                <p key={dia} className="etiqueta truncate px-1 pb-1 text-tenue sm:px-2">
                   {dia}
                 </p>
               ))}
@@ -199,13 +201,13 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
                 return (
                   <div
                     key={dia.texto}
-                    className={`flex min-h-28 flex-col gap-1 rounded-[0.875rem] p-1.5 ${
+                    className={`flex min-h-16 min-w-0 flex-col gap-1 rounded-xl p-1 sm:min-h-28 sm:rounded-[0.875rem] sm:p-1.5 ${
                       dia.cerrado ? "" : "bg-superficie-alta"
                     } ${dia.delMes ? "" : "opacity-40"}`}
                     style={dia.cerrado ? RAYADO : undefined}
                   >
                     <span
-                      className={`cifra flex h-7 w-7 items-center justify-center rounded-full text-[0.8125rem] font-medium ${
+                      className={`cifra flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium sm:h-7 sm:w-7 sm:text-[0.8125rem] ${
                         esHoy ? "bg-texto text-fondo" : dia.cerrado ? "text-tenue" : ""
                       }`}
                     >
@@ -217,19 +219,22 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
                         key={cita.id}
                         href={enlaceDe(cita)}
                         title={`${cita.nombre} · ${descripcion(cita)}`}
-                        className="flex items-center gap-1.5 rounded-lg bg-superficie px-1.5 py-1 text-xs font-medium transition-shadow duration-200 hover:shadow-[0_2px_10px_rgb(0_0_0/0.08)]"
+                        className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg bg-superficie px-1 py-1 text-xs font-medium transition-shadow duration-200 hover:shadow-[0_2px_10px_rgb(0_0_0/0.08)] sm:justify-start sm:px-1.5"
                       >
                         <span
                           aria-hidden
                           className="h-2 w-2 shrink-0 rounded-full border-2"
                           style={{ borderColor: colorDe(cita.estado) }}
                         />
-                        <span className="truncate">{cita.nombre}</span>
+                        <span className="hidden truncate sm:inline">{cita.nombre}</span>
                       </Link>
                     ))}
 
                     {resto > 0 && (
-                      <span className="px-1.5 text-[0.7rem] text-tenue">+{resto} más</span>
+                      <span className="px-1 text-[0.7rem] text-tenue sm:px-1.5">
+                        +{resto}
+                        <span className="hidden sm:inline"> más</span>
+                      </span>
                     )}
                   </div>
                 );
@@ -252,7 +257,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
               <ul className="mt-3 space-y-1.5 text-sm text-fondo/80">
                 {enDiaCerrado.slice(0, 4).map((cita) => (
                   <li key={cita.id} className="flex justify-between gap-3">
-                    <span className="truncate">{cita.nombre}</span>
+                    <span className="hidden truncate sm:inline">{cita.nombre}</span>
                     <span className="cifra shrink-0 text-fondo/60">
                       {new Date(`${cita.fecha_deseada!.slice(0, 10)}T12:00:00Z`).toLocaleDateString("es-ES", {
                         weekday: "short",

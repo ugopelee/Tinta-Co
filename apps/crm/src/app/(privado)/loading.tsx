@@ -10,7 +10,7 @@ export default function Cargando() {
         <div className="mt-2 h-9 w-72 rounded-full bg-superficie" />
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.15fr_1fr]">
         <div className="space-y-3">
           <div className="tarjeta h-64" />
           <div className="tarjeta h-80" />

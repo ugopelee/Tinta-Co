@@ -102,7 +102,7 @@ export default async function Portal() {
         <BotonFichar dentro={Boolean(abierto)} />
       </section>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {empleado.estado === "incorporacion" && (
           <Bloque titulo="Tu incorporación" nota="El estudio va marcando lo suyo; lo tuyo lo marcas tú">
             <Checklist tareas={tareas} modo="empleado" />
