@@ -1,0 +1,4 @@
+# Fuera del ZIP de entrega (git archive): herramientas del entorno de desarrollo
+.agents export-ignore
+.claude export-ignore
+skills-lock.json export-ignore
