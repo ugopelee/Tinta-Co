@@ -133,7 +133,7 @@ export function BarraLateral({
 
   return (
     <>
-      <div className="flex items-center justify-between px-4 py-3 lg:hidden">
+      <div className="flex items-center justify-between px-4 py-3 lg:hidden print:hidden">
         <span className="flex items-center gap-2.5">
           <Logo className="h-9 w-9" />
           <span className="text-[0.95rem] font-semibold tracking-tight">

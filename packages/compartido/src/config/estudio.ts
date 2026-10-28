@@ -20,6 +20,14 @@ export const estudio = {
     instagram: "@tintaco.studio",
   },
 
+  /** Datos legales que salen en las facturas. Estudio ficticio: el NIF no es real. */
+  datosFiscales: {
+    razonSocial: "Tinta&Co Estudio de Tatuaje S.L.",
+    nif: "B00000000",
+    direccion: "Calle del Pez 14, bajo, 28004 Madrid",
+    email: "facturacion@tintaco.studio",
+  },
+
   /** A quién escribe el equipo cuando el panel falla. No es el email público. */
   soporte: {
     email: "soporte@tintaco.studio",
