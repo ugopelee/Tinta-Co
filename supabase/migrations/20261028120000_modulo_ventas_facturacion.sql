@@ -91,25 +91,24 @@ create table public.lineas_factura (
 
 create index lineas_factura_por_factura on public.lineas_factura (factura_id, orden);
 
--- Lo que el agente lee del PDF o la foto; los datos que no consigue leer
--- quedan vacíos y los completa el propietario al revisar.
+-- Lo que el agente lee del PDF o la foto. El NIF puede faltar; el resto es
+-- obligatorio para el agente.
 create table public.facturas_proveedor (
   id uuid primary key default gen_random_uuid(),
-  numero text,
-  fecha date,
-  proveedor text,
+  numero text not null,
+  fecha date not null,
+  proveedor text not null,
   nif text,
-  base numeric(12, 2),
-  iva numeric(12, 2),
-  total numeric(12, 2),
+  base numeric(12, 2) not null,
+  iva numeric(12, 2) not null,
+  total numeric(12, 2) not null,
   -- Ruta dentro del bucket privado «facturas-proveedor».
   archivo text not null,
   nombre_archivo text not null,
   estado text not null default 'por_revisar'
     check (estado in ('por_revisar', 'validada', 'descartada')),
   revisada_at timestamptz,
-  created_at timestamptz not null default now(),
-  unique (nif, numero)
+  created_at timestamptz not null default now()
 );
 
 -- --- 2. Numeración -------------------------------------------------------------

@@ -237,13 +237,13 @@ export type LineaFactura = {
 
 export type FacturaProveedor = {
   id: string;
-  numero: string | null;
-  fecha: string | null;
-  proveedor: string | null;
+  numero: string;
+  fecha: string;
+  proveedor: string;
   nif: string | null;
-  base: number | null;
-  iva: number | null;
-  total: number | null;
+  base: number;
+  iva: number;
+  total: number;
   archivo: string;
   nombre_archivo: string;
   estado: EstadoFacturaProveedor;
