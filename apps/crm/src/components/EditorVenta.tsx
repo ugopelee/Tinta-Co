@@ -7,44 +7,13 @@ import { cambiarEstadoVenta, guardarVenta } from "@/app/acciones-ventas";
 import { claseCampo } from "@/components/FormularioAlta";
 import { Icono } from "@/components/Icono";
 import { euros, importeLinea, totales } from "@/lib/importes";
+import { lineaEditable, type LineaEditable } from "@/lib/ventas";
 
 export type OpcionCliente = { id: string; nombre: string };
 export type OpcionDiseno = { id: string; nombre: string; precio: number | null };
 
-/** Las cifras se editan como texto para no pelearse con la coma ni con el campo vacío. */
-export type LineaEditable = {
-  clave: string;
-  descripcion: string;
-  diseno_id: string | null;
-  cantidad: string;
-  precio: string;
-  descuento: string;
-  iva: number;
-};
-
 /** Acepta «12,5» y «12.5»; lo que no es un número queda en NaN y no se guarda. */
 const numero = (texto: string) => (texto.trim() === "" ? NaN : Number(texto.replace(",", ".")));
-
-let contador = 0;
-
-export function lineaEditable(datos: {
-  descripcion: string;
-  diseno_id: string | null;
-  cantidad?: number;
-  precio_unitario?: number;
-  descuento?: number;
-  iva?: number;
-}): LineaEditable {
-  return {
-    clave: `linea-${++contador}`,
-    descripcion: datos.descripcion,
-    diseno_id: datos.diseno_id,
-    cantidad: String(datos.cantidad ?? 1),
-    precio: String(datos.precio_unitario ?? 0),
-    descuento: String(datos.descuento ?? 0),
-    iva: datos.iva ?? tiposIva[0],
-  };
-}
 
 export function EditorVenta({
   id,

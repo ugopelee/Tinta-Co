@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { Encabezado } from "@/components/Encabezado";
-import { EditorVenta, lineaEditable, type LineaEditable } from "@/components/EditorVenta";
+import { EditorVenta } from "@/components/EditorVenta";
+import { lineaEditable, type LineaEditable } from "@/lib/ventas";
 
 export const metadata: Metadata = { title: "Nuevo presupuesto" };
 
