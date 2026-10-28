@@ -14,7 +14,8 @@ drop table if exists public.ventas;
 
 drop function if exists public.facturar_venta(uuid);
 drop function if exists public.proteger_factura();
-drop function if exists public.tocar_venta();
+drop function if exists public.controlar_venta();
+drop function if exists public.proteger_lineas_venta();
 drop function if exists public.numerar_venta();
 drop function if exists public.siguiente_numero(text);
 
