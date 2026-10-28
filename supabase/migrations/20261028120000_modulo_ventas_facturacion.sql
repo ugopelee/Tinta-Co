@@ -306,7 +306,7 @@ returns uuid
 language plpgsql
 security invoker
 set search_path = public, pg_temp
-as $
+as $$
 declare
   v_id uuid;
   v_estado text;
@@ -341,7 +341,7 @@ begin
 
   return v_id;
 end;
-$;
+$$;
 
 -- --- 4. Una factura emitida no se reescribe ---------------------------------------
 -- Emitida solo cambia de estado, con los datos del cobro o de la anulación,
