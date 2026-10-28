@@ -450,3 +450,31 @@ export const notasEvaluacion = [
   { nota: 4, nombre: "Supera expectativas" },
   { nota: 5, nombre: "Excelente" },
 ] as const;
+
+export const estadosVenta = [
+  { id: "presupuesto", nombre: "Presupuesto", color: "#ffa814" },
+  { id: "confirmada", nombre: "Confirmada", color: "#2a76ff" },
+  { id: "facturada", nombre: "Facturada", color: "#12b955" },
+  { id: "cancelada", nombre: "Cancelada", color: "#f0362b" },
+] as const;
+
+export type EstadoVenta = (typeof estadosVenta)[number]["id"];
+
+export const estadosFactura = [
+  { id: "emitida", nombre: "Emitida", color: "#2a76ff" },
+  { id: "cobrada", nombre: "Cobrada", color: "#12b955" },
+  { id: "anulada", nombre: "Anulada", color: "#8a8a8a" },
+] as const;
+
+export type EstadoFactura = (typeof estadosFactura)[number]["id"];
+
+export const estadosFacturaProveedor = [
+  { id: "por_revisar", nombre: "Por revisar", color: "#ffa814" },
+  { id: "validada", nombre: "Validada", color: "#12b955" },
+  { id: "descartada", nombre: "Descartada", color: "#8a8a8a" },
+] as const;
+
+export type EstadoFacturaProveedor = (typeof estadosFacturaProveedor)[number]["id"];
+
+/** Tipos de IVA aplicables a una línea, de mayor a menor. */
+export const tiposIva = [21, 10, 4, 0] as const;
