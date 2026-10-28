@@ -151,6 +151,27 @@ def test_caso_feliz_inserta_una_vez_y_mueve_a_procesadas(factura, carpetas):
     assert (carpetas / "procesadas" / "factura.pdf").exists()
 
 
+@pytest.mark.parametrize(
+    "nombre, tipo",
+    [
+        ("f.pdf", "application/pdf"),
+        ("f.PDF", "application/pdf"),
+        ("f.jpg", "image/jpeg"),
+        ("f.jpeg", "image/jpeg"),
+        ("f.png", "image/png"),
+        ("f.webp", "image/webp"),
+    ],
+)
+def test_el_archivo_se_sube_con_su_tipo_mime(carpetas, nombre, tipo):
+    ruta = carpetas / "entrada" / nombre
+    ruta.write_bytes(b"contenido")
+    supabase = SupabaseFalso()
+
+    agente.procesar(ruta, ModeloGuionizado(argumentos=DATOS), supabase)
+
+    assert supabase.subidas[0][2] == {"content-type": tipo}
+
+
 def test_nif_vacio_se_guarda_como_null(factura):
     modelo = ModeloGuionizado(argumentos={**DATOS, "nif": "  "})
     supabase = SupabaseFalso()

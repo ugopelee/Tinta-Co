@@ -20,7 +20,7 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from herramientas import FacturaDuplicada, crear_guardar_factura
+from herramientas import TIPOS_MIME, FacturaDuplicada, crear_guardar_factura
 
 # 1. Modelo
 MODELO_POR_DEFECTO = "anthropic/claude-sonnet-5.5"
@@ -34,8 +34,7 @@ Si un dato no aparece, déjalo vacío.
 No inventes nada.
 Cuando lo tengas, llama a guardar_factura."""
 
-TIPOS_IMAGEN = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
-SUFIJOS_SOPORTADOS = {".pdf", *TIPOS_IMAGEN}
+SUFIJOS_SOPORTADOS = set(TIPOS_MIME)
 SEGUNDOS_ENTRE_PASADAS = 10
 # Una copia lenta o una descarga puede tener el archivo a medias; se espera a la pasada siguiente.
 EDAD_MINIMA_SEGUNDOS = 2
@@ -59,13 +58,13 @@ def construir_mensaje(ruta: Path) -> HumanMessage | None:
     ChatOpenRouter convierte estos bloques al formato de OpenRouter, así que
     no hace falta construir `image_url` ni `file_data` a mano.
     """
-    sufijo = ruta.suffix.lower()
-    if sufijo == ".pdf":
-        bloque = {"type": "file", "mime_type": "application/pdf", "filename": ruta.name}
-    elif sufijo in TIPOS_IMAGEN:
-        bloque = {"type": "image", "mime_type": TIPOS_IMAGEN[sufijo]}
-    else:
+    tipo = TIPOS_MIME.get(ruta.suffix.lower())
+    if tipo is None:
         return None
+    if tipo == "application/pdf":
+        bloque = {"type": "file", "mime_type": tipo, "filename": ruta.name}
+    else:
+        bloque = {"type": "image", "mime_type": tipo}
     bloque["base64"] = base64.b64encode(ruta.read_bytes()).decode("ascii")
     return HumanMessage(content=[{"type": "text", "text": "Esta es la factura."}, bloque])
 

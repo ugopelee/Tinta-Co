@@ -4,7 +4,6 @@ La ejecuta el agente, nunca Claude: Claude solo pide llamarla con unos datos.
 """
 
 import logging
-import mimetypes
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -15,6 +14,16 @@ from postgrest.exceptions import APIError
 from pydantic import BaseModel, Field, model_validator
 
 log = logging.getLogger("agente")
+
+# Extensiones que el agente lee y su tipo MIME. Una sola tabla, a mano: el MIME
+# que adivina `mimetypes` depende del sistema y puede variar de un equipo a otro.
+TIPOS_MIME = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 
 BUCKET = "facturas-proveedor"
 TABLA = "facturas_proveedor"
@@ -71,7 +80,7 @@ def crear_guardar_factura(supabase, ruta: Path) -> BaseTool:
         """Guarda en la base de datos los datos de la factura leída."""
         # Subir primero: si el INSERT falla se borra el archivo y no queda huérfano.
         destino = f"{fecha.year}/{uuid.uuid4()}-{ruta.name}"
-        tipo = mimetypes.guess_type(ruta.name)[0] or "application/octet-stream"
+        tipo = TIPOS_MIME[ruta.suffix.lower()]
         almacen = supabase.storage.from_(BUCKET)
         almacen.upload(destino, ruta.read_bytes(), {"content-type": tipo})
         try:
