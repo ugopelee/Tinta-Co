@@ -5,8 +5,11 @@ import { useState, useTransition } from "react";
 import type { EstadoVenta } from "@tinta/compartido/estudio";
 import { cambiarEstadoVenta, facturarVenta } from "@/app/acciones-ventas";
 
-/** Acciones de una venta según su estado; la base de datos vuelve a validar cada paso. */
-export function BotonesVenta({ id, estado }: { id: string; estado: EstadoVenta }) {
+/**
+ * Acciones de una venta que ya no es presupuesto; las del presupuesto viven en
+ * el editor para guardar antes lo que haya en pantalla.
+ */
+export function BotonesVenta({ id, estado }: { id: string; estado: Exclude<EstadoVenta, "presupuesto"> }) {
   const router = useRouter();
   const [ocupado, iniciar] = useTransition();
   const [error, setError] = useState("");
@@ -31,11 +34,6 @@ export function BotonesVenta({ id, estado }: { id: string; estado: EstadoVenta }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {estado === "presupuesto" && (
-        <button type="button" disabled={ocupado} onClick={() => cambiar("confirmada")} className="boton !px-4 !py-2">
-          Confirmar venta
-        </button>
-      )}
       {estado === "confirmada" && (
         <button type="button" disabled={ocupado} onClick={facturar} className="boton !px-4 !py-2">
           Crear factura
@@ -46,7 +44,7 @@ export function BotonesVenta({ id, estado }: { id: string; estado: EstadoVenta }
           Volver a presupuesto
         </button>
       )}
-      {(estado === "presupuesto" || estado === "confirmada") && (
+      {estado === "confirmada" && (
         <button
           type="button"
           disabled={ocupado}
@@ -56,7 +54,11 @@ export function BotonesVenta({ id, estado }: { id: string; estado: EstadoVenta }
           Cancelar
         </button>
       )}
-      {error && <span className="text-sm text-acento">{error}</span>}
+      {error && (
+        <span role="alert" className="text-sm text-acento">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

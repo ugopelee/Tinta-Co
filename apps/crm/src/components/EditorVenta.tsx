@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { estudio, tiposIva } from "@tinta/compartido/estudio";
-import { guardarVenta } from "@/app/acciones-ventas";
+import { cambiarEstadoVenta, guardarVenta } from "@/app/acciones-ventas";
 import { claseCampo } from "@/components/FormularioAlta";
 import { Icono } from "@/components/Icono";
 import { euros, importeLinea, totales } from "@/lib/importes";
@@ -73,6 +73,11 @@ export function EditorVenta({
   const [nota, setNota] = useState(notas ?? "");
   const [lineas, setLineas] = useState(lineasIniciales);
 
+  // Lo último guardado, para saber si hay cambios sin guardar.
+  const instantanea = JSON.stringify([cliente, valida, nota, lineas.map((l) => [l.descripcion, l.diseno_id, l.cantidad, l.precio, l.descuento, l.iva])]);
+  const [guardado, setGuardado] = useState(instantanea);
+  const sucio = instantanea !== guardado;
+
   const convertidas = lineas.map((linea, orden) => ({
     orden,
     descripcion: linea.descripcion,
@@ -111,27 +116,62 @@ export function EditorVenta({
     if (nueva) setLineas((actuales) => [...actuales, nueva]);
   }
 
-  function guardar() {
-    setError("");
+  /** Guarda lo que hay en pantalla; devuelve el id si ha ido bien. */
+  async function guardarTodo(): Promise<string | null> {
     if (convertidas.some(incompleta)) {
       setError("Revisa las cifras: alguna línea tiene un valor que no es un número.");
-      return;
+      return null;
     }
+    const resultado = await guardarVenta({
+      id,
+      cliente_id: cliente,
+      cita_id: citaId,
+      valida_hasta: valida || null,
+      notas: nota,
+      lineas: convertidas,
+    });
+    if (!resultado.ok) {
+      setError(resultado.mensaje);
+      return null;
+    }
+    setGuardado(instantanea);
+    return resultado.id;
+  }
+
+  function guardar() {
+    setError("");
     iniciar(async () => {
-      const resultado = await guardarVenta({
-        id,
-        cliente_id: cliente,
-        cita_id: citaId,
-        valida_hasta: valida || null,
-        notas: nota,
-        lineas: convertidas,
-      });
+      const guardada = await guardarTodo();
+      if (!guardada) return;
+      if (id) router.refresh();
+      else router.push(`/ventas/${guardada}`);
+    });
+  }
+
+  // Confirmar guarda primero lo que hay en pantalla: un solo clic, un solo flujo.
+  function confirmar() {
+    setError("");
+    iniciar(async () => {
+      const guardada = await guardarTodo();
+      if (!guardada) return;
+      const resultado = await cambiarEstadoVenta(guardada, "confirmada");
       if (!resultado.ok) {
         setError(resultado.mensaje);
+        router.refresh();
         return;
       }
-      if (id) router.refresh();
-      else router.push(`/ventas/${resultado.id}`);
+      router.refresh();
+    });
+  }
+
+  function cancelar() {
+    const aviso = sucio ? "¿Cancelar esta venta? Los cambios sin guardar se perderán." : "¿Cancelar esta venta?";
+    if (!window.confirm(aviso)) return;
+    setError("");
+    iniciar(async () => {
+      const resultado = await cambiarEstadoVenta(id!, "cancelada");
+      if (!resultado.ok) setError(resultado.mensaje);
+      router.refresh();
     });
   }
 
@@ -214,14 +254,14 @@ export function EditorVenta({
               </select>
             </label>
             <div className="flex items-center justify-between gap-2 sm:justify-end">
-              <span className="cifra text-sm font-medium sm:hidden">
+              <span className="cifra text-sm font-medium">
                 {euros(incompleta(convertidas[indice]) ? 0 : importeLinea(convertidas[indice]))}
               </span>
               <button
                 type="button"
                 onClick={() => setLineas((actuales) => actuales.filter((l) => l.clave !== linea.clave))}
                 title="Quitar la línea"
-                aria-label="Quitar la línea"
+                aria-label={`Quitar la línea ${indice + 1}${linea.descripcion ? `: ${linea.descripcion}` : ""}`}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-tenue transition-colors duration-200 hover:bg-superficie-alta hover:text-acento"
               >
                 <Icono nombre="cerrar" className="h-4 w-4" />
@@ -284,7 +324,21 @@ export function EditorVenta({
         <button type="button" onClick={guardar} disabled={ocupado} className="boton !px-4 !py-2">
           {ocupado ? "Guardando…" : id ? "Guardar cambios" : "Crear presupuesto"}
         </button>
-        {error && <span className="text-sm text-acento">{error}</span>}
+        {id && (
+          <>
+            <button type="button" onClick={confirmar} disabled={ocupado} className="boton !px-4 !py-2">
+              Confirmar venta
+            </button>
+            <button type="button" onClick={cancelar} disabled={ocupado} className="boton-fantasma">
+              Cancelar
+            </button>
+          </>
+        )}
+        {error && (
+          <span role="alert" className="text-sm text-acento">
+            {error}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -292,6 +292,57 @@ begin
 end;
 $$;
 
+-- Crea o edita un presupuesto con sus líneas en una sola transacción. Va con
+-- los permisos de quien llama: la RLS y los triggers de arriba siguen mandando.
+create or replace function public.guardar_venta(
+  p_venta uuid,
+  p_cliente uuid,
+  p_cita uuid,
+  p_valida_hasta date,
+  p_notas text,
+  p_lineas jsonb
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $
+declare
+  v_id uuid;
+  v_estado text;
+begin
+  if p_venta is null then
+    insert into public.ventas (cliente_id, cita_id, valida_hasta, notas)
+    values (p_cliente, p_cita, p_valida_hasta, p_notas)
+    returning id into v_id;
+  else
+    select id, estado into v_id, v_estado from public.ventas where id = p_venta for update;
+    if not found then
+      raise exception 'Esa venta no existe.';
+    end if;
+    if v_estado <> 'presupuesto' then
+      raise exception 'Solo se puede editar un presupuesto.';
+    end if;
+
+    update public.ventas
+       set cliente_id = p_cliente, cita_id = p_cita, valida_hasta = p_valida_hasta, notas = p_notas
+     where id = v_id;
+    delete from public.lineas_venta where venta_id = v_id;
+  end if;
+
+  insert into public.lineas_venta (
+    venta_id, orden, descripcion, diseno_id, cantidad, precio_unitario, descuento, iva
+  )
+  select v_id, l.orden, l.descripcion, l.diseno_id, l.cantidad, l.precio_unitario, l.descuento, l.iva
+    from jsonb_to_recordset(p_lineas) as l(
+      orden smallint, descripcion text, diseno_id uuid, cantidad numeric,
+      precio_unitario numeric, descuento numeric, iva smallint
+    );
+
+  return v_id;
+end;
+$;
+
 -- --- 4. Una factura emitida no se reescribe ---------------------------------------
 -- Emitida solo cambia de estado, con los datos del cobro o de la anulación,
 -- hacia cobrada o anulada; después ya no cambia nada. Lo único que se acepta
@@ -374,6 +425,8 @@ revoke all on function public.siguiente_numero(text) from public, anon, authenti
 revoke all on function public.numerar_venta() from public, anon, authenticated;
 revoke all on function public.facturar_venta(uuid) from public, anon;
 grant execute on function public.facturar_venta(uuid) to authenticated;
+revoke all on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) from public, anon;
+grant execute on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) to authenticated;
 
 -- --- 6. Archivos: facturas de proveedor (privado) -----------------------------------
 

@@ -16,7 +16,9 @@ export default async function NuevaVenta({ searchParams }: PageProps<"/ventas/nu
     supabase.from("disenos").select("id, nombre, precio").eq("disponible", true).order("nombre"),
   ]);
 
-  let clienteId = texto(parametros.cliente);
+  // Un cliente desconocido en la URL se ignora: el select empezaría vacío.
+  const pedido = texto(parametros.cliente);
+  let clienteId = clientes?.some((c) => c.id === pedido) ? pedido : "";
   let citaId: string | null = null;
   const lineas: LineaEditable[] = [];
 

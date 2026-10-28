@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
-import { tiposIva, type EstadoVenta } from "@tinta/compartido/estudio";
+import { estadosVenta, tiposIva, type EstadoVenta } from "@tinta/compartido/estudio";
 import type { LineaVenta } from "@tinta/compartido/tipos";
 import { totales } from "@/lib/importes";
 
@@ -39,9 +39,9 @@ function revalidarVentas(id?: string) {
 function validarLineas(lineas: LineaNueva[]): string | null {
   for (const linea of lineas) {
     if (!linea.descripcion.trim()) return "Todas las líneas necesitan una descripción.";
-    if (!(linea.cantidad > 0)) return "La cantidad de cada línea debe ser mayor que cero.";
-    if (!(linea.precio_unitario >= 0)) return "El precio de una línea no puede ser negativo.";
-    if (!(linea.descuento >= 0 && linea.descuento <= 100)) return "El descuento debe estar entre 0 y 100.";
+    if (!Number.isFinite(linea.cantidad) || !(linea.cantidad > 0)) return "La cantidad de cada línea debe ser mayor que cero.";
+    if (!Number.isFinite(linea.precio_unitario) || !(linea.precio_unitario >= 0)) return "El precio de una línea no puede ser negativo.";
+    if (!Number.isFinite(linea.descuento) || !(linea.descuento >= 0 && linea.descuento <= 100)) return "El descuento debe estar entre 0 y 100.";
     if (!(tiposIva as readonly number[]).includes(linea.iva)) return "El IVA de una línea no es válido.";
   }
   return null;
@@ -62,56 +62,31 @@ export async function guardarVenta(datos: {
   const fallo = validarLineas(datos.lineas);
   if (fallo) return { ok: false, mensaje: fallo };
 
-  const campos = {
-    cliente_id: datos.cliente_id,
-    cita_id: datos.cita_id,
-    valida_hasta: datos.valida_hasta || null,
-    notas: datos.notas?.trim() || null,
-  };
+  const { data: existe } = await supabase.from("clientes").select("id").eq("id", datos.cliente_id).maybeSingle();
+  if (!existe) return { ok: false, mensaje: "Ese cliente no existe." };
 
-  let id = datos.id;
-  if (id) {
-    const { data: actual } = await supabase.from("ventas").select("estado").eq("id", id).maybeSingle();
-    if (!actual) return { ok: false, mensaje: "Esa venta no existe." };
-    if (actual.estado !== "presupuesto") {
-      return { ok: false, mensaje: "Solo se puede editar un presupuesto. Vuelve a presupuesto para cambiarlo." };
-    }
-    const { error } = await supabase.from("ventas").update(campos).eq("id", id);
-    if (error) return { ok: false, mensaje: mensajeDe(error, "No se ha podido guardar el presupuesto.") };
-  } else {
-    const { data, error } = await supabase.from("ventas").insert(campos).select("id").single();
-    if (error || !data) {
-      return { ok: false, mensaje: error ? mensajeDe(error, "No se ha podido crear el presupuesto.") : "No se ha podido crear el presupuesto." };
-    }
-    id = data.id as string;
+  // Una sola llamada: la venta y sus líneas se guardan juntas o no se guarda nada.
+  const { data, error } = await supabase.rpc("guardar_venta", {
+    p_venta: datos.id ?? null,
+    p_cliente: datos.cliente_id,
+    p_cita: datos.cita_id,
+    p_valida_hasta: datos.valida_hasta || null,
+    p_notas: datos.notas?.trim() || null,
+    p_lineas: datos.lineas.map((linea, orden) => ({
+      orden,
+      descripcion: linea.descripcion.trim(),
+      diseno_id: linea.diseno_id,
+      cantidad: linea.cantidad,
+      precio_unitario: linea.precio_unitario,
+      descuento: linea.descuento,
+      iva: linea.iva,
+    })),
+  });
+  if (error || !data) {
+    return { ok: false, mensaje: error ? mensajeDe(error, "No se ha podido guardar el presupuesto.") : "No se ha podido guardar el presupuesto." };
   }
 
-  // Primero se insertan las nuevas y después se borran las viejas: si algo
-  // falla a medias, el presupuesto no se queda sin líneas.
-  const { data: viejas } = await supabase.from("lineas_venta").select("id").eq("venta_id", id);
-
-  if (datos.lineas.length > 0) {
-    const { error } = await supabase.from("lineas_venta").insert(
-      datos.lineas.map((linea, orden) => ({
-        venta_id: id,
-        orden,
-        descripcion: linea.descripcion.trim(),
-        diseno_id: linea.diseno_id,
-        cantidad: linea.cantidad,
-        precio_unitario: linea.precio_unitario,
-        descuento: linea.descuento,
-        iva: linea.iva,
-      })),
-    );
-    if (error) return { ok: false, mensaje: mensajeDe(error, "No se han podido guardar las líneas.") };
-  }
-
-  const idsViejos = (viejas ?? []).map((fila) => fila.id as string);
-  if (idsViejos.length > 0) {
-    const { error } = await supabase.from("lineas_venta").delete().in("id", idsViejos);
-    if (error) return { ok: false, mensaje: mensajeDe(error, "No se han podido reemplazar las líneas.") };
-  }
-
+  const id = data as string;
   revalidarVentas(id);
   return { ok: true, id };
 }
@@ -136,7 +111,8 @@ export async function cambiarEstadoVenta(
 
   const actual = venta.estado as EstadoVenta;
   if (!TRANSICIONES[actual].includes(estado)) {
-    return { ok: false, mensaje: `Una venta ${actual} no puede pasar a ${estado}.` };
+    const nombre = (id: EstadoVenta) => estadosVenta.find((e) => e.id === id)!.nombre.toLowerCase();
+    return { ok: false, mensaje: `Una venta en estado ${nombre(actual)} no puede pasar a ${nombre(estado)}.` };
   }
 
   if (estado === "confirmada") {

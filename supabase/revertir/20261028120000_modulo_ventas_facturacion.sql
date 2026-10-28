@@ -12,6 +12,7 @@ drop table if exists public.facturas;
 drop table if exists public.lineas_venta;
 drop table if exists public.ventas;
 
+drop function if exists public.guardar_venta(uuid, uuid, uuid, date, text, jsonb);
 drop function if exists public.facturar_venta(uuid);
 drop function if exists public.proteger_factura();
 drop function if exists public.controlar_venta();

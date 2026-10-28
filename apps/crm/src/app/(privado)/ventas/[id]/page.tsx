@@ -60,7 +60,7 @@ export default async function DetalleVenta({ params }: PageProps<"/ventas/[id]">
       </Encabezado>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <BotonesVenta id={venta.id} estado={venta.estado} />
+        {venta.estado !== "presupuesto" && <BotonesVenta id={venta.id} estado={venta.estado} />}
         {factura && (
           <Link href={`/facturacion/${factura.id}`} className="text-sm font-medium underline-offset-4 hover:underline">
             Ver la factura {factura.numero}
