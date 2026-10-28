@@ -159,12 +159,23 @@ def _pasada(carpeta: Path, modelo, supabase) -> None:
             log.exception("error %s: no se pudo terminar de procesar", ruta.name)
 
 
+VARIABLES_OBLIGATORIAS = ("OPENROUTER_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
+
+
 def main() -> None:
     from langchain_openrouter import ChatOpenRouter
     from supabase import create_client
 
     load_dotenv(Path(__file__).parent / ".env")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+    faltan = [nombre for nombre in VARIABLES_OBLIGATORIAS if not os.getenv(nombre)]
+    if faltan:
+        log.error(
+            "Faltan variables de entorno: %s. Copia .env.example a .env y rellénalas.",
+            ", ".join(faltan),
+        )
+        raise SystemExit(1)
 
     analizador = argparse.ArgumentParser(description="Lee facturas de proveedor y las guarda en Supabase.")
     analizador.add_argument("--vigilar", action="store_true", help="repite la pasada cada 10 s")
