@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { tiposActividad, tiposEncargo, tiposEvento } from "@tinta/compartido/estudio";
@@ -68,7 +69,12 @@ export default async function FichaCliente({
         miga="Clientes · ficha"
         titulo={ficha.nombre}
         nota={`Cliente desde ${fecha(ficha.created_at, true)}`}
-      />
+      >
+        <Link href={`/ventas/nueva?cliente=${ficha.id}`} className="boton !px-4 !py-2">
+          <Icono nombre="mas" className="h-4 w-4" />
+          Nuevo presupuesto
+        </Link>
+      </Encabezado>
 
       <section className="tarjeta mb-3 p-5">
         <div className="flex flex-wrap items-center gap-2 text-sm">

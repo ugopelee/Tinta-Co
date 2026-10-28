@@ -8,21 +8,7 @@ import { estadosCita, tiposActividad, type EstadoCita } from "@tinta/compartido/
 import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
 import { googleDisponible } from "@/lib/google";
-
-/**
- * El proxy no basta para proteger las server actions: se ejecutan como POST
- * sobre la ruta donde viven y un cambio de matcher las dejaría al descubierto.
- * Por eso cada acción comprueba la sesión por su cuenta.
- */
-async function conSesion() {
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-  return supabase;
-}
+import { conSesion, SIN_SESION } from "@/lib/sesion";
 
 export async function iniciarSesion(
   _anterior: ResultadoFormulario,
@@ -49,59 +35,12 @@ export async function iniciarSesion(
   redirect(esInterna ? volver : "/");
 }
 
-export async function registrarse(
-  _anterior: ResultadoFormulario,
-  datos: FormData,
-): Promise<ResultadoFormulario> {
-  const nombre = String(datos.get("nombre") ?? "").trim();
-  const email = String(datos.get("email") ?? "").trim();
-  const password = String(datos.get("password") ?? "");
-  const repetir = String(datos.get("repetir") ?? "");
-
-  if (!nombre || !email || !password) {
-    return { estado: "error", mensaje: "Rellena todos los campos." };
-  }
-
-  if (password.length < 8) {
-    return {
-      estado: "error",
-      mensaje: "La contraseña debe tener al menos 8 caracteres.",
-    };
-  }
-
-  if (password !== repetir) {
-    return { estado: "error", mensaje: "Las dos contraseñas no coinciden." };
-  }
-
-  const supabase = await crearClienteServidor();
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { nombre } },
-  });
-
-  if (error) {
-    console.error("Error al registrar la cuenta:", error);
-    return {
-      estado: "error",
-      mensaje:
-        error.code === "user_already_exists"
-          ? "Ya existe una cuenta con ese email."
-          : "No hemos podido crear la cuenta. Revisa los datos e inténtalo de nuevo.",
-    };
-  }
-
-  // La cuenta nace sin acceso: el layout del CRM mostrará el aviso de
-  // pendiente de aprobación.
-  redirect("/");
-}
-
 export async function cambiarRolCuenta(
   id: string,
   rol: "propietario" | "artista",
 ) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return SIN_SESION;
 
   const {
     data: { user },
@@ -179,7 +118,7 @@ export async function salirDeLaCuenta(datos: FormData) {
 
 export async function moverCita(id: string, estado: EstadoCita, posicion: number) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return SIN_SESION;
 
   if (!estadosCita.some((columna) => columna.id === estado)) {
     return { ok: false as const, mensaje: "Estado no válido." };
@@ -192,7 +131,7 @@ export async function moverCita(id: string, estado: EstadoCita, posicion: number
 
   if (error) {
     console.error("Error al mover la cita:", error);
-    return { ok: false as const, mensaje: "No se ha podido mover la cita." };
+    return { ok: false as const, mensaje: "No se ha podido mover la cita. Inténtalo de nuevo." };
   }
 
   revalidatePath("/");
@@ -209,7 +148,7 @@ export async function guardarCobro(
   },
 ) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return SIN_SESION;
 
   if (cambios.importe !== null && (cambios.importe < 0 || cambios.importe > 100000)) {
     return { ok: false as const, mensaje: "El importe no es válido." };
@@ -232,7 +171,7 @@ export async function guardarCobro(
 
   if (error) {
     console.error("Error al guardar el cobro:", error);
-    return { ok: false as const, mensaje: "No se ha podido guardar el cobro." };
+    return { ok: false as const, mensaje: "No se ha podido guardar el cobro. Inténtalo de nuevo." };
   }
 
   revalidatePath("/facturacion");
@@ -245,7 +184,7 @@ export async function anadirActividad(
   datos: FormData,
 ): Promise<ResultadoFormulario> {
   const supabase = await conSesion();
-  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha caducado." };
+  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   const clienteId = String(datos.get("cliente_id") ?? "");
   const titulo = String(datos.get("titulo") ?? "").trim();
@@ -289,7 +228,7 @@ export async function guardarDiseno(
   datos: FormData,
 ): Promise<ResultadoFormulario> {
   const supabase = await conSesion();
-  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha caducado." };
+  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   const id = String(datos.get("id") ?? "");
   const nombre = String(datos.get("nombre") ?? "").trim();
@@ -343,13 +282,13 @@ export async function guardarDiseno(
 
 export async function cambiarDisponible(id: string, disponible: boolean) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return SIN_SESION;
 
   const { error } = await supabase.from("disenos").update({ disponible }).eq("id", id);
 
   if (error) {
     console.error("Error al cambiar la disponibilidad:", error);
-    return { ok: false as const, mensaje: "No se ha podido cambiar." };
+    return { ok: false as const, mensaje: "No se ha podido cambiar. Inténtalo de nuevo." };
   }
 
   revalidatePath("/catalogo");
@@ -358,7 +297,7 @@ export async function cambiarDisponible(id: string, disponible: boolean) {
 
 export async function eliminarDiseno(id: string) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return SIN_SESION;
 
   // Un diseño con reservas es historia de clientes: se retira, no se borra.
   const { count } = await supabase
@@ -374,7 +313,7 @@ export async function eliminarDiseno(id: string) {
 
   if (error) {
     console.error("Error al eliminar el diseño:", error);
-    return { ok: false as const, mensaje: "No se ha podido eliminar." };
+    return { ok: false as const, mensaje: "No se ha podido eliminar. Inténtalo de nuevo." };
   }
 
   revalidatePath("/catalogo");
@@ -393,7 +332,7 @@ export async function registrarConsentimiento(
   datos: FormData,
 ): Promise<ResultadoFormulario> {
   const supabase = await conSesion();
-  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha caducado." };
+  if (!supabase) return { estado: "error", mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   const clienteId = String(datos.get("cliente_id") ?? "");
   const citaId = String(datos.get("cita_id") ?? "") || null;

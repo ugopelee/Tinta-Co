@@ -71,7 +71,7 @@ async function crearCuentaPara(
   const { error } = await supabase.rpc("crear_cuenta_empleado", { p_empleado: empleadoId, p_clave: clave });
   if (error) {
     console.error("Error al crear la cuenta del empleado:", error);
-    return { ok: false, mensaje: error.message || "No se ha podido crear la cuenta." };
+    return { ok: false, mensaje: error.message || "No se ha podido crear la cuenta. Inténtalo de nuevo." };
   }
   return { ok: true, credenciales: { usuario: ficha.email, clave } };
 }
@@ -187,7 +187,7 @@ export async function cambiarFoto(empleadoId: string, datos: FormData) {
   const { error } = await supabase.storage.from("fotos-equipo").upload(ruta, foto, { contentType: foto.type });
   if (error) {
     console.error("Error al subir la foto:", error);
-    return { ok: false as const, mensaje: "No se ha podido subir la foto." };
+    return { ok: false as const, mensaje: "No se ha podido subir la foto. Inténtalo de nuevo." };
   }
 
   const { data } = supabase.storage.from("fotos-equipo").getPublicUrl(ruta);
@@ -221,14 +221,14 @@ export async function restablecerClave(empleadoId: string) {
   const { error } = await supabase.rpc("restablecer_clave_empleado", { p_empleado: empleadoId, p_clave: clave });
   if (error) {
     console.error("Error al restablecer la contraseña:", error);
-    return { ok: false as const, mensaje: error.message || "No se ha podido cambiar la contraseña." };
+    return { ok: false as const, mensaje: error.message || "No se ha podido cambiar la contraseña. Inténtalo de nuevo." };
   }
   return { ok: true as const, credenciales: { usuario: ficha.email as string, clave } };
 }
 
 export async function alternarTarea(tareaId: string, hecha: boolean) {
   const supabase = await conPropietario();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   // El paso a «Activo» lo hace un trigger al cerrarse la última tarea.
   const { data, error } = await supabase
@@ -240,7 +240,7 @@ export async function alternarTarea(tareaId: string, hecha: boolean) {
 
   if (error) {
     console.error("Error al marcar la tarea:", error);
-    return { ok: false as const, mensaje: "No se ha podido guardar." };
+    return { ok: false as const, mensaje: "No se ha podido guardar. Inténtalo de nuevo." };
   }
 
   revalidarEquipo(data.empleado_id as string);
@@ -249,7 +249,7 @@ export async function alternarTarea(tareaId: string, hecha: boolean) {
 
 export async function cambiarBaja(empleadoId: string, baja: boolean) {
   const supabase = await conPropietario();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   let estado: "baja" | "activo" | "incorporacion" = "baja";
   if (!baja) {
@@ -264,7 +264,7 @@ export async function cambiarBaja(empleadoId: string, baja: boolean) {
   const { error } = await supabase.from("empleados").update({ estado }).eq("id", empleadoId);
   if (error) {
     console.error("Error al cambiar la baja:", error);
-    return { ok: false as const, mensaje: "No se ha podido guardar." };
+    return { ok: false as const, mensaje: "No se ha podido guardar. Inténtalo de nuevo." };
   }
 
   // Al dar de baja se cierra un fichaje que se hubiera quedado abierto.
@@ -282,7 +282,7 @@ export async function cambiarBaja(empleadoId: string, baja: boolean) {
 
 export async function responderVacaciones(id: string, estado: "aprobada" | "rechazada", respuesta?: string) {
   const supabase = await conPropietario();
-  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
 
   if (estado !== "aprobada" && estado !== "rechazada") {
     return { ok: false as const, mensaje: "Respuesta no válida." };
@@ -301,7 +301,7 @@ export async function responderVacaciones(id: string, estado: "aprobada" | "rech
 
   if (error) {
     console.error("Error al responder las vacaciones:", error);
-    return { ok: false as const, mensaje: "No se ha podido guardar la respuesta." };
+    return { ok: false as const, mensaje: "No se ha podido guardar la respuesta. Inténtalo de nuevo." };
   }
 
   revalidarEquipo(data.empleado_id as string);
@@ -475,7 +475,7 @@ export async function completarMiTarea(tareaId: string) {
   const { error } = await sesion.supabase.rpc("completar_mi_tarea", { p_tarea: tareaId });
   if (error) {
     console.error("Error al completar la tarea:", error);
-    return { ok: false as const, mensaje: "No se ha podido marcar la tarea." };
+    return { ok: false as const, mensaje: "No se ha podido marcar la tarea. Inténtalo de nuevo." };
   }
 
   revalidarEquipo(sesion.empleadoId);

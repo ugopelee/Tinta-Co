@@ -78,7 +78,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <style>{`[data-revelar]{opacity:1 !important;transform:none !important;filter:none !important}`}</style>
         </noscript>
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <a href="#contenido" className="saltar">
+          Saltar al contenido principal
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

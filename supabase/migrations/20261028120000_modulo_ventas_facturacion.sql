@@ -1,0 +1,487 @@
+-- =====================================================================
+-- Módulo de ventas y facturación de Tinta&Co
+--
+-- Presupuestos y ventas con sus líneas, facturas emitidas a partir de una
+-- venta confirmada (numeración correlativa por año e inmutables una vez
+-- emitidas) y facturas de proveedor que lee el agente y revisa el
+-- propietario.
+--
+-- Se apoya en lo que ya existe en el proyecto: `clientes`, `citas`,
+-- `disenos` y la función `es_propietario()`. Todo es solo del propietario.
+-- Para deshacerlo: supabase/revertir/20261028120000_modulo_ventas_facturacion.sql
+-- =====================================================================
+
+-- --- 1. Tablas ---------------------------------------------------------------
+
+-- Contador por serie y año («P-2026», «F-2026»). Solo lo toca siguiente_numero.
+create table public.series (
+  clave text primary key,
+  ultimo int not null
+);
+
+create table public.ventas (
+  id uuid primary key default gen_random_uuid(),
+  -- La pone el trigger: «P-2026-0001».
+  numero text not null unique,
+  cliente_id uuid not null references public.clientes (id),
+  cita_id uuid references public.citas (id) on delete set null,
+  estado text not null default 'presupuesto'
+    check (estado in ('presupuesto', 'confirmada', 'facturada', 'cancelada')),
+  fecha date not null default (now() at time zone 'Europe/Madrid')::date,
+  valida_hasta date,
+  notas text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index ventas_por_cliente on public.ventas (cliente_id);
+
+create table public.lineas_venta (
+  id uuid primary key default gen_random_uuid(),
+  venta_id uuid not null references public.ventas (id) on delete cascade,
+  orden smallint not null default 0,
+  descripcion text not null check (length(trim(descripcion)) > 0),
+  diseno_id uuid references public.disenos (id) on delete set null,
+  cantidad numeric(10, 2) not null check (cantidad > 0),
+  precio_unitario numeric(12, 2) not null check (precio_unitario >= 0),
+  descuento numeric(5, 2) not null default 0 check (descuento between 0 and 100),
+  iva smallint not null default 21 check (iva in (0, 4, 10, 21))
+);
+
+create index lineas_venta_por_venta on public.lineas_venta (venta_id, orden);
+
+create table public.facturas (
+  id uuid primary key default gen_random_uuid(),
+  numero text not null unique,
+  serie int not null,
+  -- Una venta se factura una sola vez.
+  venta_id uuid not null unique references public.ventas (id),
+  cliente_id uuid not null references public.clientes (id),
+  cita_id uuid references public.citas (id) on delete set null,
+  fecha_emision date not null,
+  fecha_vencimiento date not null,
+  base numeric(12, 2) not null,
+  cuota_iva numeric(12, 2) not null,
+  total numeric(12, 2) not null,
+  estado text not null default 'emitida'
+    check (estado in ('emitida', 'cobrada', 'anulada')),
+  fecha_cobro date,
+  metodo_pago text check (metodo_pago in ('efectivo', 'tarjeta', 'transferencia', 'bizum')),
+  motivo_anulacion text,
+  created_at timestamptz not null default now()
+);
+
+create index facturas_por_cliente on public.facturas (cliente_id);
+
+-- Copia de las líneas de la venta en el momento de facturar, con el importe
+-- ya calculado: la factura no cambia aunque luego cambie el catálogo.
+create table public.lineas_factura (
+  id uuid primary key default gen_random_uuid(),
+  factura_id uuid not null references public.facturas (id) on delete cascade,
+  orden smallint not null default 0,
+  descripcion text not null,
+  diseno_id uuid references public.disenos (id) on delete set null,
+  cantidad numeric(10, 2) not null,
+  precio_unitario numeric(12, 2) not null,
+  descuento numeric(5, 2) not null,
+  iva smallint not null,
+  -- Base de la línea (con descuento), redondeada a céntimos.
+  importe numeric(12, 2) not null
+);
+
+create index lineas_factura_por_factura on public.lineas_factura (factura_id, orden);
+
+-- Lo que el agente lee del PDF o la foto. El NIF puede faltar; el resto es
+-- obligatorio para el agente.
+create table public.facturas_proveedor (
+  id uuid primary key default gen_random_uuid(),
+  numero text not null,
+  fecha date not null,
+  proveedor text not null,
+  nif text,
+  base numeric(12, 2) not null,
+  iva numeric(12, 2) not null,
+  total numeric(12, 2) not null,
+  -- Ruta dentro del bucket privado «facturas-proveedor».
+  archivo text not null,
+  nombre_archivo text not null,
+  estado text not null default 'por_revisar'
+    check (estado in ('por_revisar', 'validada', 'descartada')),
+  revisada_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Duplicados: mismo NIF (sin espacios ni guiones) o, sin él, mismo proveedor,
+-- y mismo número. Las descartadas quedan fuera: un original mal leído y
+-- descartado no debe impedir que se vuelva a escanear bien.
+create unique index facturas_proveedor_unica
+  on public.facturas_proveedor (
+    coalesce(upper(regexp_replace(nif, '[^A-Za-z0-9]', '', 'g')), lower(trim(proveedor))),
+    numero
+  )
+  where estado <> 'descartada';
+
+-- --- 2. Numeración -------------------------------------------------------------
+
+-- 'F' -> 'F-2026-0001'. El upsert bloquea la fila de la serie hasta el final
+-- de la transacción, así que dos llamadas a la vez nunca repiten número.
+-- No se concede a nadie: solo la llaman las funciones de abajo.
+create or replace function public.siguiente_numero(prefijo text)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  anio text := to_char(now() at time zone 'Europe/Madrid', 'YYYY');
+  n int;
+begin
+  insert into public.series (clave, ultimo) values (prefijo || '-' || anio, 1)
+  on conflict (clave) do update set ultimo = public.series.ultimo + 1
+  returning ultimo into n;
+
+  return prefijo || '-' || anio || '-' || lpad(n::text, 4, '0');
+end;
+$$;
+
+-- El número lo decide siempre el servidor, venga lo que venga del cliente.
+create or replace function public.numerar_venta()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  new.numero := public.siguiente_numero('P');
+  return new;
+end;
+$$;
+
+-- `numero` es not null: el trigger lo rellena antes de que se compruebe.
+create trigger ventas_numerar
+  before insert on public.ventas
+  for each row execute function public.numerar_venta();
+
+-- Estados de una venta. Pasar a «facturada» solo lo hace facturar_venta (que
+-- activa `tinta.facturando` en su transacción) y, una vez facturada, no se
+-- toca más.
+create or replace function public.controlar_venta()
+returns trigger
+language plpgsql
+as $$
+begin
+  if old.estado = 'facturada' then
+    raise exception 'Una venta facturada no se puede modificar.';
+  end if;
+  if new.numero is distinct from old.numero then
+    raise exception 'El número de una venta no se puede cambiar.';
+  end if;
+
+  if new.estado is distinct from old.estado then
+    if new.estado = 'facturada' then
+      if old.estado <> 'confirmada'
+         or coalesce(current_setting('tinta.facturando', true), '') <> 'si' then
+        raise exception 'Una venta solo pasa a facturada al facturarla.';
+      end if;
+    elsif not (
+      (old.estado = 'presupuesto' and new.estado in ('confirmada', 'cancelada'))
+      or (old.estado = 'confirmada' and new.estado in ('presupuesto', 'cancelada'))
+      or (old.estado = 'cancelada' and new.estado = 'presupuesto')
+    ) then
+      raise exception 'Una venta % no puede pasar a %.', old.estado, new.estado;
+    end if;
+  end if;
+
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create trigger ventas_controlar
+  before update on public.ventas
+  for each row execute function public.controlar_venta();
+
+-- Las líneas solo se tocan mientras la venta es un presupuesto. Si la venta
+-- ya no existe (borrado en cascada) no hay nada que proteger. Única excepción:
+-- que diseno_id pase a nulo, que es lo que hace «on delete set null» al borrar
+-- un diseño del catálogo usado en una venta ya confirmada o facturada.
+create or replace function public.proteger_lineas_venta()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'UPDATE'
+     and new.diseno_id is null
+     and to_jsonb(new) - 'diseno_id' = to_jsonb(old) - 'diseno_id' then
+    return new;
+  end if;
+
+  if exists (
+    select 1 from public.ventas
+     where id in (coalesce(new.venta_id, old.venta_id), coalesce(old.venta_id, new.venta_id))
+       and estado <> 'presupuesto'
+  ) then
+    raise exception 'Solo se pueden cambiar las líneas de un presupuesto.';
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+
+create trigger lineas_venta_proteger
+  before insert or update or delete on public.lineas_venta
+  for each row execute function public.proteger_lineas_venta();
+
+-- --- 3. Facturar una venta ------------------------------------------------------
+
+create or replace function public.facturar_venta(p_venta uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v public.ventas;
+  hoy date := (now() at time zone 'Europe/Madrid')::date;
+  base_total numeric(12, 2);
+  cuota_total numeric(12, 2);
+  nueva uuid;
+begin
+  if not public.es_propietario() then
+    raise exception 'Solo el propietario puede facturar.';
+  end if;
+
+  -- Se bloquea la venta y el estado se mira ya con el bloqueo: si otra
+  -- llamada llega a la vez, espera y encuentra la venta ya facturada.
+  select * into v from public.ventas where id = p_venta for update;
+  if not found then
+    raise exception 'Esa venta no existe.';
+  end if;
+  if v.estado <> 'confirmada' then
+    raise exception 'Solo se puede facturar una venta confirmada.';
+  end if;
+
+  -- Con las líneas bloqueadas, los totales y la copia salen de lo mismo.
+  perform 1 from public.lineas_venta where venta_id = p_venta for update;
+  if not found then
+    raise exception 'La venta no tiene líneas.';
+  end if;
+
+  -- IVA agrupado por tipo, como en el CRM: la cuota se redondea por grupo.
+  select coalesce(sum(g.base), 0), coalesce(sum(round(g.base * g.iva / 100, 2)), 0)
+    into base_total, cuota_total
+    from (
+      select iva, sum(round(cantidad * precio_unitario * (1 - descuento / 100), 2)) as base
+        from public.lineas_venta where venta_id = p_venta
+       group by iva
+    ) g;
+
+  if base_total + cuota_total <= 0 then
+    raise exception 'El total de la venta debe ser mayor que cero.';
+  end if;
+
+  insert into public.facturas (
+    numero, serie, venta_id, cliente_id, cita_id,
+    fecha_emision, fecha_vencimiento, base, cuota_iva, total
+  ) values (
+    public.siguiente_numero('F'), extract(year from hoy)::int, v.id, v.cliente_id, v.cita_id,
+    hoy, hoy + 30, base_total, cuota_total, base_total + cuota_total
+  ) returning id into nueva;
+
+  insert into public.lineas_factura (
+    factura_id, orden, descripcion, diseno_id, cantidad, precio_unitario, descuento, iva, importe
+  )
+  select nueva, orden, descripcion, diseno_id, cantidad, precio_unitario, descuento, iva,
+         round(cantidad * precio_unitario * (1 - descuento / 100), 2)
+    from public.lineas_venta where venta_id = p_venta;
+
+  perform set_config('tinta.facturando', 'si', true);
+  update public.ventas set estado = 'facturada' where id = p_venta;
+  perform set_config('tinta.facturando', '', true);
+
+  return nueva;
+end;
+$$;
+
+-- Crea o edita un presupuesto con sus líneas en una sola transacción. Va con
+-- los permisos de quien llama: la RLS y los triggers de arriba siguen mandando.
+create or replace function public.guardar_venta(
+  p_venta uuid,
+  p_cliente uuid,
+  p_cita uuid,
+  p_valida_hasta date,
+  p_notas text,
+  p_lineas jsonb
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_id uuid;
+  v_estado text;
+begin
+  -- La cita solo puede ser del propio cliente.
+  if p_cita is not null and not exists (
+    select 1 from public.citas where id = p_cita and cliente_id = p_cliente
+  ) then
+    raise exception 'La cita elegida no pertenece a ese cliente.';
+  end if;
+
+  if p_venta is null then
+    insert into public.ventas (cliente_id, cita_id, valida_hasta, notas)
+    values (p_cliente, p_cita, p_valida_hasta, p_notas)
+    returning id into v_id;
+  else
+    select id, estado into v_id, v_estado from public.ventas where id = p_venta for update;
+    if not found then
+      raise exception 'Esa venta no existe.';
+    end if;
+    if v_estado <> 'presupuesto' then
+      raise exception 'Solo se puede editar un presupuesto.';
+    end if;
+
+    update public.ventas
+       set cliente_id = p_cliente, cita_id = p_cita, valida_hasta = p_valida_hasta, notas = p_notas
+     where id = v_id;
+    delete from public.lineas_venta where venta_id = v_id;
+  end if;
+
+  insert into public.lineas_venta (
+    venta_id, orden, descripcion, diseno_id, cantidad, precio_unitario, descuento, iva
+  )
+  select v_id, l.orden, l.descripcion, l.diseno_id, l.cantidad, l.precio_unitario, l.descuento, l.iva
+    from jsonb_to_recordset(p_lineas) as l(
+      orden smallint, descripcion text, diseno_id uuid, cantidad numeric,
+      precio_unitario numeric, descuento numeric, iva smallint
+    );
+
+  return v_id;
+end;
+$$;
+
+-- --- 4. Una factura emitida no se reescribe ---------------------------------------
+-- Emitida solo cambia de estado, con los datos del cobro o de la anulación,
+-- hacia cobrada o anulada; después ya no cambia nada. Lo único que se acepta
+-- siempre es que cita_id pase a nulo (la cita se borra; el vínculo es
+-- informativo).
+
+create or replace function public.proteger_factura()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.cita_id is distinct from old.cita_id and new.cita_id is not null then
+    raise exception 'La cita de una factura no se puede cambiar.';
+  end if;
+
+  if old.estado <> 'emitida' then
+    if to_jsonb(new) - 'cita_id' is distinct from to_jsonb(old) - 'cita_id' then
+      raise exception 'Una factura % no se puede modificar.', old.estado;
+    end if;
+    return new;
+  end if;
+
+  if new.numero is distinct from old.numero
+     or new.serie is distinct from old.serie
+     or new.venta_id is distinct from old.venta_id
+     or new.cliente_id is distinct from old.cliente_id
+     or new.fecha_emision is distinct from old.fecha_emision
+     or new.fecha_vencimiento is distinct from old.fecha_vencimiento
+     or new.base is distinct from old.base
+     or new.cuota_iva is distinct from old.cuota_iva
+     or new.total is distinct from old.total then
+    raise exception 'Una factura emitida no se puede modificar.';
+  end if;
+
+  if new.estado = 'cobrada' and (new.fecha_cobro is null or new.metodo_pago is null) then
+    raise exception 'Para cobrar una factura hacen falta la fecha y el método de pago.';
+  end if;
+  if new.estado = 'anulada' and length(trim(coalesce(new.motivo_anulacion, ''))) = 0 then
+    raise exception 'Para anular una factura hace falta el motivo.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger facturas_proteger
+  before update on public.facturas
+  for each row execute function public.proteger_factura();
+
+-- --- 5. Seguridad por filas ---------------------------------------------------------
+-- Todo es del propietario. Las facturas nacen solo en facturar_venta (sin
+-- insert) y no se borran; sus líneas solo se leen.
+
+-- series: sin políticas ni permisos, solo la tocan las funciones definer.
+alter table public.series enable row level security;
+alter table public.ventas enable row level security;
+alter table public.lineas_venta enable row level security;
+alter table public.facturas enable row level security;
+alter table public.lineas_factura enable row level security;
+alter table public.facturas_proveedor enable row level security;
+
+create policy ventas_propietario on public.ventas
+  for all using (public.es_propietario()) with check (public.es_propietario());
+create policy lineas_venta_propietario on public.lineas_venta
+  for all using (public.es_propietario()) with check (public.es_propietario());
+create policy facturas_proveedor_propietario on public.facturas_proveedor
+  for all using (public.es_propietario()) with check (public.es_propietario());
+
+create policy facturas_ver on public.facturas
+  for select using (public.es_propietario());
+create policy facturas_actualizar on public.facturas
+  for update using (public.es_propietario()) with check (public.es_propietario());
+
+create policy lineas_factura_ver on public.lineas_factura
+  for select using (public.es_propietario());
+
+-- Solo usuarios con sesión; dentro, cada función comprueba el rol.
+revoke all on table public.series from anon, authenticated;
+revoke all on function public.siguiente_numero(text) from public, anon, authenticated;
+revoke all on function public.numerar_venta() from public, anon, authenticated;
+revoke all on function public.facturar_venta(uuid) from public, anon;
+grant execute on function public.facturar_venta(uuid) to authenticated;
+revoke all on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) from public, anon;
+grant execute on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) to authenticated;
+
+-- Cifras de la pantalla de facturación calculadas en la base: la página no se
+-- trae todas las facturas. Security invoker: las políticas RLS siguen mandando.
+create function public.resumen_facturacion()
+returns table (
+  facturado numeric, cobrado numeric, pendiente numeric, vencidas int,
+  base_facturada numeric, gastos_validados numeric, base_gastos numeric
+)
+language sql stable security invoker
+set search_path = public, pg_temp
+as $$
+  select
+    coalesce(sum(f.total) filter (where f.estado <> 'anulada'), 0),
+    coalesce(sum(f.total) filter (where f.estado = 'cobrada'), 0),
+    coalesce(sum(f.total) filter (where f.estado = 'emitida'), 0),
+    (count(*) filter (
+      where f.estado = 'emitida'
+        and f.fecha_vencimiento < (now() at time zone 'Europe/Madrid')::date
+    ))::int,
+    coalesce(sum(f.base) filter (where f.estado <> 'anulada'), 0),
+    (select coalesce(sum(p.total), 0) from public.facturas_proveedor p where p.estado = 'validada'),
+    (select coalesce(sum(p.base), 0) from public.facturas_proveedor p where p.estado = 'validada')
+  from public.facturas f;
+$$;
+
+revoke all on function public.resumen_facturacion() from public, anon;
+grant execute on function public.resumen_facturacion() to authenticated;
+
+-- --- 6. Archivos: facturas de proveedor (privado) -----------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'facturas-proveedor', 'facturas-proveedor', false, 10485760,
+  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do nothing;
+
+create policy facturas_proveedor_archivos_propietario on storage.objects
+  for all to authenticated
+  using (bucket_id = 'facturas-proveedor' and public.es_propietario())
+  with check (bucket_id = 'facturas-proveedor' and public.es_propietario());

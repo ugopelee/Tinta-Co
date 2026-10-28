@@ -13,7 +13,7 @@ export default function CrearCuenta() {
       pie={
         <>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/acceder" className="enlace-sutil text-texto">
+          <Link href="/acceder" className="text-texto underline underline-offset-4">
             Accede aquí
           </Link>
         </>

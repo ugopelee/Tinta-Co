@@ -273,7 +273,7 @@ export function RuedaProceso({ pasos, rotulo }: { pasos: PasoProceso[]; rotulo: 
                 <button
                   type="button"
                   onClick={() => ir(i)}
-                  className={`transition-colors duration-200 ${i === activo ? "text-texto" : "text-tenue/60 hover:text-texto"}`}
+                  className={`-my-1 py-1 transition-colors duration-200 ${i === activo ? "text-texto" : "text-tenue hover:text-texto"}`}
                 >
                   {p.titulo}
                   <span className={`ml-2 inline-block h-px align-middle transition-[width,background-color] duration-300 ${i === activo ? "w-6 bg-acento-suave" : "w-3 bg-white/20"}`} />

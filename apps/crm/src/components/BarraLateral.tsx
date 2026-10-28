@@ -23,6 +23,7 @@ export type Contadores = {
   cobros: number;
   sinResponder: number;
   vacaciones: number;
+  porRevisar: number;
 };
 
 type Enlace = {
@@ -65,11 +66,18 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
   {
     titulo: "Caja",
     enlaces: [
+      { href: "/ventas", texto: "Ventas", icono: "documento" },
       {
         href: "/facturacion",
         texto: "Facturación",
         icono: "euro",
         contador: "cobros",
+      },
+      {
+        href: "/facturacion/proveedores",
+        texto: "Proveedores",
+        icono: "tarjeta",
+        contador: "porRevisar",
       },
       { href: "/informes", texto: "Informes", icono: "informe" },
     ],
@@ -132,7 +140,7 @@ export function BarraLateral({
 
   return (
     <>
-      <div className="flex items-center justify-between px-4 py-3 lg:hidden">
+      <div className="flex items-center justify-between px-4 py-3 lg:hidden print:hidden">
         <span className="flex items-center gap-2.5">
           <Logo className="h-9 w-9" />
           <span className="text-[0.95rem] font-semibold tracking-tight">
@@ -217,7 +225,7 @@ export function BarraLateral({
               name="q"
               placeholder="Buscar cliente"
               aria-label="Buscar cliente"
-              className="h-10 w-full rounded-xl bajo:h-9 bg-superficie-alta pl-9 pr-12 text-sm outline-none transition-shadow duration-200 placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
+              className="h-10 w-full rounded-xl bajo:h-9 bg-superficie-alta pl-9 pr-12 text-sm ring-1 ring-borde-campo transition-shadow duration-200 placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
             />
             <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md bg-superficie px-1.5 py-0.5 font-sans text-[0.65rem] text-tenue">
               Ctrl K
@@ -244,7 +252,10 @@ export function BarraLateral({
                             (ruta.startsWith("/equipo/") &&
                               !ruta.startsWith("/equipo/ausencias") &&
                               !ruta.startsWith("/equipo/fichajes"))
-                          : ruta.startsWith(enlace.href);
+                          : enlace.href === "/facturacion"
+                            ? ruta.startsWith("/facturacion") &&
+                              !ruta.startsWith("/facturacion/proveedores")
+                            : ruta.startsWith(enlace.href);
                     const cuenta = enlace.contador
                       ? contadores[enlace.contador]
                       : null;
@@ -314,7 +325,7 @@ export function BarraLateral({
               <span className="barra-texto flex-1">Ver la web</span>
             </a>
 
-            <div className="barra-centrar flex items-center gap-3 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2 enano:!mt-1.5">
+            <div className="barra-centrar flex items-center gap-2 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2 enano:!mt-1.5">
               <span
                 title={email}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bajo:h-8 bajo:w-8 bg-texto text-xs font-semibold text-fondo"
@@ -322,12 +333,12 @@ export function BarraLateral({
                 {iniciales || "·"}
               </span>
               <span className="barra-texto min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium leading-tight">
+                <span className="block truncate text-[0.72rem] font-medium leading-tight tracking-tight">
                   {nombre}
                 </span>
                 <span className="block truncate text-xs text-tenue">Propietario</span>
               </span>
-              <span className="barra-texto flex items-center">
+              <span className="barra-texto flex flex-none items-center gap-1">
                 <SelectorTema />
                 <form action={cerrarSesion}>
                   <button

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { estudio } from "@tinta/compartido/estudio";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import type { Diseno } from "@tinta/compartido/tipos";
@@ -43,7 +44,7 @@ export default async function Landing() {
       <VolverArriba />
       <FondoVivo />
 
-      <main className="relative z-10">
+      <main id="contenido" tabIndex={-1} className="relative z-10">
         <Portada />
         <Estudio />
         <Servicios />
@@ -155,7 +156,7 @@ function Portada() {
               </EnlaceMagnetico>
               <a
                 href="#catalogo"
-                className="enlace-sutil text-[0.85rem] text-texto/75 transition-colors hover:text-texto"
+                className="enlace-sutil py-1 text-[0.85rem] text-texto/75 transition-colors hover:text-texto"
               >
                 {estudio.hero.ctaSecundario}
               </a>
@@ -174,7 +175,7 @@ function Portada() {
             { valor: String(estudio.cifras[0].valor), etiqueta: estudio.cifras[0].etiqueta },
           ].map((cifra) => (
             <div key={cifra.etiqueta} className="flex flex-col-reverse gap-1.5">
-              <dt className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-texto/45">
+              <dt className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-tenue">
                 {cifra.etiqueta}
               </dt>
               <dd className="font-serif text-[clamp(1.6rem,2.4vw,2.1rem)] leading-none tabular-nums">
@@ -182,8 +183,9 @@ function Portada() {
               </dd>
             </div>
           ))}
-          <div className="hidden self-end text-right font-mono text-[0.62rem] uppercase leading-[1.9] tracking-[0.14em] text-texto/45 md:block">
-            {OFICIOS.join(" · ")}
+          <div className="hidden self-end text-right font-mono text-[0.62rem] uppercase leading-[1.9] tracking-[0.14em] text-tenue md:block">
+            <dt className="sr-only">Oficios</dt>
+            <dd>{OFICIOS.join(" · ")}</dd>
           </div>
         </dl>
       </div>
@@ -266,7 +268,7 @@ function Pie() {
           </p>
           <div className="flex gap-5 md:justify-end">
             <span>{estudio.contacto.instagram}</span>
-            <a href="#inicio" className="enlace-sutil transition-colors hover:text-texto">
+            <a href="#inicio" className="enlace-sutil py-1 transition-colors hover:text-texto">
               Arriba ↑
             </a>
           </div>
@@ -279,8 +281,11 @@ function Pie() {
           {estudio.nombre}
         </p>
 
-        <p className="mt-6 text-center text-xs text-tenue/60">
-          © {new Date().getFullYear()} {estudio.nombre}. Hecho a mano en Madrid.
+        <p className="mt-6 text-center text-xs text-tenue">
+          © {new Date().getFullYear()} {estudio.nombre}. Hecho a mano en Madrid.{" "}·{" "}
+          <Link href="/accesibilidad" className="underline underline-offset-4 transition-colors hover:text-texto">
+            Declaración de accesibilidad
+          </Link>
         </p>
       </div>
     </footer>

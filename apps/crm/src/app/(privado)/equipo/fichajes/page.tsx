@@ -97,15 +97,16 @@ export default async function Fichajes() {
           {fichajes.length === 0 ? (
             <p className="mx-5 mb-5 fila px-4 py-6 text-center text-sm text-tenue">Sin fichajes todavía.</p>
           ) : (
-            <div className="overflow-x-auto px-5 pb-5">
+            <div className="overflow-x-auto px-5 pb-5" tabIndex={0} role="region" aria-label="Registro de fichajes">
               <table className="w-full text-sm">
+                <caption className="sr-only">Fichajes de los últimos 14 días</caption>
                 <thead>
                   <tr className="text-left text-xs text-tenue">
-                    <th className="pb-2 font-medium">Persona</th>
-                    <th className="pb-2 font-medium">Día</th>
-                    <th className="pb-2 font-medium">Entrada</th>
-                    <th className="pb-2 font-medium">Salida</th>
-                    <th className="pb-2 text-right font-medium">Horas</th>
+                    <th scope="col" className="pb-2 font-medium">Persona</th>
+                    <th scope="col" className="pb-2 font-medium">Día</th>
+                    <th scope="col" className="pb-2 font-medium">Entrada</th>
+                    <th scope="col" className="pb-2 font-medium">Salida</th>
+                    <th scope="col" className="pb-2 text-right font-medium">Horas</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,7 +116,7 @@ export default async function Fichajes() {
                       <td className="py-2 pr-3 text-tenue">{fechaCorta(diaDe(fichaje.entrada))}</td>
                       <td className="cifra py-2 pr-3">{hora(fichaje.entrada)}</td>
                       <td className="cifra py-2 pr-3">
-                        {fichaje.salida ? hora(fichaje.salida) : <span className="text-verde">Dentro</span>}
+                        {fichaje.salida ? hora(fichaje.salida) : <span className="font-medium text-texto">Dentro</span>}
                       </td>
                       <td className="cifra py-2 text-right font-medium">{duracion(minutos(fichaje))}</td>
                     </tr>

@@ -33,7 +33,7 @@ export default async function Cuentas() {
       <Encabezado
         miga="Ajustes · acceso"
         titulo="Cuentas"
-        nota="Todo el que se registra aparece aquí, pero registrarse no da acceso a nada. Dar permisos de propietario a una cuenta la mueve al equipo, y quitárselos la saca."
+        nota="Las cuentas se crean desde Equipo al dar de alta a una persona; tener cuenta sin permisos no da acceso a nada. Dar permisos de propietario a una cuenta la mueve al equipo, y quitárselos la saca."
       />
 
       <ListaCuentas perfiles={perfiles} idPropio={user!.id} />

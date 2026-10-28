@@ -205,7 +205,7 @@ function Tarjeta({
             Ver ficha
           </Link>
         ) : (
-          <span className="whitespace-nowrap text-xs text-tenue/50">
+          <span className="whitespace-nowrap text-xs text-tenue">
             Sin ficha
           </span>
         )}
@@ -220,7 +220,7 @@ function Tarjeta({
           onChange={(evento) =>
             onCambiarEstado(evento.target.value as EstadoCita)
           }
-          className="rounded-full bg-superficie px-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-texto/15"
+          className="rounded-full bg-superficie px-2.5 py-1 text-xs ring-1 ring-borde-campo focus:ring-2 focus:ring-texto/15"
         >
           {estadosCita.map((columna) => (
             <option key={columna.id} value={columna.id}>

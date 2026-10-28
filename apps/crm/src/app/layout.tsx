@@ -74,7 +74,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <style dangerouslySetInnerHTML={{ __html: paletaCss }} />
         <script dangerouslySetInnerHTML={{ __html: guionPreferencias }} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <a href="#contenido" className="saltar">
+          Saltar al contenido principal
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

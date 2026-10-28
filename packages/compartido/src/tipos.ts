@@ -1,6 +1,9 @@
 import type {
   EstadoCita,
   EstadoEmpleado,
+  EstadoFactura,
+  EstadoFacturaProveedor,
+  EstadoVenta,
   EstadoVacaciones,
   TipoActividad,
   TipoEvento,
@@ -171,5 +174,79 @@ export type Nomina = {
   archivo: string;
   firma: string | null;
   firmada_at: string | null;
+  created_at: string;
+};
+
+/** Importes en euros; Postgres numeric llega como number por PostgREST. */
+export type Venta = {
+  id: string;
+  numero: string;
+  cliente_id: string;
+  cita_id: string | null;
+  estado: EstadoVenta;
+  fecha: string;
+  valida_hasta: string | null;
+  notas: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LineaVenta = {
+  id: string;
+  venta_id: string;
+  orden: number;
+  descripcion: string;
+  diseno_id: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  descuento: number;
+  iva: number;
+};
+
+export type Factura = {
+  id: string;
+  numero: string;
+  serie: number;
+  venta_id: string;
+  cliente_id: string;
+  cita_id: string | null;
+  fecha_emision: string;
+  fecha_vencimiento: string;
+  base: number;
+  cuota_iva: number;
+  total: number;
+  estado: EstadoFactura;
+  fecha_cobro: string | null;
+  metodo_pago: string | null;
+  motivo_anulacion: string | null;
+  created_at: string;
+};
+
+export type LineaFactura = {
+  id: string;
+  factura_id: string;
+  orden: number;
+  descripcion: string;
+  diseno_id: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  descuento: number;
+  iva: number;
+  importe: number;
+};
+
+export type FacturaProveedor = {
+  id: string;
+  numero: string;
+  fecha: string;
+  proveedor: string;
+  nif: string | null;
+  base: number;
+  iva: number;
+  total: number;
+  archivo: string;
+  nombre_archivo: string;
+  estado: EstadoFacturaProveedor;
+  revisada_at: string | null;
   created_at: string;
 };

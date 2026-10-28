@@ -53,7 +53,7 @@ export default async function LayoutEmpleado({ children }: LayoutProps<"/">) {
         </span>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pb-10">{children}</main>
+      <main id="contenido" tabIndex={-1} className="mx-auto max-w-5xl px-4 pb-10">{children}</main>
     </div>
   );
 }

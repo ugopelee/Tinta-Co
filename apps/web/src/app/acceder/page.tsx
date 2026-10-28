@@ -16,7 +16,7 @@ export default async function Acceder({ searchParams }: PageProps<"/acceder">) {
       pie={
         <>
           ¿Todavía no tienes cuenta?{" "}
-          <Link href="/crear-cuenta" className="enlace-sutil text-texto">
+          <Link href="/crear-cuenta" className="text-texto underline underline-offset-4">
             Créala aquí
           </Link>
         </>

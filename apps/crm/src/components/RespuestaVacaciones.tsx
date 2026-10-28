@@ -24,7 +24,7 @@ export function RespuestaVacaciones({ id }: { id: string }) {
         onChange={(evento) => setNota(evento.target.value)}
         placeholder="Nota (opcional)"
         aria-label="Nota para el empleado"
-        className="h-9 w-44 rounded-xl bg-superficie px-3 text-sm outline-none ring-1 ring-borde focus:ring-2 focus:ring-texto/30"
+        className="h-9 w-44 rounded-xl bg-superficie px-3 text-sm ring-1 ring-borde-campo focus:ring-2 focus:ring-texto/30"
       />
       <button
         type="button"

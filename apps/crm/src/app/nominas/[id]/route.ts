@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest, contexto: RouteContext<"/nomina
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return new Response("Sesión caducada.", { status: 401 });
+  if (!user) return new Response("Tu sesión ha terminado. Vuelve a entrar para seguir.", { status: 401 });
 
   // Con RLS, una nómina ajena simplemente no aparece.
   const { data: nomina } = await supabase.from("nominas").select("archivo").eq("id", id).maybeSingle();

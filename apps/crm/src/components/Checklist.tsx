@@ -74,6 +74,9 @@ export function Checklist({ tareas, modo }: { tareas: TareaIncorporacion[]; modo
                     {modo === "empleado" ? "Te toca" : "La marca el empleado"}
                   </span>
                 )}
+                {modo === "empleado" && !puede && !tarea.de_empleado && (
+                  <span className="insignia shrink-0 text-[0.7rem]">La marca tu responsable</span>
+                )}
                 {tarea.hecha && tarea.hecha_at && (
                   <span className="hidden shrink-0 items-center gap-1 text-xs text-tenue sm:flex">
                     <Icono nombre="hecho" className="h-3.5 w-3.5 text-verde" />

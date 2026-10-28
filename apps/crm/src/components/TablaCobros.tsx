@@ -59,14 +59,16 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
         </p>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabla de cobros">
         <table className="w-full min-w-[52rem] text-sm">
+          <caption className="sr-only">Cobros de los trabajos realizados</caption>
           <thead>
             <tr className="border-b border-borde text-left">
               {["Cliente", "Pieza", "Estado", "Importe", "Cobro", "Método"].map(
                 (columna) => (
                   <th
                     key={columna}
+                    scope="col"
                     className="etiqueta px-5 py-2.5 font-medium text-tenue"
                   >
                     {columna}
@@ -109,6 +111,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                       max={100000}
                       step={5}
                       autoFocus
+                      aria-label="Importe en euros"
                       defaultValue={cita.importe ?? ""}
                       onBlur={(evento) => {
                         const valor = evento.target.value.trim();
@@ -124,7 +127,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                         if (evento.key === "Enter") evento.currentTarget.blur();
                         if (evento.key === "Escape") setEditando(null);
                       }}
-                      className="w-24 rounded-lg border border-texto bg-superficie px-2.5 py-1.5 text-sm outline-none"
+                      className="w-24 rounded-lg border border-texto bg-superficie px-2.5 py-1.5 text-sm"
                     />
                   ) : (
                     <button
@@ -179,7 +182,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                         })
                       }
                       aria-label={`Método de pago de ${cita.nombre}`}
-                      className="rounded-lg border border-borde bg-superficie px-2.5 py-1.5 text-xs text-tenue outline-none transition-colors focus:border-texto"
+                      className="rounded-lg border border-borde-campo bg-superficie px-2.5 py-1.5 text-xs text-tenue transition-colors focus:border-texto"
                     >
                       {metodosPago.map((metodo) => (
                         <option key={metodo.id} value={metodo.id}>
@@ -188,7 +191,7 @@ export function TablaCobros({ citas }: { citas: Cita[] }) {
                       ))}
                     </select>
                   ) : (
-                    <span className="text-xs text-tenue/60">—</span>
+                    <span className="text-xs text-tenue">—</span>
                   )}
                 </td>
               </tr>

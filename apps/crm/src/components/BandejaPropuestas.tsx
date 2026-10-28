@@ -184,7 +184,7 @@ function Fila({
           id={`estado-${propuesta.id}`}
           value={propuesta.estado}
           onChange={(evento) => onCambiarEstado(propuesta, evento.target.value as EstadoCita)}
-          className="rounded-full border border-borde bg-superficie px-2.5 py-1 text-xs text-tenue outline-none focus:border-texto"
+          className="rounded-full border border-borde-campo bg-superficie px-2.5 py-1 text-xs text-tenue focus:border-texto"
         >
           {estadosCita.map((estado) => (
             <option key={estado.id} value={estado.id}>

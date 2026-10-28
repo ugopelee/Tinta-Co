@@ -6,7 +6,7 @@ import { crearCuenta, iniciarSesion } from "@/app/cuenta/acciones";
 import { formularioInicial } from "@tinta/compartido/formularios";
 
 const claseCampo =
-  "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-texto outline-none backdrop-blur transition-colors duration-300 placeholder:text-tenue/70 focus:border-acento focus:ring-1 focus:ring-acento";
+  "w-full rounded-xl border border-borde-campo bg-white/5 px-4 py-3.5 text-texto backdrop-blur transition-colors duration-300 placeholder:text-tenue focus:border-acento focus:ring-1 focus:ring-acento";
 
 const claseEtiqueta = "mb-2 block text-sm text-tenue";
 

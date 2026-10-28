@@ -7,7 +7,7 @@ import { registrarConsentimiento } from "@/app/acciones";
 import { Icono } from "@/components/Icono";
 
 const claseCampo =
-  "w-full rounded-xl bg-superficie px-3 py-2 text-sm outline-none ring-1 ring-borde transition-shadow duration-200 placeholder:text-tenue/70 focus:ring-2 focus:ring-texto/30";
+  "w-full rounded-xl bg-superficie px-3 py-2 text-sm ring-1 ring-borde-campo transition-shadow duration-200 placeholder:text-tenue focus:ring-2 focus:ring-texto/30";
 
 function Guardar() {
   const { pending } = useFormStatus();

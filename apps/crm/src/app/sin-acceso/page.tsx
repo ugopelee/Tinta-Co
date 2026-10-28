@@ -8,7 +8,7 @@ const URL_WEB = process.env.NEXT_PUBLIC_URL_WEB ?? "/";
 
 export default function SinAcceso() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
+    <main id="contenido" tabIndex={-1} className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md text-center">
         <p className="chip-lima">Sin permisos</p>
         <h1 className="titular mt-5 text-3xl">Este panel es del propietario</h1>

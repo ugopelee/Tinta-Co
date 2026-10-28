@@ -2,15 +2,16 @@
 
 /* Pantallas bajas (portátiles): la barra lateral se compacta por escalones
    para caber entera sin desplazarse. */
-@custom-variant bajo (@media (max-height: 940px));
-@custom-variant enano (@media (max-height: 840px));
-@custom-variant mini (@media (max-height: 680px));
+@custom-variant bajo (@media (max-height: 1000px));
+@custom-variant enano (@media (max-height: 900px));
+@custom-variant mini (@media (max-height: 800px));
 
 @theme inline {
   --color-fondo: var(--fondo);
   --color-superficie: var(--superficie);
   --color-superficie-alta: var(--superficie-alta);
   --color-borde: var(--borde);
+  --color-borde-campo: var(--borde-campo);
   --color-texto: var(--texto);
   --color-tenue: var(--tenue);
   --color-acento: var(--acento);
@@ -65,6 +66,52 @@ body {
   outline: 2px solid var(--texto);
   outline-offset: 2px;
   border-radius: 0.35rem;
+}
+
+/* --- Accesibilidad (WCAG 2.2 AA) ------------------------------------- */
+
+/* Primer elemento de cada página: salta la barra lateral. Solo aparece al
+   recibir el foco. */
+.saltar {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  translate: 0 -200%;
+  border-radius: 9999px;
+  background: var(--texto);
+  color: var(--fondo);
+  padding: 0.625rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.saltar:focus {
+  translate: 0 0;
+}
+
+/* El destino del salto recibe el foco, pero no hace falta enmarcarlo entero. */
+#contenido:focus {
+  outline: none;
+}
+
+/* Temas de contraste de Windows: el sistema quita los fondos, así que lo
+   que es solo relleno (botones, segmentos, filas pulsables) conserva un
+   borde para seguir pareciendo pulsable. */
+@media (forced-colors: active) {
+  .boton,
+  .segmento,
+  .chip-lima,
+  .boton-fantasma,
+  a.fila,
+  button.fila {
+    border: 2px solid ButtonText;
+  }
+
+  .segmento[aria-pressed="true"],
+  .segmento[aria-current="page"] {
+    border-color: Highlight;
+  }
 }
 
 /* Barras de desplazamiento al tono del panel, no las del sistema. */
@@ -263,12 +310,66 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
+}
+
+/* --- Login: columna de marca viva ------------------------------------ */
+
+@keyframes login-deriva {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3rem, -2.5rem, 0) scale(1.12);
+  }
+}
+
+@keyframes login-flota {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes login-entra {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+.login-deriva {
+  animation: login-deriva 16s ease-in-out infinite;
+}
+
+.login-flota {
+  animation:
+    login-entra 0.7s cubic-bezier(0.22, 0.7, 0.3, 1) both,
+    login-flota 7s ease-in-out 0.7s infinite;
+}
+
+/* Retícula de puntos que se desvanece hacia los bordes. */
+.login-puntos {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--fondo) 22%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 40% 45%, #000 20%, transparent 75%);
 }
 
 /* Con la barra plegada no caben el logotipo y el botón en una línea. */
@@ -286,5 +387,51 @@ body {
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+/* --- Impresión de facturas -------------------------------------------- */
+
+/* Solo sale el documento, en A4 y con tinta sobre papel blanco aunque el
+   panel esté en oscuro: se redefinen las variables dentro de la factura. */
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+@media print {
+  .barra,
+  .saltar {
+    display: none !important;
+  }
+
+  /* El contenedor del panel reserva alto de pantalla y márgenes: fuera. */
+  body,
+  main,
+  main > div {
+    background: #fff !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  body > div {
+    display: block !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .factura {
+    --fondo: #fff;
+    --superficie: #fff;
+    --texto: #000;
+    --tenue: #444;
+    --borde: #bbb;
+    --acento: #a02510;
+    max-width: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    background: #fff;
+    color: #000;
   }
 }

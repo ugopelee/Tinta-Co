@@ -16,7 +16,8 @@ export function TarjetaIndicador({
 }: {
   icono: NombreIcono;
   etiqueta: string;
-  valor: number;
+  /** `null` cuando el dato no se ha podido cargar. */
+  valor: number | null;
   sufijo?: string;
   variacion: number | null;
   nota: string;
@@ -37,8 +38,14 @@ export function TarjetaIndicador({
 
       <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p className="titular cifra text-[2rem] leading-none">
-          {valor.toLocaleString("es-ES")}
-          <span className="ml-1 text-xl text-tenue">{sufijo}</span>
+          {valor === null ? (
+            <span className="text-xl text-tenue">No disponible</span>
+          ) : (
+            <>
+              {valor.toLocaleString("es-ES")}
+              <span className="ml-1 text-xl text-tenue">{sufijo}</span>
+            </>
+          )}
         </p>
 
         {variacion !== null && (

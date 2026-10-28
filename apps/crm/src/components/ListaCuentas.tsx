@@ -119,7 +119,7 @@ function Seccion({
                   <p className="mt-0.5 truncate text-xs text-tenue">
                     {perfil.email}
                   </p>
-                  <p className="mt-1 text-xs text-tenue/70">
+                  <p className="mt-1 text-xs text-tenue">
                     Registrada el{" "}
                     {new Date(perfil.created_at).toLocaleDateString("es-ES", {
                       day: "numeric",
@@ -134,12 +134,14 @@ function Seccion({
                     atajo para que un empleado viera todo el panel. */}
                 {perfil.rol === "empleado" ? (
                   <span className="insignia text-xs">Empleado · se gestiona en Equipo</span>
+                ) : perfil.id === idPropio ? (
+                  // Mejor decir por qué que un botón desactivado que no explica nada.
+                  <span className="insignia text-xs">Tu cuenta · no puedes sacarte del equipo</span>
                 ) : (
                 <button
                   type="button"
                   onClick={() => onAlternar(perfil)}
-                  disabled={perfil.id === idPropio}
-                  className="rounded-lg border border-borde px-3.5 py-2 text-sm text-tenue transition-colors duration-200 hover:border-texto hover:text-texto disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-borde-campo px-3.5 py-2 text-sm text-tenue transition-colors duration-200 hover:border-texto hover:text-texto"
                 >
                   {esPropietario ? "Sacar del equipo" : "Añadir al equipo"}
                 </button>

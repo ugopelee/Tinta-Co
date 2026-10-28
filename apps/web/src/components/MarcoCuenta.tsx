@@ -15,7 +15,7 @@ export function MarcoCuenta({
   pie: ReactNode;
 }) {
   return (
-    <main className="relative z-10 flex min-h-screen items-center justify-center overflow-hidden px-5 py-16 sm:px-6">
+    <main id="contenido" tabIndex={-1} className="relative z-10 flex min-h-screen items-center justify-center overflow-hidden px-5 py-16 sm:px-6">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/3 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[140px]"
@@ -38,7 +38,7 @@ export function MarcoCuenta({
 
         <Link
           href="/"
-          className="enlace-sutil mt-8 inline-block text-sm text-tenue transition-colors hover:text-texto"
+          className="enlace-sutil mt-7 inline-block py-1 text-sm text-tenue transition-colors hover:text-texto"
         >
           ← Volver a la web
         </Link>
