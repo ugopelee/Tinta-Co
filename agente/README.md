@@ -30,7 +30,8 @@ py -m venv .venv
 Copia `.env.example` a `.env` y rellena `OPENROUTER_API_KEY`, `SUPABASE_URL` y
 `SUPABASE_SERVICE_ROLE_KEY`. Opcionales: `MODELO` y `CARPETA_FACTURAS`
 (por defecto `agente/facturas`). La migración `20261028120000_modulo_ventas_facturacion.sql`
-debe estar aplicada.
+debe estar aplicada. Si falta alguna variable obligatoria, el agente lo indica y termina
+con código 1.
 
 ## Uso
 

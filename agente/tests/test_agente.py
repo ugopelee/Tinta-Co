@@ -393,3 +393,20 @@ def test_la_fila_insertada_lleva_importes_como_texto_y_tipos_correctos(factura):
     assert (fila["base"], fila["iva"], fila["total"]) == ("100.00", "21.00", "121.00")
     assert all(isinstance(fila[k], str) for k in ("numero", "fecha", "proveedor", "archivo"))
     assert fila["nif"] == "B12345678"
+
+
+def test_main_sin_variables_explica_cuales_faltan_y_sale(monkeypatch, caplog):
+    monkeypatch.setattr(agente, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.setattr("sys.argv", ["agente.py"])
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setenv("SUPABASE_URL", "")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "valor")
+
+    with caplog.at_level(logging.ERROR, logger="agente"), pytest.raises(SystemExit) as salida:
+        agente.main()
+
+    assert salida.value.code == 1
+    assert "OPENROUTER_API_KEY" in caplog.text
+    assert "SUPABASE_URL" in caplog.text
+    assert "SUPABASE_SERVICE_ROLE_KEY" not in caplog.text
+    assert ".env.example" in caplog.text
