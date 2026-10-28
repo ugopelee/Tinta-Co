@@ -111,6 +111,10 @@ create table public.facturas_proveedor (
   created_at timestamptz not null default now()
 );
 
+-- Duplicados: mismo NIF (o, sin él, mismo proveedor) y mismo número.
+create unique index facturas_proveedor_unica
+  on public.facturas_proveedor (coalesce(nif, lower(trim(proveedor))), numero);
+
 -- --- 2. Numeración -------------------------------------------------------------
 
 -- 'F' -> 'F-2026-0001'. El upsert bloquea la fila de la serie hasta el final
