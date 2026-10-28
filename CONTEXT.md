@@ -5,7 +5,7 @@ contexto), lee **esto primero**: resume qué es el proyecto, cómo está montado
 qué decisiones ya están tomadas y qué queda pendiente, para no tener que releer
 media conversación ni medio repositorio.
 
-Última actualización: 24 de septiembre de 2026.
+Última actualización: 28 de octubre de 2026.
 
 ---
 
@@ -210,6 +210,35 @@ entera en el editor SQL de Supabase). Tablas `empleados`,
   `/nominas/[id]` redirige a un enlace firmado de 60 s con la sesión de
   quien pulsa. El empleado firma dibujando en un lienzo (`FirmaNomina`);
   se guarda el PNG con `firmar_nomina`, que no deja firmar dos veces.
+
+### Ventas, facturación y agente lector de facturas (28/10/2026)
+
+Tarea 3 de SGE, con el flujo de Odoo (presupuesto → venta → factura; facturas
+de proveedor que digitaliza una IA y valida una persona). Diseño y plan en
+`docs/superpowers/`. Migración aplicada:
+`supabase/migrations/20261028120000_modulo_ventas_facturacion.sql`; se deshace
+con `supabase/revertir/` (el bucket se borra a mano desde Storage).
+
+- **Ventas** (`/ventas`, `app/acciones-ventas.ts`): `ventas` + `lineas_venta`.
+  Estados presupuesto ↔ confirmada → facturada, y cancelada. Las líneas solo
+  cambian en presupuesto (trigger); se guardan de una vez con la RPC
+  `guardar_venta`. «Confirmar» guarda antes lo que hay en pantalla.
+- **Facturas** (`/facturacion`, `/facturacion/[id]`, `app/acciones-facturas.ts`):
+  solo nacen en la RPC `facturar_venta`, con número correlativo por año
+  (`F-2026-0001`, tabla `series`). Emitida → cobrada o anulada (con motivo) y
+  después no cambia nada (trigger `proteger_factura`). Cobrar una factura con
+  cita marca la cita como pagada si aún no lo estaba. Los indicadores salen de
+  `resumen_facturacion()`. Imprimir = imprimir del navegador (CSS `@media print`).
+- **Importes**: `lib/importes.ts` replica el SQL (línea redondeada a céntimo,
+  IVA por tipo, medio céntimo hacia arriba). Tests: `npm test --workspace=crm`.
+- **Proveedores** (`/facturacion/proveedores`): filas de `facturas_proveedor`
+  que inserta el agente como `por_revisar`; se validan o descartan. «Ver
+  original» abre el archivo del bucket privado `facturas-proveedor`.
+- **Agente** (`agente/`, Python + LangChain + Claude vía OpenRouter): lee
+  `agente/facturas/entrada/`, Claude extrae los datos y pide `guardar_factura`;
+  el agente sube el original e inserta la fila (Claude nunca toca la base).
+  Claves en `agente/.env` (ver `.env.example`; la service_role solo ahí).
+  Instalación y uso en `agente/README.md`; tests con `pytest`.
 
 ### Piezas del panel (`apps/crm/src/app/(privado)/page.tsx`)
 
