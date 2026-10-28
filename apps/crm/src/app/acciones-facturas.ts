@@ -24,9 +24,12 @@ function mensajeDe(error: { code?: string; message: string }, generico: string) 
   return generico;
 }
 
-function revalidarFacturas(id: string) {
+function revalidarFacturas(id: string, ventaId: string | null) {
   revalidatePath("/facturacion");
   revalidatePath(`/facturacion/${id}`);
+  if (ventaId) revalidatePath(`/ventas/${ventaId}`);
+  // El contador de cobros de la barra lateral vive en el layout.
+  revalidatePath("/", "layout");
 }
 
 export async function marcarFacturaCobrada(id: string, metodo: MetodoPago): Promise<Respuesta> {
@@ -44,11 +47,11 @@ export async function marcarFacturaCobrada(id: string, metodo: MetodoPago): Prom
     .update({ estado: "cobrada", fecha_cobro: hoy, metodo_pago: metodo })
     .eq("id", id)
     .eq("estado", "emitida")
-    .select("cita_id, total");
+    .select("cita_id, venta_id, total");
   if (error) return { ok: false, mensaje: mensajeDe(error, "No se ha podido marcar la factura como cobrada.") };
   if (!data?.length) return { ok: false, mensaje: "Solo se puede cobrar una factura emitida. Recarga la página." };
 
-  revalidarFacturas(id);
+  revalidarFacturas(id, data[0].venta_id);
 
   // Mantiene coherente el gráfico y el contador de cobros, que leen de las citas.
   // Si falla, la factura ya está cobrada y no se deshace: se avisa.
@@ -65,7 +68,6 @@ export async function marcarFacturaCobrada(id: string, metodo: MetodoPago): Prom
         aviso: "La factura está cobrada, pero no se ha podido actualizar la cita asociada. Revísala en Cobros.",
       };
     }
-    revalidatePath("/");
   }
 
   return { ok: true };
@@ -83,10 +85,10 @@ export async function anularFactura(id: string, motivo: string): Promise<Respues
     .update({ estado: "anulada", motivo_anulacion: texto })
     .eq("id", id)
     .eq("estado", "emitida")
-    .select("id");
+    .select("venta_id");
   if (error) return { ok: false, mensaje: mensajeDe(error, "No se ha podido anular la factura.") };
   if (!data?.length) return { ok: false, mensaje: "Solo se puede anular una factura emitida. Recarga la página." };
 
-  revalidarFacturas(id);
+  revalidarFacturas(id, data[0].venta_id);
   return { ok: true };
 }

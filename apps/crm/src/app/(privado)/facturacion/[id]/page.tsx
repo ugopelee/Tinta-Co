@@ -13,7 +13,7 @@ import { euros, totales } from "@/lib/importes";
 export const metadata: Metadata = { title: "Factura" };
 
 const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 export default async function DetalleFactura({ params }: PageProps<"/facturacion/[id]">) {
   const { id } = await params;
@@ -37,10 +37,10 @@ export default async function DetalleFactura({ params }: PageProps<"/facturacion
     iva: Number(linea.iva),
     importe: Number(linea.importe),
   }));
-  const estado = estadosFactura.find((e) => e.id === factura.estado)!;
+  const estado = estadosFactura.find((e) => e.id === factura.estado) ?? estadosFactura[0];
   const metodo = metodosPago.find((m) => m.id === factura.metodo_pago)?.nombre;
-  // El desglose sale de las líneas guardadas con los mismos helpers que la función SQL.
-  const resumen = totales(lineas);
+  // Los totales son los guardados al emitir; las líneas solo reparten el IVA por tipo.
+  const { porIva } = totales(lineas);
   const fiscal = estudio.datosFiscales;
 
   return (
@@ -145,9 +145,9 @@ export default async function DetalleFactura({ params }: PageProps<"/facturacion
         <dl className="ml-auto grid w-full max-w-xs gap-1 text-sm">
           <div className="flex justify-between">
             <dt className="text-tenue">Base imponible</dt>
-            <dd className="cifra">{euros(resumen.base)}</dd>
+            <dd className="cifra">{euros(Number(factura.base))}</dd>
           </div>
-          {resumen.porIva.map((grupo) => (
+          {porIva.map((grupo) => (
             <div key={grupo.iva} className="flex justify-between">
               <dt className="text-tenue">
                 IVA {grupo.iva} % sobre {euros(grupo.base)}
@@ -155,9 +155,13 @@ export default async function DetalleFactura({ params }: PageProps<"/facturacion
               <dd className="cifra">{euros(grupo.cuota)}</dd>
             </div>
           ))}
+          <div className="flex justify-between">
+            <dt className="text-tenue">Cuota de IVA</dt>
+            <dd className="cifra">{euros(Number(factura.cuota_iva))}</dd>
+          </div>
           <div className="flex justify-between border-t border-borde pt-1 text-base font-semibold">
             <dt>Total</dt>
-            <dd className="cifra">{euros(factura.total)}</dd>
+            <dd className="cifra">{euros(Number(factura.total))}</dd>
           </div>
         </dl>
       </article>

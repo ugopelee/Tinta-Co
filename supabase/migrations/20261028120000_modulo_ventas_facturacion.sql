@@ -428,6 +428,33 @@ grant execute on function public.facturar_venta(uuid) to authenticated;
 revoke all on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) from public, anon;
 grant execute on function public.guardar_venta(uuid, uuid, uuid, date, text, jsonb) to authenticated;
 
+-- Cifras de la pantalla de facturación calculadas en la base: la página no se
+-- trae todas las facturas. Security invoker: las políticas RLS siguen mandando.
+create function public.resumen_facturacion()
+returns table (
+  facturado numeric, cobrado numeric, pendiente numeric, vencidas int,
+  base_facturada numeric, gastos_validados numeric, base_gastos numeric
+)
+language sql stable security invoker
+set search_path = public, pg_temp
+as $$
+  select
+    coalesce(sum(f.total) filter (where f.estado <> 'anulada'), 0),
+    coalesce(sum(f.total) filter (where f.estado = 'cobrada'), 0),
+    coalesce(sum(f.total) filter (where f.estado = 'emitida'), 0),
+    (count(*) filter (
+      where f.estado = 'emitida'
+        and f.fecha_vencimiento < (now() at time zone 'Europe/Madrid')::date
+    ))::int,
+    coalesce(sum(f.base) filter (where f.estado <> 'anulada'), 0),
+    (select coalesce(sum(p.total), 0) from public.facturas_proveedor p where p.estado = 'validada'),
+    (select coalesce(sum(p.base), 0) from public.facturas_proveedor p where p.estado = 'validada')
+  from public.facturas f;
+$$;
+
+revoke all on function public.resumen_facturacion() from public, anon;
+grant execute on function public.resumen_facturacion() to authenticated;
+
 -- --- 6. Archivos: facturas de proveedor (privado) -----------------------------------
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

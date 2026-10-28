@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosFactura, tiposEncargo } from "@tinta/compartido/estudio";
-import { metodosPago, type Cita, type Factura, type FacturaProveedor } from "@tinta/compartido/tipos";
+import { metodosPago, type Cita, type Factura } from "@tinta/compartido/tipos";
 import { Bloque } from "@/components/Bloque";
 import {
   GraficoFacturacion,
@@ -18,12 +18,12 @@ export const metadata: Metadata = { title: "Facturación" };
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
+// Fechas sin hora (`date` de la base): en UTC para que no se corran un día.
 const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
-/** Suma de importes con dos decimales, sin restos de coma flotante. */
-const sumar = (valores: number[]) =>
-  Math.round(valores.reduce((suma, valor) => suma + Number(valor), 0) * 100) / 100;
+/** Las facturas que se listan; las cifras de arriba cuentan todas. */
+const FACTURAS_VISIBLES = 50;
 
 const euros = (valor: number) =>
   valor.toLocaleString("es-ES", {
@@ -69,29 +69,31 @@ function porMes(citas: Cita[]): MesFacturado[] {
 export default async function Facturacion() {
   const supabase = await crearClienteServidor();
 
-  const [{ data }, { data: facturasDatos }, { data: gastosDatos }] = await Promise.all([
+  const [{ data }, { data: facturasDatos, count: totalFacturas }, { data: resumenDatos }] = await Promise.all([
     supabase.from("citas").select("*").in("tipo", tiposEncargo).order("created_at", { ascending: false }),
     supabase
       .from("facturas")
-      .select("*, clientes(nombre)")
+      .select("*, clientes(nombre)", { count: "exact" })
       .order("fecha_emision", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("facturas_proveedor").select("base, total").eq("estado", "validada"),
+      .order("numero", { ascending: false })
+      .limit(FACTURAS_VISIBLES),
+    supabase.rpc("resumen_facturacion").single(),
   ]);
 
   const facturas = (facturasDatos ?? []) as (Factura & { clientes: { nombre: string } | null })[];
-  const gastos = (gastosDatos ?? []) as Pick<FacturaProveedor, "base" | "total">[];
-  const hoyMadrid = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
-
-  // Una factura anulada no cuenta como ingreso; el IVA tampoco lo es.
-  const vigentes = facturas.filter((f) => f.estado !== "anulada");
-  const emitidas = facturas.filter((f) => f.estado === "emitida");
-  const vencidas = emitidas.filter((f) => f.fecha_vencimiento < hoyMadrid);
-  const facturado = sumar(vigentes.map((f) => f.total));
-  const cobradoFacturas = sumar(facturas.filter((f) => f.estado === "cobrada").map((f) => f.total));
-  const pendienteFacturas = sumar(emitidas.map((f) => f.total));
-  const gastosValidados = sumar(gastos.map((g) => g.total));
-  const resultado = sumar([...vigentes.map((f) => f.base), ...gastos.map((g) => -g.base)]);
+  // Todas las cifras en una consulta agregada en la base, no sobre las filas traídas.
+  const resumen = resumenDatos as {
+    facturado: number;
+    cobrado: number;
+    pendiente: number;
+    vencidas: number;
+    base_facturada: number;
+    gastos_validados: number;
+    base_gastos: number;
+  } | null;
+  const vencidas = resumen?.vencidas ?? 0;
+  // El IVA no es ingreso ni gasto: el resultado se calcula sobre las bases.
+  const resultado = Math.round((Number(resumen?.base_facturada ?? 0) - Number(resumen?.base_gastos ?? 0)) * 100) / 100;
 
   const citas = (data ?? []) as Cita[];
   const cobradas = citas.filter((cita) => cita.pagado);
@@ -145,24 +147,29 @@ export default async function Facturacion() {
         )}
       </Encabezado>
 
+      <h2 className="etiqueta mb-2 text-tenue">Facturas</h2>
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <TarjetaIndicador icono="documento" etiqueta="Facturado" valor={facturado} sufijo="€" variacion={null} nota="facturas no anuladas, con IVA" />
-        <TarjetaIndicador icono="bien" etiqueta="Cobrado" valor={cobradoFacturas} sufijo="€" variacion={null} nota="facturas cobradas" />
+        <TarjetaIndicador icono="documento" etiqueta="Facturado" valor={Number(resumen?.facturado ?? 0)} sufijo="€" variacion={null} nota="facturas no anuladas, con IVA" />
+        <TarjetaIndicador icono="bien" etiqueta="Facturas cobradas" valor={Number(resumen?.cobrado ?? 0)} sufijo="€" variacion={null} nota="importe cobrado" />
         <TarjetaIndicador
           icono="reloj"
-          etiqueta="Pendiente de cobro"
-          valor={pendienteFacturas}
+          etiqueta="Facturas pendientes de cobro"
+          valor={Number(resumen?.pendiente ?? 0)}
           sufijo="€"
           variacion={null}
-          nota={vencidas.length ? `${vencidas.length} ${vencidas.length === 1 ? "vencida" : "vencidas"}` : "facturas emitidas, ninguna vencida"}
+          nota={vencidas ? `${vencidas} ${vencidas === 1 ? "vencida" : "vencidas"}` : "emitidas, ninguna vencida"}
           subirEsMalo
         />
-        <TarjetaIndicador icono="tarjeta" etiqueta="Gastos validados" valor={gastosValidados} sufijo="€" variacion={null} nota="facturas de proveedores" subirEsMalo />
+        <TarjetaIndicador icono="tarjeta" etiqueta="Gastos validados" valor={Number(resumen?.gastos_validados ?? 0)} sufijo="€" variacion={null} nota="facturas de proveedores" subirEsMalo />
         <TarjetaIndicador icono="grafico" etiqueta="Resultado (sin IVA)" valor={resultado} sufijo="€" variacion={null} nota="base facturada menos base de gastos" />
       </div>
 
       <div className="mb-3">
-        <Bloque icono="documento" titulo="Facturas" nota="Se crean desde Ventas, al facturar una venta confirmada" ajustado>
+        <Bloque icono="documento" titulo="Facturas" nota={
+            (totalFacturas ?? 0) > facturas.length
+              ? `Las ${facturas.length} más recientes de ${totalFacturas}. Se crean desde Ventas.`
+              : "Se crean desde Ventas, al facturar una venta confirmada"
+          } ajustado>
           {facturas.length === 0 ? (
             <p className="px-5 py-8 text-sm text-tenue">Todavía no hay facturas.</p>
           ) : (
@@ -182,7 +189,7 @@ export default async function Facturacion() {
                 </thead>
                 <tbody>
                   {facturas.map((factura) => {
-                    const estado = estadosFactura.find((e) => e.id === factura.estado)!;
+                    const estado = estadosFactura.find((e) => e.id === factura.estado) ?? estadosFactura[0];
                     return (
                       <tr key={factura.id} className="border-b border-borde last:border-0">
                         <td className="cifra px-5 py-3 font-semibold">{factura.numero}</td>
@@ -207,10 +214,11 @@ export default async function Facturacion() {
         </Bloque>
       </div>
 
+      <h2 className="etiqueta mb-2 text-tenue">Cobros de citas</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaIndicador
           icono="euro"
-          etiqueta="Total cobrado"
+          etiqueta="Cobrado en citas"
           valor={totalCobrado}
           sufijo="€"
           variacion={null}
@@ -218,7 +226,7 @@ export default async function Facturacion() {
         />
         <TarjetaIndicador
           icono="reloj"
-          etiqueta="Pendiente de cobro"
+          etiqueta="Citas por cobrar"
           valor={porCobrar}
           sufijo="€"
           variacion={null}
