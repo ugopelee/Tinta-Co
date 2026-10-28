@@ -5,6 +5,9 @@ guionizada y Supabase es un doble que anota lo que se le pide.
 """
 
 import base64
+import logging
+import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +45,16 @@ class ModeloGuionizado(BaseChatModel):
             ],
         )
         return ChatResult(generations=[ChatGeneration(message=mensaje)])
+
+
+class ModeloSoloTexto(ModeloGuionizado):
+    """Contesta con texto y sin llamar a la herramienta."""
+
+    texto: str = ""
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.llamadas += 1
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=self.texto))])
 
 
 class RespuestaFalsa:
@@ -231,13 +244,131 @@ def test_construir_mensaje_formato_no_soportado(carpetas):
     assert agente.construir_mensaje(ruta) is None
 
 
-def test_archivo_no_soportado_va_a_errores(carpetas):
+def envejecer(ruta):
+    """Hace que el archivo parezca llevar tiempo en la carpeta."""
+    antiguo = time.time() - 60
+    os.utime(ruta, (antiguo, antiguo))
+
+
+def test_pasada_deja_intactos_los_formatos_no_soportados(carpetas):
     ruta = carpetas / "entrada" / "notas.txt"
     ruta.write_text("hola")
+    envejecer(ruta)
     modelo = ModeloGuionizado(argumentos=DATOS)
 
-    resultado = agente.procesar(ruta, modelo, SupabaseFalso())
+    agente._pasada(carpetas, modelo, SupabaseFalso())
+
+    assert ruta.exists()
+    assert modelo.llamadas == 0
+    assert not (carpetas / "errores" / "notas.txt").exists()
+
+
+def test_procesar_rechaza_formato_no_soportado(carpetas):
+    ruta = carpetas / "entrada" / "notas.txt"
+    ruta.write_text("hola")
+
+    resultado = agente.procesar(ruta, ModeloGuionizado(argumentos=DATOS), SupabaseFalso())
 
     assert not resultado.ok
+
+
+def test_pasada_salta_archivos_recien_modificados(carpetas):
+    reciente = carpetas / "entrada" / "nueva.pdf"
+    reciente.write_bytes(b"%PDF a medias")
+    modelo = ModeloGuionizado(argumentos=DATOS)
+
+    agente._pasada(carpetas, modelo, SupabaseFalso())
+
+    assert reciente.exists()
     assert modelo.llamadas == 0
-    assert (carpetas / "errores" / "notas.txt").exists()
+
+    envejecer(reciente)
+    agente._pasada(carpetas, modelo, SupabaseFalso())
+
+    assert not reciente.exists()
+    assert modelo.llamadas == 1
+
+
+def test_dos_archivos_con_el_mismo_nombre_acaban_en_errores(carpetas):
+    modelo = ModeloGuionizado(argumentos={**DATOS, "total": "999"})
+    for contenido in (b"uno", b"dos"):
+        ruta = carpetas / "entrada" / "factura.pdf"
+        ruta.write_bytes(contenido)
+        agente.procesar(ruta, modelo, SupabaseFalso())
+
+    pdfs = sorted((carpetas / "errores").glob("*.pdf"))
+    assert len(pdfs) == 2
+    assert {p.read_bytes() for p in pdfs} == {b"uno", b"dos"}
+    for pdf in pdfs:
+        assert (carpetas / "errores" / f"{pdf.name}.error.txt").exists()
+
+
+def test_un_fallo_al_mover_no_para_el_lote(carpetas, monkeypatch, caplog):
+    for nombre in ("a.pdf", "b.pdf"):
+        ruta = carpetas / "entrada" / nombre
+        ruta.write_bytes(b"%PDF")
+        envejecer(ruta)
+    original = agente._mover
+
+    def mover_con_fallo(ruta, destino, razon=None):
+        if ruta.name == "a.pdf":
+            raise OSError("disco lleno")
+        original(ruta, destino, razon)
+
+    monkeypatch.setattr(agente, "_mover", mover_con_fallo)
+
+    with caplog.at_level(logging.ERROR, logger="agente"):
+        agente._pasada(carpetas, ModeloGuionizado(argumentos=DATOS), SupabaseFalso())
+
+    assert (carpetas / "procesadas" / "b.pdf").exists()
+    assert "a.pdf" in caplog.text
+
+
+def test_error_generico_al_insertar_borra_la_subida_y_va_a_errores(factura, carpetas):
+    supabase = SupabaseFalso(error_insert=ConnectionError("sin red"))
+
+    resultado = agente.procesar(factura, ModeloGuionizado(argumentos=DATOS), supabase)
+
+    assert not resultado.ok
+    assert "duplicada" not in resultado.detalle
+    assert supabase.borrados[0][1] == [supabase.subidas[0][1]]
+    assert (carpetas / "errores" / "factura.pdf").exists()
+
+
+def test_si_falla_el_borrado_se_conserva_el_error_original(factura, carpetas):
+    supabase = SupabaseFalso(error_insert=ConnectionError("sin red"))
+
+    def remove_roto(paths):
+        raise RuntimeError("borrado roto")
+
+    supabase.storage.from_ = lambda nombre: type(
+        "B", (BucketFalso,), {"remove": lambda self, paths: remove_roto(paths)}
+    )(supabase, nombre)
+
+    resultado = agente.procesar(factura, ModeloGuionizado(argumentos=DATOS), supabase)
+
+    assert "sin red" in resultado.detalle
+
+
+def test_sin_llamada_a_la_herramienta_la_razon_incluye_el_texto_de_claude(factura, carpetas):
+    modelo = ModeloSoloTexto(argumentos={}, texto="No veo ninguna factura en la imagen. " + "x" * 400)
+    supabase = SupabaseFalso()
+
+    resultado = agente.procesar(factura, modelo, supabase)
+
+    assert not resultado.ok
+    assert "No veo ninguna factura" in resultado.detalle
+    assert len(resultado.detalle) < 400
+    assert supabase.inserciones == []
+    assert (carpetas / "errores" / "factura.pdf").exists()
+
+
+def test_la_fila_insertada_lleva_importes_como_texto_y_tipos_correctos(factura):
+    supabase = SupabaseFalso()
+
+    agente.procesar(factura, ModeloGuionizado(argumentos=DATOS), supabase)
+
+    fila = supabase.inserciones[0][1]
+    assert (fila["base"], fila["iva"], fila["total"]) == ("100.00", "21.00", "121.00")
+    assert all(isinstance(fila[k], str) for k in ("numero", "fecha", "proveedor", "archivo"))
+    assert fila["nif"] == "B12345678"

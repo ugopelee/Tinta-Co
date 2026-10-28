@@ -3,6 +3,7 @@
 La ejecuta el agente, nunca Claude: Claude solo pide llamarla con unos datos.
 """
 
+import logging
 import mimetypes
 import uuid
 from datetime import date
@@ -12,6 +13,8 @@ from pathlib import Path
 from langchain_core.tools import BaseTool, tool
 from postgrest.exceptions import APIError
 from pydantic import BaseModel, Field, model_validator
+
+log = logging.getLogger("agente")
 
 BUCKET = "facturas-proveedor"
 TABLA = "facturas_proveedor"
@@ -91,13 +94,18 @@ def crear_guardar_factura(supabase, ruta: Path) -> BaseTool:
                 )
                 .execute()
             )
-        except APIError as error:
-            almacen.remove([destino])
-            if error.code == VIOLACION_UNICIDAD:
+            identificador = respuesta.data[0]["id"]
+        except Exception as error:
+            # Cualquier fallo (red, respuesta vacía, RLS...) deja el archivo huérfano.
+            try:
+                almacen.remove([destino])
+            except Exception:
+                log.exception("no se pudo borrar el archivo huérfano %s", destino)
+            if isinstance(error, APIError) and error.code == VIOLACION_UNICIDAD:
                 raise FacturaDuplicada(
                     f"Factura duplicada: {proveedor} ya tiene la factura {numero}"
                 ) from error
             raise
-        return f"guardada {respuesta.data[0]['id']}"
+        return f"guardada {identificador}"
 
     return guardar_factura

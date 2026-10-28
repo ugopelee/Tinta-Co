@@ -11,13 +11,14 @@ import logging
 import os
 import shutil
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from herramientas import FacturaDuplicada, crear_guardar_factura
 
@@ -34,9 +35,16 @@ No inventes nada.
 Cuando lo tengas, llama a guardar_factura."""
 
 TIPOS_IMAGEN = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+SUFIJOS_SOPORTADOS = {".pdf", *TIPOS_IMAGEN}
 SEGUNDOS_ENTRE_PASADAS = 10
+# Una copia lenta o una descarga puede tener el archivo a medias; se espera a la pasada siguiente.
+EDAD_MINIMA_SEGUNDOS = 2
+MAX_TEXTO_CLAUDE = 300
+CARPETAS = ("entrada", "procesadas", "errores")
 
 log = logging.getLogger("agente")
+# Para avisar una sola vez de cada archivo ignorado y no llenar el registro en cada pasada.
+_ignorados: set[Path] = set()
 
 
 @dataclass
@@ -65,9 +73,14 @@ def construir_mensaje(ruta: Path) -> HumanMessage | None:
 def _mover(ruta: Path, destino: str, razon: str | None = None) -> None:
     carpeta = ruta.parent.parent / destino
     carpeta.mkdir(exist_ok=True)
-    shutil.move(ruta, carpeta / ruta.name)
+    final = carpeta / ruta.name
+    if final.exists():
+        # No se pisa nada: el archivo anterior puede ser la única copia de otra factura.
+        marca = f"{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}"
+        final = carpeta / f"{ruta.stem}-{marca}{ruta.suffix}"
+    shutil.move(ruta, final)
     if razon:
-        (carpeta / f"{ruta.name}.error.txt").write_text(razon, encoding="utf-8")
+        (carpeta / f"{final.name}.error.txt").write_text(razon, encoding="utf-8")
 
 
 def _razon_del_fallo(mensajes: list) -> str:
@@ -75,7 +88,9 @@ def _razon_del_fallo(mensajes: list) -> str:
     for mensaje in mensajes:
         if isinstance(mensaje, ToolMessage) and mensaje.status == "error":
             return str(mensaje.content)
-    return "Claude no llamó a guardar_factura"
+    respuestas = [m for m in mensajes if isinstance(m, AIMessage) and m.text.strip()]
+    texto = respuestas[-1].text.strip()[:MAX_TEXTO_CLAUDE] if respuestas else ""
+    return f"Claude no llamó a guardar_factura: {texto}" if texto else "Claude no llamó a guardar_factura"
 
 
 def _ejecutar(ruta: Path, modelo, supabase) -> Resultado:
@@ -120,10 +135,29 @@ def procesar(ruta: Path, modelo, supabase) -> Resultado:
     return resultado
 
 
+def _pendientes(entrada: Path) -> list[Path]:
+    ahora = time.time()
+    pendientes = []
+    for ruta in sorted(entrada.iterdir()):
+        if not ruta.is_file() or ruta.name == ".gitkeep":
+            continue
+        if ruta.suffix.lower() not in SUFIJOS_SOPORTADOS:
+            if ruta not in _ignorados:
+                _ignorados.add(ruta)
+                log.debug("ignorado %s: formato no soportado", ruta.name)
+            continue
+        if ahora - ruta.stat().st_mtime < EDAD_MINIMA_SEGUNDOS:
+            continue
+        pendientes.append(ruta)
+    return pendientes
+
+
 def _pasada(carpeta: Path, modelo, supabase) -> None:
-    entrada = carpeta / "entrada"
-    for ruta in sorted(p for p in entrada.iterdir() if p.is_file() and p.name != ".gitkeep"):
-        procesar(ruta, modelo, supabase)
+    for ruta in _pendientes(carpeta / "entrada"):
+        try:
+            procesar(ruta, modelo, supabase)
+        except Exception:  # p. ej. no se pudo mover: se registra y sigue con el resto
+            log.exception("error %s: no se pudo terminar de procesar", ruta.name)
 
 
 def main() -> None:
@@ -141,8 +175,14 @@ def main() -> None:
     modelo = ChatOpenRouter(model=os.getenv("MODELO", MODELO_POR_DEFECTO), temperature=0)
     supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
 
+    for nombre in CARPETAS:
+        (carpeta / nombre).mkdir(parents=True, exist_ok=True)
+
     while True:
-        _pasada(carpeta, modelo, supabase)
+        try:
+            _pasada(carpeta, modelo, supabase)
+        except Exception:  # p. ej. carpeta no disponible: se reintenta en la pasada siguiente
+            log.exception("error al leer la carpeta de entrada")
         if not args.vigilar:
             break
         time.sleep(SEGUNDOS_ENTRE_PASADAS)

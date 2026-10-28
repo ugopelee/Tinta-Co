@@ -50,7 +50,7 @@ facturas/
   errores/      archivo + <archivo>.error.txt con el motivo
 ```
 
-Van a `errores/` los formatos no soportados, los importes que no cuadran
+Los archivos con otra extensión se dejan en `entrada/` sin tocar, y los modificados hace menos de 2 s se esperan a la pasada siguiente. Si el nombre ya existe en `procesadas/` o `errores/`, se añade una marca de fecha antes de la extensión. Van a `errores/` los importes que no cuadran
 (base + IVA frente a total, tolerancia 0,02), las facturas duplicadas
 (motivo "duplicada") y cualquier fallo de lectura o de base de datos.
 
