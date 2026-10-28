@@ -50,3 +50,6 @@ agente/facturas/entrada/*
 agente/facturas/procesadas/*
 agente/facturas/errores/*
 !agente/facturas/*/.gitkeep
+
+# ZIP de entrega: se genera con git archive, no se versiona
+*.zip
