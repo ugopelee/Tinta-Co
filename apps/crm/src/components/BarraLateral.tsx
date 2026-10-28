@@ -325,7 +325,7 @@ export function BarraLateral({
               <span className="barra-texto flex-1">Ver la web</span>
             </a>
 
-            <div className="barra-centrar flex items-center gap-3 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2 enano:!mt-1.5">
+            <div className="barra-centrar flex items-center gap-2 border-t border-borde px-1 pt-3 !mt-2 bajo:pt-2 enano:!mt-1.5">
               <span
                 title={email}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bajo:h-8 bajo:w-8 bg-texto text-xs font-semibold text-fondo"
@@ -333,12 +333,12 @@ export function BarraLateral({
                 {iniciales || "·"}
               </span>
               <span className="barra-texto min-w-0 flex-1">
-                <span className="block whitespace-nowrap text-[0.72rem] font-medium leading-tight tracking-tight">
+                <span className="block truncate text-[0.72rem] font-medium leading-tight tracking-tight">
                   {nombre}
                 </span>
                 <span className="block truncate text-xs text-tenue">Propietario</span>
               </span>
-              <span className="barra-texto flex items-center">
+              <span className="barra-texto flex flex-none items-center gap-1">
                 <SelectorTema />
                 <form action={cerrarSesion}>
                   <button
