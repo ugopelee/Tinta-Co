@@ -8,15 +8,12 @@ import { Encabezado } from "@/components/Encabezado";
 import { PastillaColor } from "@/components/PastillaColor";
 import { RevisionFacturaProveedor } from "@/components/RevisionFacturaProveedor";
 import { euros } from "@/lib/importes";
+import { fecha } from "@/lib/fechas";
 
 export const metadata: Metadata = { title: "Facturas de proveedores" };
 
 /** Las que se listan por pestaña; las ya resueltas se acumulan sin fin. */
 const FACTURAS_VISIBLES = 50;
-
-// Fechas sin hora (`date` de la base): en UTC para que no se corran un día.
-const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 export default async function FacturasProveedor({ searchParams }: PageProps<"/facturacion/proveedores">) {
   const { estado: parametro } = await searchParams;

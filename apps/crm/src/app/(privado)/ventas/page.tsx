@@ -6,6 +6,7 @@ import { Encabezado } from "@/components/Encabezado";
 import { Icono } from "@/components/Icono";
 import { PastillaColor } from "@/components/PastillaColor";
 import { euros, totales } from "@/lib/importes";
+import { fecha } from "@/lib/fechas";
 
 export const metadata: Metadata = { title: "Ventas" };
 
@@ -17,9 +18,6 @@ type FilaVenta = {
   clientes: { nombre: string } | null;
   lineas_venta: { cantidad: number; precio_unitario: number; descuento: number; iva: number }[];
 };
-
-const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 
 export default async function Ventas({ searchParams }: PageProps<"/ventas">) {
   const { estado } = await searchParams;

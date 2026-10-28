@@ -9,11 +9,9 @@ import { BotonImprimir } from "@/components/BotonImprimir";
 import { Encabezado } from "@/components/Encabezado";
 import { PastillaColor } from "@/components/PastillaColor";
 import { euros, totales } from "@/lib/importes";
+import { fecha } from "@/lib/fechas";
 
 export const metadata: Metadata = { title: "Factura" };
-
-const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 export default async function DetalleFactura({ params }: PageProps<"/facturacion/[id]">) {
   const { id } = await params;
@@ -46,7 +44,7 @@ export default async function DetalleFactura({ params }: PageProps<"/facturacion
   return (
     <div className="max-w-4xl">
       <div className="print:hidden">
-        <Encabezado miga="Facturación · factura" titulo={factura.numero} nota={`${cliente?.nombre ?? "Cliente eliminado"} · ${fecha(factura.fecha_emision)}`}>
+        <Encabezado miga="Facturación · factura" titulo={factura.numero} nota={`${cliente?.nombre ?? "Cliente eliminado"} · ${fecha(factura.fecha_emision, true)}`}>
           <PastillaColor nombre={estado.nombre} color={estado.color} />
           <BotonImprimir />
         </Encabezado>
@@ -97,17 +95,17 @@ export default async function DetalleFactura({ params }: PageProps<"/facturacion
           <dl className="grid gap-1 sm:justify-items-end">
             <div className="flex gap-2">
               <dt className="text-tenue">Emisión</dt>
-              <dd>{fecha(factura.fecha_emision)}</dd>
+              <dd>{fecha(factura.fecha_emision, true)}</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-tenue">Vencimiento</dt>
-              <dd>{fecha(factura.fecha_vencimiento)}</dd>
+              <dd>{fecha(factura.fecha_vencimiento, true)}</dd>
             </div>
             {factura.fecha_cobro && (
               <div className="flex gap-2">
                 <dt className="text-tenue">Cobro</dt>
                 <dd>
-                  {fecha(factura.fecha_cobro)}
+                  {fecha(factura.fecha_cobro, true)}
                   {metodo && ` · ${metodo}`}
                 </dd>
               </div>

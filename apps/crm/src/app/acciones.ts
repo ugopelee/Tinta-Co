@@ -8,21 +8,7 @@ import { estadosCita, tiposActividad, type EstadoCita } from "@tinta/compartido/
 import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
 import { googleDisponible } from "@/lib/google";
-
-/**
- * El proxy no basta para proteger las server actions: se ejecutan como POST
- * sobre la ruta donde viven y un cambio de matcher las dejaría al descubierto.
- * Por eso cada acción comprueba la sesión por su cuenta.
- */
-async function conSesion() {
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-  return supabase;
-}
+import { conSesion, SIN_SESION } from "@/lib/sesion";
 
 export async function iniciarSesion(
   _anterior: ResultadoFormulario,
@@ -54,7 +40,7 @@ export async function cambiarRolCuenta(
   rol: "propietario" | "artista",
 ) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
+  if (!supabase) return SIN_SESION;
 
   const {
     data: { user },
@@ -132,7 +118,7 @@ export async function salirDeLaCuenta(datos: FormData) {
 
 export async function moverCita(id: string, estado: EstadoCita, posicion: number) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
+  if (!supabase) return SIN_SESION;
 
   if (!estadosCita.some((columna) => columna.id === estado)) {
     return { ok: false as const, mensaje: "Estado no válido." };
@@ -162,7 +148,7 @@ export async function guardarCobro(
   },
 ) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
+  if (!supabase) return SIN_SESION;
 
   if (cambios.importe !== null && (cambios.importe < 0 || cambios.importe > 100000)) {
     return { ok: false as const, mensaje: "El importe no es válido." };
@@ -296,7 +282,7 @@ export async function guardarDiseno(
 
 export async function cambiarDisponible(id: string, disponible: boolean) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
+  if (!supabase) return SIN_SESION;
 
   const { error } = await supabase.from("disenos").update({ disponible }).eq("id", id);
 
@@ -311,7 +297,7 @@ export async function cambiarDisponible(id: string, disponible: boolean) {
 
 export async function eliminarDiseno(id: string) {
   const supabase = await conSesion();
-  if (!supabase) return { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
+  if (!supabase) return SIN_SESION;
 
   // Un diseño con reservas es historia de clientes: se retira, no se borra.
   const { count } = await supabase

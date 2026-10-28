@@ -9,11 +9,9 @@ import { EditorVenta, lineaEditable } from "@/components/EditorVenta";
 import { Encabezado } from "@/components/Encabezado";
 import { PastillaColor } from "@/components/PastillaColor";
 import { euros, importeLinea, totales } from "@/lib/importes";
+import { fecha } from "@/lib/fechas";
 
 export const metadata: Metadata = { title: "Venta" };
-
-const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
 
 export default async function DetalleVenta({ params }: PageProps<"/ventas/[id]">) {
   const { id } = await params;
@@ -54,7 +52,7 @@ export default async function DetalleVenta({ params }: PageProps<"/ventas/[id]">
       <Encabezado
         miga="Ventas · detalle"
         titulo={venta.numero}
-        nota={`${cliente?.nombre ?? "Cliente eliminado"} · ${fecha(venta.fecha)}`}
+        nota={`${cliente?.nombre ?? "Cliente eliminado"} · ${fecha(venta.fecha, true)}`}
       >
         <PastillaColor nombre={estado.nombre} color={estado.color} />
       </Encabezado>
@@ -81,7 +79,7 @@ export default async function DetalleVenta({ params }: PageProps<"/ventas/[id]">
         />
       ) : (
         <section className="tarjeta grid gap-4 p-5">
-          {venta.valida_hasta && <p className="text-sm text-tenue">Válido hasta el {fecha(venta.valida_hasta)}</p>}
+          {venta.valida_hasta && <p className="text-sm text-tenue">Válido hasta el {fecha(venta.valida_hasta, true)}</p>}
 
           <ul className="grid gap-2">
             {lineas.map((linea) => (

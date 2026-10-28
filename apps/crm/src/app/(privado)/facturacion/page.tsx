@@ -12,20 +12,18 @@ import { TarjetaIndicador } from "@/components/TarjetaIndicador";
 import { TablaCobros } from "@/components/TablaCobros";
 import { Encabezado } from "@/components/Encabezado";
 import { PastillaColor } from "@/components/PastillaColor";
-import { euros as eurosExactos } from "@/lib/importes";
+import { euros } from "@/lib/importes";
+import { fecha } from "@/lib/fechas";
 
 export const metadata: Metadata = { title: "Facturación" };
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-// Fechas sin hora (`date` de la base): en UTC para que no se corran un día.
-const fecha = (valor: string) =>
-  new Date(valor).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-
 /** Las facturas que se listan; las cifras de arriba cuentan todas. */
 const FACTURAS_VISIBLES = 50;
 
-const euros = (valor: number) =>
+/** Cifras grandes de caja y gráfico: sin céntimos. Las facturas usan `euros`, exacto. */
+const eurosSinCentimos = (valor: number) =>
   valor.toLocaleString("es-ES", {
     style: "currency",
     currency: "EUR",
@@ -69,7 +67,7 @@ function porMes(citas: Cita[]): MesFacturado[] {
 export default async function Facturacion() {
   const supabase = await crearClienteServidor();
 
-  const [{ data }, { data: facturasDatos, count: totalFacturas }, { data: resumenDatos }] = await Promise.all([
+  const [{ data }, { data: facturasDatos, count: totalFacturas }, { data: resumenDatos, error: errorResumen }] = await Promise.all([
     supabase.from("citas").select("*").in("tipo", tiposEncargo).order("created_at", { ascending: false }),
     supabase
       .from("facturas")
@@ -79,6 +77,9 @@ export default async function Facturacion() {
       .limit(FACTURAS_VISIBLES),
     supabase.rpc("resumen_facturacion").single(),
   ]);
+
+  // Si falla, las cifras de factura se muestran como no disponibles: un 0 € parecería un dato real.
+  if (errorResumen) console.error("No se ha podido cargar el resumen de facturación", errorResumen);
 
   const facturas = (facturasDatos ?? []) as (Factura & { clientes: { nombre: string } | null })[];
   // Todas las cifras en una consulta agregada en la base, no sobre las filas traídas.
@@ -93,7 +94,7 @@ export default async function Facturacion() {
   } | null;
   const vencidas = resumen?.vencidas ?? 0;
   // El IVA no es ingreso ni gasto: el resultado se calcula sobre las bases.
-  const resultado = Math.round((Number(resumen?.base_facturada ?? 0) - Number(resumen?.base_gastos ?? 0)) * 100) / 100;
+  const resultado = resumen ? Math.round((Number(resumen.base_facturada) - Number(resumen.base_gastos)) * 100) / 100 : null;
 
   const citas = (data ?? []) as Cita[];
   const cobradas = citas.filter((cita) => cita.pagado);
@@ -136,31 +137,31 @@ export default async function Facturacion() {
     <>
       <Encabezado
         miga="Caja · facturación"
-        titulo={`${euros(totalCobrado)} cobrados`}
+        titulo={`${eurosSinCentimos(totalCobrado)} cobrados`}
         nota={`De ${cobradas.length} ${cobradas.length === 1 ? "oportunidad" : "oportunidades"} a ${clientesPagadores} ${clientesPagadores === 1 ? "cliente" : "clientes"} distintos.`}
       >
         {porCobrar > 0 && (
           <span className="chip-lima cifra">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-sobre-lima" />
-            {euros(porCobrar)} por cobrar
+            {eurosSinCentimos(porCobrar)} por cobrar
           </span>
         )}
       </Encabezado>
 
       <h2 className="etiqueta mb-2 text-tenue">Facturas</h2>
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <TarjetaIndicador icono="documento" etiqueta="Facturado" valor={Number(resumen?.facturado ?? 0)} sufijo="€" variacion={null} nota="facturas no anuladas, con IVA" />
-        <TarjetaIndicador icono="bien" etiqueta="Facturas cobradas" valor={Number(resumen?.cobrado ?? 0)} sufijo="€" variacion={null} nota="importe cobrado" />
+        <TarjetaIndicador icono="documento" etiqueta="Facturado" valor={resumen ? Number(resumen.facturado) : null} sufijo="€" variacion={null} nota="facturas no anuladas, con IVA" />
+        <TarjetaIndicador icono="bien" etiqueta="Facturas cobradas" valor={resumen ? Number(resumen.cobrado) : null} sufijo="€" variacion={null} nota="importe cobrado" />
         <TarjetaIndicador
           icono="reloj"
           etiqueta="Facturas pendientes de cobro"
-          valor={Number(resumen?.pendiente ?? 0)}
+          valor={resumen ? Number(resumen.pendiente) : null}
           sufijo="€"
           variacion={null}
           nota={vencidas ? `${vencidas} ${vencidas === 1 ? "vencida" : "vencidas"}` : "emitidas, ninguna vencida"}
           subirEsMalo
         />
-        <TarjetaIndicador icono="tarjeta" etiqueta="Gastos validados" valor={Number(resumen?.gastos_validados ?? 0)} sufijo="€" variacion={null} nota="facturas de proveedores" subirEsMalo />
+        <TarjetaIndicador icono="tarjeta" etiqueta="Gastos validados" valor={resumen ? Number(resumen.gastos_validados) : null} sufijo="€" variacion={null} nota="facturas de proveedores" subirEsMalo />
         <TarjetaIndicador icono="grafico" etiqueta="Resultado (sin IVA)" valor={resultado} sufijo="€" variacion={null} nota="base facturada menos base de gastos" />
       </div>
 
@@ -195,7 +196,7 @@ export default async function Facturacion() {
                         <td className="cifra px-5 py-3 font-semibold">{factura.numero}</td>
                         <td className="px-3 py-3">{factura.clientes?.nombre ?? "Cliente eliminado"}</td>
                         <td className="px-3 py-3 text-tenue">{fecha(factura.fecha_emision)}</td>
-                        <td className="cifra px-3 py-3 text-right font-medium">{eurosExactos(Number(factura.total))}</td>
+                        <td className="cifra px-3 py-3 text-right font-medium">{euros(Number(factura.total))}</td>
                         <td className="px-3 py-3">
                           <PastillaColor nombre={estado.nombre} color={estado.color} />
                         </td>
@@ -271,7 +272,7 @@ export default async function Facturacion() {
                     <div className="flex items-baseline justify-between gap-3 text-sm">
                       <span className="font-medium">{fila.nombre}</span>
                       <span className="cifra text-tenue">
-                        {euros(fila.total)} · {porcentaje}%
+                        {eurosSinCentimos(fila.total)} · {porcentaje}%
                       </span>
                     </div>
                     <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-superficie">
