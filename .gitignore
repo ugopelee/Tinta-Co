@@ -41,3 +41,12 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# agente de facturas
+agente/.venv/
+__pycache__/
+.pytest_cache/
+agente/facturas/entrada/*
+agente/facturas/procesadas/*
+agente/facturas/errores/*
+!agente/facturas/*/.gitkeep
