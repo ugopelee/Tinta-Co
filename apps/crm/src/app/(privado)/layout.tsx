@@ -27,7 +27,7 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
   if (perfil?.rol !== "propietario") redirect("/sin-acceso");
 
   // Cifras de la barra: solo cuentas, sin traerse las filas.
-  const [citas, clientes, sinResponder, cobros, vacaciones] = await Promise.all([
+  const [citas, clientes, sinResponder, cobros, vacaciones, porRevisar] = await Promise.all([
     supabase.from("citas").select("id", { count: "exact", head: true }),
     supabase.from("clientes").select("id", { count: "exact", head: true }),
     supabase
@@ -44,6 +44,10 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
       .from("vacaciones")
       .select("id", { count: "exact", head: true })
       .eq("estado", "pendiente"),
+    supabase
+      .from("facturas_proveedor")
+      .select("id", { count: "exact", head: true })
+      .eq("estado", "por_revisar"),
   ]);
 
   const contadores = {
@@ -52,6 +56,7 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
     sinResponder: sinResponder.count ?? 0,
     cobros: cobros.count ?? 0,
     vacaciones: vacaciones.count ?? 0,
+    porRevisar: porRevisar.count ?? 0,
   };
 
   return (

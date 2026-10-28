@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
-import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
+import { metodosPago, type FacturaProveedor, type MetodoPago } from "@tinta/compartido/tipos";
 
 type Respuesta = { ok: true; aviso?: string } | { ok: false; mensaje: string };
 
@@ -90,5 +90,76 @@ export async function anularFactura(id: string, motivo: string): Promise<Respues
   if (!data?.length) return { ok: false, mensaje: "Solo se puede anular una factura emitida. Recarga la página." };
 
   revalidarFacturas(id, data[0].venta_id);
+  return { ok: true };
+}
+
+type DatosFacturaProveedor = Pick<FacturaProveedor, "numero" | "fecha" | "proveedor" | "nif" | "base" | "iva" | "total">;
+
+/** Una fecha ISO (AAAA-MM-DD) que además existe en el calendario. */
+function fechaValida(valor: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const fecha = new Date(`${valor}T00:00:00Z`);
+  return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === valor;
+}
+
+/**
+ * El agente deja la factura como borrador y la persona la contrasta con el
+ * original: aquí se corrige y se valida o se descarta, una sola vez.
+ */
+export async function revisarFacturaProveedor(
+  id: string,
+  datos: DatosFacturaProveedor,
+  estado: "validada" | "descartada",
+): Promise<Respuesta> {
+  const supabase = await conSesion();
+  if (!supabase) return SIN_SESION;
+
+  if (estado !== "validada" && estado !== "descartada") return { ok: false, mensaje: "Estado no válido." };
+
+  const numero = datos.numero.trim();
+  const proveedor = datos.proveedor.trim();
+  if (!numero) return { ok: false, mensaje: "Indica el número de factura." };
+  if (!proveedor) return { ok: false, mensaje: "Indica el proveedor." };
+  if (!fechaValida(datos.fecha)) return { ok: false, mensaje: "La fecha no es válida." };
+
+  const importes = [datos.base, datos.iva, datos.total];
+  if (!importes.every((valor) => Number.isFinite(valor) && valor >= 0)) {
+    return { ok: false, mensaje: "Los importes deben ser números iguales o mayores que cero." };
+  }
+  // Tolerancia de dos céntimos por los redondeos de la factura original.
+  if (Math.abs(datos.base + datos.iva - datos.total) > 0.02) {
+    return { ok: false, mensaje: "La base más el IVA no coincide con el total." };
+  }
+
+  // Con el estado de partida en el filtro, una factura ya resuelta no se pisa.
+  const { data, error } = await supabase
+    .from("facturas_proveedor")
+    .update({
+      numero,
+      fecha: datos.fecha,
+      proveedor,
+      nif: datos.nif?.trim() || null,
+      base: datos.base,
+      iva: datos.iva,
+      total: datos.total,
+      estado,
+      revisada_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("estado", "por_revisar")
+    .select("id");
+  if (error) {
+    // Índice único por proveedor y número: corregir los datos puede crear un duplicado.
+    if (error.code === "23505") {
+      return { ok: false, mensaje: "Ya existe otra factura de este proveedor con ese número." };
+    }
+    return { ok: false, mensaje: mensajeDe(error, "No se ha podido guardar la factura del proveedor.") };
+  }
+  if (!data?.length) return { ok: false, mensaje: "Esta factura ya no está por revisar. Recarga la página." };
+
+  revalidatePath("/facturacion/proveedores");
+  // «Gastos validados» de Facturación y el contador de la barra lateral.
+  revalidatePath("/facturacion");
+  revalidatePath("/", "layout");
   return { ok: true };
 }

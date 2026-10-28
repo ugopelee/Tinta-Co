@@ -23,6 +23,7 @@ export type Contadores = {
   cobros: number;
   sinResponder: number;
   vacaciones: number;
+  porRevisar: number;
 };
 
 type Enlace = {
@@ -71,6 +72,12 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
         texto: "Facturación",
         icono: "euro",
         contador: "cobros",
+      },
+      {
+        href: "/facturacion/proveedores",
+        texto: "Proveedores",
+        icono: "tarjeta",
+        contador: "porRevisar",
       },
       { href: "/informes", texto: "Informes", icono: "informe" },
     ],
@@ -245,7 +252,10 @@ export function BarraLateral({
                             (ruta.startsWith("/equipo/") &&
                               !ruta.startsWith("/equipo/ausencias") &&
                               !ruta.startsWith("/equipo/fichajes"))
-                          : ruta.startsWith(enlace.href);
+                          : enlace.href === "/facturacion"
+                            ? ruta.startsWith("/facturacion") &&
+                              !ruta.startsWith("/facturacion/proveedores")
+                            : ruta.startsWith(enlace.href);
                     const cuenta = enlace.contador
                       ? contadores[enlace.contador]
                       : null;
