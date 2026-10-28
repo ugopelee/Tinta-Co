@@ -112,12 +112,14 @@ create table public.facturas_proveedor (
 );
 
 -- Duplicados: mismo NIF (sin espacios ni guiones) o, sin él, mismo proveedor,
--- y mismo número.
+-- y mismo número. Las descartadas quedan fuera: un original mal leído y
+-- descartado no debe impedir que se vuelva a escanear bien.
 create unique index facturas_proveedor_unica
   on public.facturas_proveedor (
     coalesce(upper(regexp_replace(nif, '[^A-Za-z0-9]', '', 'g')), lower(trim(proveedor))),
     numero
-  );
+  )
+  where estado <> 'descartada';
 
 -- --- 2. Numeración -------------------------------------------------------------
 
@@ -200,12 +202,20 @@ create trigger ventas_controlar
   for each row execute function public.controlar_venta();
 
 -- Las líneas solo se tocan mientras la venta es un presupuesto. Si la venta
--- ya no existe (borrado en cascada) no hay nada que proteger.
+-- ya no existe (borrado en cascada) no hay nada que proteger. Única excepción:
+-- que diseno_id pase a nulo, que es lo que hace «on delete set null» al borrar
+-- un diseño del catálogo usado en una venta ya confirmada o facturada.
 create or replace function public.proteger_lineas_venta()
 returns trigger
 language plpgsql
 as $$
 begin
+  if tg_op = 'UPDATE'
+     and new.diseno_id is null
+     and to_jsonb(new) - 'diseno_id' = to_jsonb(old) - 'diseno_id' then
+    return new;
+  end if;
+
   if exists (
     select 1 from public.ventas
      where id in (coalesce(new.venta_id, old.venta_id), coalesce(old.venta_id, new.venta_id))
@@ -311,6 +321,13 @@ declare
   v_id uuid;
   v_estado text;
 begin
+  -- La cita solo puede ser del propio cliente.
+  if p_cita is not null and not exists (
+    select 1 from public.citas where id = p_cita and cliente_id = p_cliente
+  ) then
+    raise exception 'La cita elegida no pertenece a ese cliente.';
+  end if;
+
   if p_venta is null then
     insert into public.ventas (cliente_id, cita_id, valida_hasta, notas)
     values (p_cliente, p_cita, p_valida_hasta, p_notas)
