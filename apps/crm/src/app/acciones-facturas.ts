@@ -116,35 +116,34 @@ export async function revisarFacturaProveedor(
 
   if (estado !== "validada" && estado !== "descartada") return { ok: false, mensaje: "Estado no válido." };
 
-  const numero = datos.numero.trim();
-  const proveedor = datos.proveedor.trim();
-  if (!numero) return { ok: false, mensaje: "Indica el número de factura." };
-  if (!proveedor) return { ok: false, mensaje: "Indica el proveedor." };
-  if (!fechaValida(datos.fecha)) return { ok: false, mensaje: "La fecha no es válida." };
+  const resolucion = { estado, revisada_at: new Date().toISOString() };
+  let cambios: Record<string, unknown> = resolucion;
 
-  const importes = [datos.base, datos.iva, datos.total];
-  if (!importes.every((valor) => Number.isFinite(valor) && valor >= 0)) {
-    return { ok: false, mensaje: "Los importes deben ser números iguales o mayores que cero." };
-  }
-  // Tolerancia de dos céntimos por los redondeos de la factura original.
-  if (Math.abs(datos.base + datos.iva - datos.total) > 0.02) {
-    return { ok: false, mensaje: "La base más el IVA no coincide con el total." };
+  // Descartar no exige datos válidos ni los reescribe: la factura se aparta tal como la leyó el agente.
+  if (estado === "validada") {
+    const numero = String(datos?.numero ?? "").trim();
+    const proveedor = String(datos?.proveedor ?? "").trim();
+    const fecha = String(datos?.fecha ?? "");
+    if (!numero) return { ok: false, mensaje: "Indica el número de factura." };
+    if (!proveedor) return { ok: false, mensaje: "Indica el proveedor." };
+    if (!fechaValida(fecha)) return { ok: false, mensaje: "La fecha no es válida." };
+
+    const { base, iva, total } = datos;
+    if (![base, iva, total].every((valor) => typeof valor === "number" && Number.isFinite(valor) && valor >= 0)) {
+      return { ok: false, mensaje: "Los importes deben ser números iguales o mayores que cero." };
+    }
+    // En céntimos enteros, para que 0,02 exacto no falle por coma flotante.
+    if (Math.abs(Math.round(base * 100) + Math.round(iva * 100) - Math.round(total * 100)) > 2) {
+      return { ok: false, mensaje: "La base más el IVA no coincide con el total." };
+    }
+
+    cambios = { ...resolucion, numero, fecha, proveedor, nif: String(datos.nif ?? "").trim() || null, base, iva, total };
   }
 
   // Con el estado de partida en el filtro, una factura ya resuelta no se pisa.
   const { data, error } = await supabase
     .from("facturas_proveedor")
-    .update({
-      numero,
-      fecha: datos.fecha,
-      proveedor,
-      nif: datos.nif?.trim() || null,
-      base: datos.base,
-      iva: datos.iva,
-      total: datos.total,
-      estado,
-      revisada_at: new Date().toISOString(),
-    })
+    .update(cambios)
     .eq("id", id)
     .eq("estado", "por_revisar")
     .select("id");

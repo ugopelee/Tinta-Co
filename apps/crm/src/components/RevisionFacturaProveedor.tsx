@@ -34,7 +34,7 @@ export function RevisionFacturaProveedor({ factura }: { factura: FacturaProveedo
     valor.trim() === "" ? NaN : Number(valor.replace(",", ".")),
   );
   const descuadra =
-    [numBase, numIva, numTotal].every(Number.isFinite) && Math.abs(numBase + numIva - numTotal) > 0.02;
+    [numBase, numIva, numTotal].every(Number.isFinite) && Math.abs(Math.round(numBase * 100) + Math.round(numIva * 100) - Math.round(numTotal * 100)) > 2;
 
   function resolver(estado: "validada" | "descartada") {
     const texto =
