@@ -7,6 +7,38 @@ Claude las lee (OCR/visión) y pide llamar a `guardar_factura` con los datos. El
 privado `facturas-proveedor` e inserta la fila en `facturas_proveedor`
 (estado `por_revisar`). Claude nunca toca la base de datos ni ve la clave de Supabase.
 
+## Qué se automatiza
+
+El trabajo que se quita es **pasar a mano las facturas de proveedor**: abrir cada
+PDF o foto (la luz, el material, un taxi…) y copiar número, fecha, proveedor, NIF,
+base, IVA y total. Con el agente:
+
+1. Se deja el archivo en `facturas/entrada/`. Con `--vigilar`, el agente mira la
+   carpeta cada 10 s y lo recoge solo.
+2. Claude lee la factura (aunque sea una foto) y extrae los datos.
+3. El agente comprueba que cuadran (base + IVA = total) y que no está repetida.
+4. Sube el original a Supabase y guarda la fila como **por revisar**.
+5. Mueve el archivo a `procesadas/`, o a `errores/` con un `.error.txt` que dice
+   por qué.
+6. En el CRM, **Caja → Proveedores** la muestra con un contador en la barra
+   lateral. La persona solo revisa y pulsa **Validar** o **Descartar**; al
+   validarla entra en «Gastos validados» y en el resultado de Facturación.
+
+La revisión final es manual a propósito: la IA puede equivocarse, y así es como
+lo hace también Odoo con la digitalización de facturas de proveedor.
+
+## Dónde se usa cada API
+
+| API | Dónde | Qué hace |
+|---|---|---|
+| OpenRouter (Claude) | `agente.py`, `main()`: `ChatOpenRouter(...)` | Crea el modelo con `OPENROUTER_API_KEY` |
+| OpenRouter (Claude) | `agente.py`, `construir_mensaje()` | Convierte el PDF o la foto en el mensaje que se envía |
+| OpenRouter (Claude) | `agente.py`, `_ejecutar()`: `create_agent(...)` | Junta modelo, prompt y herramienta; aquí sale la petición |
+| Supabase | `agente.py`, `main()`: `create_client(...)` | Cliente con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` |
+| Supabase | `herramientas.py`, `guardar_factura` | Sube el original al bucket y hace el INSERT |
+
+Las claves solo viven en `agente/.env`, que no se sube a git.
+
 ## Las cinco partes
 
 | Parte | Dónde está |
@@ -32,6 +64,15 @@ Copia `.env.example` a `.env` y rellena `OPENROUTER_API_KEY`, `SUPABASE_URL` y
 (por defecto `agente/facturas`). La migración `20261028120000_modulo_ventas_facturacion.sql`
 debe estar aplicada. Si falta alguna variable obligatoria, el agente lo indica y termina
 con código 1.
+
+### Usarlo gratis
+
+Claude es de pago. Para probar sin gastar, en `.env` pon `MODELO=openrouter/free`:
+OpenRouter elige al azar un modelo gratuito que acepte imágenes y herramientas, y
+los PDF los convierte a texto antes de pasarlos. Sin saldo comprado el límite es
+de unas 50 peticiones al día (cada factura es una petición). Los modelos gratuitos
+cambian a menudo y leen peor que Claude: puede que alguna factura acabe en
+`errores/` o que haya que corregir más datos al revisarla.
 
 ## Uso
 
