@@ -16,6 +16,12 @@ describe("importeLinea", () => {
 });
 
 describe("totales", () => {
+  it("redondea el medio céntimo de IVA del grupo hacia arriba", () => {
+    const resultado = totales([{ cantidad: 1, precio_unitario: 0.25, descuento: 0, iva: 10 }]);
+    expect(resultado.cuotaIva).toBe(0.03);
+    expect(resultado.total).toBe(0.28);
+  });
+
   it("agrupa el IVA por tipo y suma base, cuota y total", () => {
     expect(
       totales([

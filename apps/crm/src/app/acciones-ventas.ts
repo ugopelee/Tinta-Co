@@ -1,35 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
+import { conSesion, mensajeDe, SIN_SESION } from "@/lib/sesion";
 import { estadosVenta, tiposIva, type EstadoVenta } from "@tinta/compartido/estudio";
 import type { LineaVenta } from "@tinta/compartido/tipos";
-import { totales } from "@/lib/importes";
+import { redondear, totales } from "@/lib/importes";
 
 type Respuesta<T = object> = ({ ok: true } & T) | { ok: false; mensaje: string };
 type LineaNueva = Omit<LineaVenta, "id" | "venta_id">;
-
-/** Igual que en `acciones.ts`: cada acción comprueba la sesión por su cuenta. */
-async function conSesion() {
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user ? supabase : null;
-}
-
-const SIN_SESION = { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
-
-/**
- * Los triggers y la función de facturar hacen `raise exception` con un texto
- * ya pensado para la persona (código P0001); se muestra tal cual. Cualquier
- * otro error es técnico y se queda en el log.
- */
-function mensajeDe(error: { code?: string; message: string }, generico: string) {
-  if (error.code === "P0001") return error.message;
-  console.error(generico, error);
-  return generico;
-}
 
 function revalidarVentas(id?: string) {
   revalidatePath("/ventas");
@@ -59,11 +37,23 @@ export async function guardarVenta(datos: {
   if (!supabase) return SIN_SESION;
 
   if (!datos.cliente_id) return { ok: false, mensaje: "Elige un cliente." };
-  const fallo = validarLineas(datos.lineas);
+  // Cantidad, precio y descuento a dos decimales, como los redondea la base y el editor: lo guardado es lo que se vio.
+  const lineas = datos.lineas.map((linea) => ({
+    ...linea,
+    cantidad: redondear(linea.cantidad),
+    precio_unitario: redondear(linea.precio_unitario),
+    descuento: redondear(linea.descuento),
+  }));
+  const fallo = validarLineas(lineas);
   if (fallo) return { ok: false, mensaje: fallo };
 
   const { data: existe } = await supabase.from("clientes").select("id").eq("id", datos.cliente_id).maybeSingle();
   if (!existe) return { ok: false, mensaje: "Ese cliente no existe." };
+
+  if (datos.cita_id) {
+    const { data: cita } = await supabase.from("citas").select("cliente_id").eq("id", datos.cita_id).maybeSingle();
+    if (cita?.cliente_id !== datos.cliente_id) return { ok: false, mensaje: "La cita elegida no pertenece a ese cliente." };
+  }
 
   // Una sola llamada: la venta y sus líneas se guardan juntas o no se guarda nada.
   const { data, error } = await supabase.rpc("guardar_venta", {
@@ -72,7 +62,7 @@ export async function guardarVenta(datos: {
     p_cita: datos.cita_id,
     p_valida_hasta: datos.valida_hasta || null,
     p_notas: datos.notas?.trim() || null,
-    p_lineas: datos.lineas.map((linea, orden) => ({
+    p_lineas: lineas.map((linea, orden) => ({
       orden,
       descripcion: linea.descripcion.trim(),
       diseno_id: linea.diseno_id,

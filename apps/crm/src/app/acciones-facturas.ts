@@ -1,28 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
+import { conSesion, mensajeDe, SIN_SESION } from "@/lib/sesion";
 import { metodosPago, type FacturaProveedor, type MetodoPago } from "@tinta/compartido/tipos";
 
 type Respuesta = { ok: true; aviso?: string } | { ok: false; mensaje: string };
-
-/** Igual que en `acciones-ventas.ts`: cada acción comprueba la sesión por su cuenta. */
-async function conSesion() {
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user ? supabase : null;
-}
-
-const SIN_SESION = { ok: false as const, mensaje: "Tu sesión ha terminado. Vuelve a entrar para seguir." };
-
-/** Los `raise exception` del trigger (P0001) ya traen un texto para la persona. */
-function mensajeDe(error: { code?: string; message: string }, generico: string) {
-  if (error.code === "P0001") return error.message;
-  console.error(generico, error);
-  return generico;
-}
 
 function revalidarFacturas(id: string, ventaId: string | null) {
   revalidatePath("/facturacion");
@@ -57,10 +39,19 @@ export async function marcarFacturaCobrada(id: string, metodo: MetodoPago): Prom
   // Si falla, la factura ya está cobrada y no se deshace: se avisa.
   const { cita_id, total } = data[0];
   if (cita_id) {
-    const { error: errorCita } = await supabase
+    // Solo si la cita sigue sin cobrar: si ya tenía su propio cobro (otro método, otra fecha), no se pisa.
+    const { data: citaActualizada, error: errorCita } = await supabase
       .from("citas")
       .update({ pagado: true, fecha_cobro: hoy, metodo_pago: metodo, importe: Number(total) })
-      .eq("id", cita_id);
+      .eq("id", cita_id)
+      .eq("pagado", false)
+      .select("id");
+    if (!errorCita && !citaActualizada?.length) {
+      return {
+        ok: true,
+        aviso: "La factura está cobrada. La cita asociada ya tenía su propio cobro y se ha dejado como estaba.",
+      };
+    }
     if (errorCita) {
       console.error("Factura cobrada, pero no se ha podido actualizar la cita:", errorCita);
       return {
@@ -129,8 +120,9 @@ export async function revisarFacturaProveedor(
     if (!fechaValida(fecha)) return { ok: false, mensaje: "La fecha no es válida." };
 
     const { base, iva, total } = datos;
-    if (![base, iva, total].every((valor) => typeof valor === "number" && Number.isFinite(valor) && valor >= 0)) {
-      return { ok: false, mensaje: "Los importes deben ser números iguales o mayores que cero." };
+    if (![base, iva, total].every((valor) => typeof valor === "number" && Number.isFinite(valor))) {
+      // Una factura rectificativa o un abono del proveedor traen importes negativos.
+      return { ok: false, mensaje: "Los importes deben ser números." };
     }
     // En céntimos enteros, para que 0,02 exacto no falle por coma flotante.
     if (Math.abs(Math.round(base * 100) + Math.round(iva * 100) - Math.round(total * 100)) > 2) {

@@ -125,7 +125,8 @@ export function EditorVenta({
     const resultado = await guardarVenta({
       id,
       cliente_id: cliente,
-      cita_id: citaId,
+      // La cita es del cliente de origen: si se cambia de cliente, se suelta.
+      cita_id: cliente === clienteId ? citaId : null,
       valida_hasta: valida || null,
       notas: nota,
       lineas: convertidas,

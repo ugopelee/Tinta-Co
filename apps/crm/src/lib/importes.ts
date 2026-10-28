@@ -17,7 +17,7 @@ export type LineaImporte = {
 };
 
 /** Redondea a céntimos con el medio alejándose de cero. */
-function redondear(valor: number): number {
+export function redondear(valor: number): number {
   const centimos = Math.round(Number((Math.abs(valor) * 100).toPrecision(15)));
   if (centimos === 0) return 0;
   return (Math.sign(valor) * centimos) / 100;
