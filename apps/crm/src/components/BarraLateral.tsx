@@ -65,6 +65,7 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
   {
     titulo: "Caja",
     enlaces: [
+      { href: "/ventas", texto: "Ventas", icono: "documento" },
       {
         href: "/facturacion",
         texto: "Facturación",
