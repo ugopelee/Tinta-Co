@@ -32,6 +32,8 @@ export const estudio = {
     superficie: "#101014",
     superficieAlta: "#17171d",
     borde: "#26262e",
+    /** Contorno de campos y controles: 3:1 sobre el fondo (WCAG 1.4.11). */
+    bordeCampo: "#65656b",
     texto: "#eceae4",
     tenue: "#8d8d98",
     acento: "#c2452f",
@@ -44,6 +46,10 @@ export const estudio = {
    * negro como color de acción. La lima es el único color de acento y va
    * siempre de relleno con texto oscuro encima (como texto no se lee).
    * `acento` queda para lo que quema: errores y avisos.
+   *
+   * Tonos ajustados a WCAG 2.2 AA: los que van como texto (tenue, acento,
+   * acentoSuave) llegan a 4,5:1 sobre fondo, superficie y superficie alta;
+   * `bordeCampo` y `verde` (iconos) a 3:1.
    */
   panelClaro: {
     fondo: "#efeeeb",
@@ -51,11 +57,12 @@ export const estudio = {
     superficieAlta: "#f5f4f1",
     borde: "#e6e4df",
     bordeTarjeta: "transparent",
+    bordeCampo: "#888784",
     texto: "#141414",
-    tenue: "#6f6e69",
-    acento: "#f0362b",
-    acentoSuave: "#d42a20",
-    verde: "#12b955",
+    tenue: "#6c6b66",
+    acento: "#ca2d24",
+    acentoSuave: "#cc281f",
+    verde: "#0f9b47",
     amarillo: "#ffa814",
     azul: "#2a76ff",
     lima: "#cdf25e",
@@ -68,6 +75,7 @@ export const estudio = {
     superficieAlta: "#212124",
     borde: "#2c2c30",
     bordeTarjeta: "#232326",
+    bordeCampo: "#6d6d70",
     texto: "#f2f1ee",
     tenue: "#95948f",
     acento: "#ff4a3d",

@@ -66,7 +66,7 @@ export default async function Clientes({
             defaultValue={busqueda}
             placeholder="Nombre, email o teléfono"
             aria-label="Buscar cliente"
-            className="h-10 w-64 rounded-full bg-superficie pl-10 pr-4 text-sm outline-none placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
+            className="h-10 w-64 rounded-full bg-superficie pl-10 pr-4 text-sm ring-1 ring-borde-campo placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
           />
         </form>
         {busqueda && (

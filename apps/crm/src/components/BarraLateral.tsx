@@ -217,7 +217,7 @@ export function BarraLateral({
               name="q"
               placeholder="Buscar cliente"
               aria-label="Buscar cliente"
-              className="h-10 w-full rounded-xl bajo:h-9 bg-superficie-alta pl-9 pr-12 text-sm outline-none transition-shadow duration-200 placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
+              className="h-10 w-full rounded-xl bajo:h-9 bg-superficie-alta pl-9 pr-12 text-sm ring-1 ring-borde-campo transition-shadow duration-200 placeholder:text-tenue focus:ring-2 focus:ring-texto/10"
             />
             <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md bg-superficie px-1.5 py-0.5 font-sans text-[0.65rem] text-tenue">
               Ctrl K
@@ -322,7 +322,7 @@ export function BarraLateral({
                 {iniciales || "·"}
               </span>
               <span className="barra-texto min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium leading-tight">
+                <span className="block whitespace-nowrap text-[0.72rem] font-medium leading-tight tracking-tight">
                   {nombre}
                 </span>
                 <span className="block truncate text-xs text-tenue">Propietario</span>

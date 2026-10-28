@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const RUTA_LOGIN = "/login";
 
-/** Accesibles sin sesión: entrar, registrarse y volver de Google. */
-const RUTAS_ABIERTAS = [RUTA_LOGIN, "/registro"];
+/** Accesibles sin sesión: entrar y volver de Google. */
+const RUTAS_ABIERTAS = [RUTA_LOGIN];
 const RUTA_RETORNO_OAUTH = "/auth/callback";
 
 export async function proxy(request: NextRequest) {

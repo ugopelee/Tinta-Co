@@ -7,6 +7,7 @@ import { formularioInicial } from "@tinta/compartido/formularios";
 import { estudio, tiposEvento, type TipoOportunidad } from "@tinta/compartido/estudio";
 import type { Diseno } from "@tinta/compartido/tipos";
 import { EVENTO_ELEGIR_PIEZA } from "@/lib/eventos";
+import { Desplegable } from "@/components/Desplegable";
 
 /** Las cinco puertas del formulario, en dos familias. */
 const GRUPOS: { titulo: string; opciones: { id: TipoOportunidad; texto: string }[] }[] = [
@@ -50,7 +51,7 @@ const MARCADOR_MENSAJE: Record<TipoOportunidad, string> = {
 };
 
 const claseCampo =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-texto outline-none transition-colors duration-200 placeholder:text-tenue/60 hover:border-white/20 focus:border-acento-suave/70 focus:bg-white/[0.05]";
+  "w-full rounded-2xl border border-borde-campo bg-white/[0.03] px-4 py-3 text-sm text-texto transition-colors duration-200 placeholder:text-tenue hover:border-tenue focus:border-acento-suave/70 focus:bg-white/[0.05]";
 
 const claseEtiqueta = "mb-2 block text-xs text-tenue";
 
@@ -137,7 +138,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         <legend className={claseEtiqueta}>¿Qué necesitas?</legend>
         {GRUPOS.map((grupo) => (
           <div key={grupo.titulo} className="flex flex-wrap items-center gap-1.5">
-            <span className="mono w-full text-tenue/70">{grupo.titulo}</span>
+            <span className="mono w-full text-tenue">{grupo.titulo}</span>
             {grupo.opciones.map((opcion) => (
               <label
                 key={opcion.id}
@@ -166,7 +167,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={claseEtiqueta} htmlFor="nombre">
-            Nombre *
+            Nombre (obligatorio)
           </label>
           <input
             id="nombre"
@@ -181,7 +182,7 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
 
         <div>
           <label className={claseEtiqueta} htmlFor="email">
-            Email *
+            Email (obligatorio)
           </label>
           <input
             id="email"
@@ -246,18 +247,17 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
         <div key="evento" className="surgir grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={claseEtiqueta} htmlFor="tipo_evento">
-              Tipo de evento *
+              Tipo de evento (obligatorio)
             </label>
-            <select id="tipo_evento" name="tipo_evento" required defaultValue="" className={claseCampo}>
-              <option value="" disabled>
-                Elige uno
-              </option>
-              {tiposEvento.map((opcion) => (
-                <option key={opcion.id} value={opcion.id}>
-                  {opcion.nombre}
-                </option>
-              ))}
-            </select>
+            <Desplegable
+              id="tipo_evento"
+              name="tipo_evento"
+              required
+              opciones={[
+                { valor: "", texto: "Elige uno", desactivada: true },
+                ...tiposEvento.map((o) => ({ valor: o.id, texto: o.nombre })),
+              ]}
+            />
           </div>
 
           <div>
@@ -291,34 +291,30 @@ export function FormularioReserva({ disenos }: { disenos: Diseno[] }) {
             <label className={claseEtiqueta} htmlFor="diseno_id">
               Diseño del catálogo
             </label>
-            <select
+            <Desplegable
               id="diseno_id"
               name="diseno_id"
               value={disenoElegido}
-              onChange={(evento) => setDisenoElegido(evento.target.value)}
-              className={claseCampo}
-            >
-              <option value="">Ninguno en concreto</option>
-              {disenos.map((diseno) => (
-                <option key={diseno.id} value={diseno.id}>
-                  {diseno.nombre}
-                </option>
-              ))}
-            </select>
+              onChange={setDisenoElegido}
+              opciones={[
+                { valor: "", texto: "Ninguno en concreto" },
+                ...disenos.map((d) => ({ valor: d.id, texto: d.nombre })),
+              ]}
+            />
           </div>
 
           <div>
             <label className={claseEtiqueta} htmlFor="zona_cuerpo">
               Zona del cuerpo
             </label>
-            <select id="zona_cuerpo" name="zona_cuerpo" defaultValue="" className={claseCampo}>
-              <option value="">Todavía no lo tengo claro</option>
-              {estudio.zonasCuerpo.map((zona) => (
-                <option key={zona} value={zona}>
-                  {zona}
-                </option>
-              ))}
-            </select>
+            <Desplegable
+              id="zona_cuerpo"
+              name="zona_cuerpo"
+              opciones={[
+                { valor: "", texto: "Todavía no lo tengo claro" },
+                ...estudio.zonasCuerpo.map((z) => ({ valor: z, texto: z })),
+              ]}
+            />
           </div>
         </div>
       )}

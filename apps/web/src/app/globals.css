@@ -5,6 +5,7 @@
   --color-superficie: var(--superficie);
   --color-superficie-alta: var(--superficie-alta);
   --color-borde: var(--borde);
+  --color-borde-campo: var(--borde-campo);
   --color-texto: var(--texto);
   --color-tenue: var(--tenue);
   --color-acento: var(--acento);
@@ -77,6 +78,51 @@ body {
 ::selection {
   background: var(--acento-suave);
   color: #0a0a0c;
+}
+
+/* --- Accesibilidad (WCAG 2.2 AA) ------------------------------------- */
+
+/* Foco siempre visible para quien navega con teclado: el coral suave da
+   más de 6:1 sobre el fondo. */
+:focus-visible {
+  outline: 2px solid var(--acento-suave);
+  outline-offset: 3px;
+}
+
+/* Primer elemento de cada página: salta la navegación. Solo aparece al
+   recibir el foco. */
+.saltar {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  translate: 0 -200%;
+  border-radius: 9999px;
+  background: var(--texto);
+  color: var(--fondo);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.saltar:focus {
+  translate: 0 0;
+}
+
+/* El destino del salto recibe el foco, pero no hace falta enmarcarlo entero. */
+#contenido:focus {
+  outline: none;
+}
+
+/* Temas de contraste de Windows: el sistema quita los fondos, así que los
+   botones de relleno conservan un borde para seguir pareciendo botones. */
+@media (forced-colors: active) {
+  button,
+  [role="button"],
+  a.rounded-full,
+  a.rounded-xl {
+    border: 2px solid ButtonText;
+  }
 }
 
 /* Grano sutil por encima de todo: quita el aspecto de pantalla plana. */
@@ -305,7 +351,7 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   html {
-    scroll-behavior: auto;
+    scroll-behavior: auto !important;
   }
 
   *,

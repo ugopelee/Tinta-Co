@@ -211,8 +211,8 @@ export function Servicios() {
                   key={servicio.id}
                   type="button"
                   onClick={() => ir(indice)}
-                  className={`absolute top-0 whitespace-nowrap text-xs transition-colors duration-200 ${
-                    indice === activo ? "text-texto" : "text-tenue/70 hover:text-texto"
+                  className={`absolute -top-1 whitespace-nowrap py-1 text-xs transition-colors duration-200 ${
+                    indice === activo ? "text-texto" : "text-tenue hover:text-texto"
                   }`}
                   style={{
                     left: `calc(8px + (100% - 16px) * ${f})`,

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return new Response("Sesión caducada.", { status: 401 });
+  if (!user) return new Response("Tu sesión ha terminado. Vuelve a entrar para seguir.", { status: 401 });
 
   // El proxy no protege esto por su cuenta: se comprueba el rol aquí.
   const { data: perfil } = await supabase

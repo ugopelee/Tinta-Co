@@ -25,14 +25,25 @@ export default async function PaginaLogin({
       : "/";
 
   return (
-    <main className="grid grid-cols-1 min-h-screen gap-3 p-3 lg:grid-cols-[1fr_1.1fr]">
+    <main id="contenido" tabIndex={-1} className="grid grid-cols-1 min-h-screen gap-3 p-3 lg:grid-cols-[1fr_1.1fr]">
       {/* Columna de marca: da contexto de dónde estás entrando. */}
       <section className="relative hidden flex-col justify-between overflow-hidden rounded-[1.25rem] bg-texto p-10 text-fondo lg:flex">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-32 top-1/3 h-[34rem] w-[34rem] rounded-full opacity-25 blur-[130px]"
-          style={{ background: "var(--lima)" }}
-        />
+        {/* Aurora: tres focos de color que derivan despacio sobre el negro. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div
+            className="login-deriva absolute -left-24 top-[8%] h-[26rem] w-[26rem] rounded-full opacity-60 blur-[110px]"
+            style={{ background: "var(--lima)" }}
+          />
+          <div
+            className="login-deriva absolute -right-28 bottom-[6%] h-[24rem] w-[24rem] rounded-full opacity-45 blur-[120px]"
+            style={{ background: "var(--azul)", animationDelay: "-6s" }}
+          />
+          <div
+            className="login-deriva absolute right-[12%] top-[-8%] h-[16rem] w-[16rem] rounded-full opacity-35 blur-[100px]"
+            style={{ background: "var(--acento)", animationDelay: "-11s" }}
+          />
+          <div className="login-puntos absolute inset-0" />
+        </div>
 
         <div className="relative flex items-center gap-3">
           <Logo className="h-12 w-12" />
@@ -46,12 +57,11 @@ export default async function PaginaLogin({
 
         <div className="relative">
           <p className="titular text-4xl leading-tight">
-            Las oportunidades, los clientes y su historial
-            <span className="text-fondo/40"> en un solo sitio.</span>
+            Tinta, oficio y
+            <span style={{ color: "var(--lima)" }}> buen trabajo.</span>
           </p>
           <p className="parrafo mt-5 max-w-sm text-sm text-fondo/60">
-            Este panel es privado. Si no formas parte del estudio, no verás
-            ningún dato aunque tengas cuenta.
+            Acceso exclusivo para el equipo de {estudio.nombre}.
           </p>
         </div>
 
@@ -70,7 +80,7 @@ export default async function PaginaLogin({
 
           <h1 className="titular mt-6 text-3xl lg:mt-0">Inicia sesión</h1>
           <p className="mt-2 text-sm text-tenue">
-            Entra con tu cuenta del estudio para ver el panel.
+            Entra con la cuenta que te ha dado el estudio. Si no tienes una, pídesela a la persona que administra el panel.
           </p>
 
           {/* Sin el proveedor activo en Supabase, el botón solo lleva a un
@@ -99,13 +109,6 @@ export default async function PaginaLogin({
           <div className={conGoogle ? "" : "mt-8"}>
             <FormularioLogin volver={volver} />
           </div>
-
-          <p className="mt-7 text-sm text-tenue">
-            ¿No tienes cuenta?{" "}
-            <Link href="/registro" className="enlace-sutil text-texto">
-              Crear una
-            </Link>
-          </p>
         </div>
       </section>
     </main>

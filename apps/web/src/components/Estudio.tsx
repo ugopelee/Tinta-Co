@@ -90,7 +90,7 @@ export function Estudio() {
           <Revelar retardo={380}>
             <a
               href="#proceso"
-              className="group mt-10 inline-flex items-center gap-3 text-sm text-texto/80 transition-colors hover:text-texto"
+              className="group mt-7 inline-flex min-h-11 items-center gap-3 text-sm text-texto/80 transition-colors hover:text-texto"
             >
               <span className="enlace-sutil">Cómo trabajamos</span>
               <span aria-hidden className="transition-transform duration-200 ease-out group-hover:translate-y-0.5">

@@ -7,7 +7,7 @@ import { formularioInicial } from "@tinta/compartido/formularios";
 import { tiposActividad } from "@tinta/compartido/estudio";
 
 const claseCampo =
-  "w-full rounded-xl border border-borde bg-superficie px-3 py-2 text-sm text-texto outline-none transition-colors duration-200 placeholder:text-tenue/70 focus:border-texto focus:ring-2 focus:ring-texto/10";
+  "w-full rounded-xl border border-borde-campo bg-superficie px-3 py-2 text-sm text-texto transition-colors duration-200 placeholder:text-tenue focus:border-texto focus:ring-2 focus:ring-texto/10";
 
 function Boton() {
   const { pending } = useFormStatus();

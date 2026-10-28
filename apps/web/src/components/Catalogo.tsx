@@ -171,7 +171,7 @@ export function Catalogo({ disenos }: { disenos: Diseno[] }) {
             </div>
             <a
               href="#reserva"
-              className="enlace-sutil mt-3 inline-block text-xs text-tenue transition-colors hover:text-texto"
+              className="enlace-sutil mt-2 inline-block py-1 text-xs text-tenue transition-colors hover:text-texto"
             >
               Hay más flash en el estudio: pregúntanos en el formulario
             </a>
