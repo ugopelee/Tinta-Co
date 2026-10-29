@@ -7,7 +7,7 @@ import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosCita, tiposActividad, type EstadoCita } from "@tinta/compartido/estudio";
 import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
-import { googleDisponible } from "@/lib/google";
+import { googleDisponible } from "@tinta/compartido/supabase/google";
 import { conSesion, SIN_SESION } from "@/lib/sesion";
 
 export async function iniciarSesion(

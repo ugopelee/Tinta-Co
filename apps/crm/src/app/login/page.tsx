@@ -4,7 +4,7 @@ import { estudio } from "@tinta/compartido/estudio";
 import { Logo } from "@/components/Logo";
 import { FormularioLogin } from "@/components/FormularioLogin";
 import { BotonGoogle } from "@/components/BotonGoogle";
-import { googleDisponible } from "@/lib/google";
+import { googleDisponible } from "@tinta/compartido/supabase/google";
 
 export const metadata: Metadata = { title: "Iniciar sesión" };
 
