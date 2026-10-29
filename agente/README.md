@@ -13,13 +13,15 @@ El trabajo que se quita es **pasar a mano las facturas de proveedor**: abrir cad
 PDF o foto (la luz, el material, un taxi…) y copiar número, fecha, proveedor, NIF,
 base, IVA y total. Con el agente:
 
-1. Se deja el archivo en `facturas/entrada/`. Con `--vigilar`, el agente mira la
-   carpeta cada 10 s y lo recoge solo.
+1. En el CRM, **Caja → Proveedores → Subir facturas** (o se deja el archivo en
+   `facturas/entrada/`). Con `--vigilar`, el agente mira la cola del CRM y la
+   carpeta cada 10 s y las recoge solas.
 2. Claude lee la factura (aunque sea una foto) y extrae los datos.
 3. El agente comprueba que cuadran (base + IVA = total) y que no está repetida.
 4. Sube el original a Supabase y guarda la fila como **por revisar**.
 5. Mueve el archivo a `procesadas/`, o a `errores/` con un `.error.txt` que dice
-   por qué.
+   por qué. Si vino del CRM, el error y su motivo también salen allí, en
+   «En cola del agente», con **Reintentar** y **Quitar**.
 6. En el CRM, **Caja → Proveedores** la muestra con un contador en la barra
    lateral. La persona solo revisa y pulsa **Validar** o **Descartar**; al
    validarla entra en «Gastos validados» y en el resultado de Facturación.
@@ -62,7 +64,8 @@ py -m venv .venv
 Copia `.env.example` a `.env` y rellena `OPENROUTER_API_KEY`, `SUPABASE_URL` y
 `SUPABASE_SERVICE_ROLE_KEY`. Opcionales: `MODELO` y `CARPETA_FACTURAS`
 (por defecto `agente/facturas`). La migración `20261028120000_modulo_ventas_facturacion.sql`
-debe estar aplicada. Si falta alguna variable obligatoria, el agente lo indica y termina
+debe estar aplicada, y para subir desde el CRM también
+`20261029120000_subida_facturas.sql`. Si falta alguna variable obligatoria, el agente lo indica y termina
 con código 1.
 
 ### Usarlo gratis
@@ -76,6 +79,13 @@ cambian a menudo y leen peor que Claude: puede que alguna factura acabe en
 
 ## Uso
 
+En Windows, lo más fácil es **doble clic en `arrancar-agente.bat`**: arranca
+el modo `--vigilar` y se queda en marcha hasta cerrar la ventana. Las facturas
+subidas desde el CRM mientras está parado esperan en la cola y se leen al
+arrancarlo.
+
+Desde la terminal:
+
 ```bash
 .venv/Scripts/python agente.py             # una pasada por entrada/
 .venv/Scripts/python agente.py --vigilar   # repite la pasada cada 10 s
@@ -88,6 +98,7 @@ Se escribe una línea de registro por archivo (`ok` o `error` con el motivo).
 ```
 facturas/
   entrada/      aquí se dejan los PDF, JPG, PNG o WEBP
+  crm/          las que se suben desde el CRM, mientras se leen
   procesadas/   facturas guardadas correctamente
   errores/      archivo + <archivo>.error.txt con el motivo
 ```
