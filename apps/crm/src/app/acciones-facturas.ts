@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { conSesion, mensajeDe, SIN_SESION } from "@/lib/sesion";
 import { metodosPago, type FacturaProveedor, type MetodoPago } from "@tinta/compartido/tipos";
@@ -152,5 +153,126 @@ export async function revisarFacturaProveedor(
   // «Gastos validados» de Facturación y el contador de la barra lateral.
   revalidatePath("/facturacion");
   revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// --- Subida de facturas de proveedor ------------------------------------------
+
+/** Lo que admite el bucket «facturas-proveedor» (10 MB y estos tipos). */
+const MAX_FACTURA = 10 * 1024 * 1024;
+
+/**
+ * El tipo lo declara el navegador; la cabecera del archivo no miente. Se
+ * devuelve el tipo real para guardarlo así en Storage.
+ */
+function tipoReal(cabecera: Uint8Array) {
+  const texto = (desde: number, hasta: number) => new TextDecoder().decode(cabecera.slice(desde, hasta));
+  if (texto(0, 5) === "%PDF-") return "application/pdf";
+  if (cabecera[0] === 0xff && cabecera[1] === 0xd8 && cabecera[2] === 0xff) return "image/jpeg";
+  if (cabecera[0] === 0x89 && texto(1, 4) === "PNG") return "image/png";
+  if (texto(0, 4) === "RIFF" && texto(8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
+const EXTENSIONES: Record<string, string> = {
+  "application/pdf": ".pdf",
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+function revalidarProveedores() {
+  revalidatePath("/facturacion/proveedores");
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Sube una factura (PDF o foto) para que la lea el agente. Se llama una vez
+ * por archivo: así cada uno cabe en el límite de la server action y el
+ * fallo de uno no tumba al resto.
+ */
+export async function subirFacturaProveedor(datos: FormData): Promise<Respuesta> {
+  const supabase = await conSesion();
+  if (!supabase) return SIN_SESION;
+
+  const archivo = datos.get("archivo");
+  if (!(archivo instanceof File) || archivo.size === 0) return { ok: false, mensaje: "Elige un archivo." };
+  if (archivo.size > MAX_FACTURA) return { ok: false, mensaje: "No puede pasar de 10 MB." };
+
+  const tipo = tipoReal(new Uint8Array(await archivo.slice(0, 12).arrayBuffer()));
+  if (!tipo) return { ok: false, mensaje: "Tiene que ser un PDF o una foto (JPG, PNG o WEBP)." };
+
+  // El nombre acaba en una ruta de Storage y en el disco del agente: fuera
+  // separadores y caracteres que Windows no admite. La extensión, la del tipo real.
+  const base =
+    archivo.name
+      .replace(/\.[^.]*$/, "")
+      .replace(/[\\/:*?"<>|\p{Cc}]/gu, "-")
+      .trim()
+      .slice(0, 80) || "factura";
+  const nombre = `${base}${EXTENSIONES[tipo]}`;
+  // Storage solo acepta claves ASCII: «Factura año» → «Factura-ano».
+  const claveStorage = nombre
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^A-Za-z0-9._-]/g, "-");
+  const ruta = `entrada/${randomUUID()}-${claveStorage}`;
+
+  const { error: errorSubida } = await supabase.storage
+    .from("facturas-proveedor")
+    .upload(ruta, archivo, { contentType: tipo });
+  if (errorSubida) {
+    console.error("Error al subir la factura de proveedor:", errorSubida);
+    return { ok: false, mensaje: "No se ha podido subir el archivo." };
+  }
+
+  const { error } = await supabase.from("facturas_entrantes").insert({ archivo: ruta, nombre_archivo: nombre });
+  if (error) {
+    // Sin fila que lo apunte, el agente nunca lo leería y quedaría huérfano.
+    await supabase.storage.from("facturas-proveedor").remove([ruta]);
+    return { ok: false, mensaje: mensajeDe(error, "No se ha podido poner la factura en cola.") };
+  }
+
+  revalidarProveedores();
+  return { ok: true };
+}
+
+/** Vuelve a poner en cola una factura que el agente no pudo leer. */
+export async function reintentarFacturaEntrante(id: string): Promise<Respuesta> {
+  const supabase = await conSesion();
+  if (!supabase) return SIN_SESION;
+
+  const { data, error } = await supabase
+    .from("facturas_entrantes")
+    .update({ estado: "pendiente", motivo: null, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("estado", "error")
+    .select("id");
+  if (error) return { ok: false, mensaje: mensajeDe(error, "No se ha podido reintentar.") };
+  if (!data?.length) return { ok: false, mensaje: "Esta factura ya no está en error. Recarga la página." };
+
+  revalidarProveedores();
+  return { ok: true };
+}
+
+/** Quita de la cola una factura que el agente no pudo leer, con su original. */
+export async function quitarFacturaEntrante(id: string): Promise<Respuesta> {
+  const supabase = await conSesion();
+  if (!supabase) return SIN_SESION;
+
+  // Solo las que están en error: una pendiente puede estar leyéndose ahora mismo.
+  const { data, error } = await supabase
+    .from("facturas_entrantes")
+    .delete()
+    .eq("id", id)
+    .eq("estado", "error")
+    .select("archivo");
+  if (error) return { ok: false, mensaje: mensajeDe(error, "No se ha podido quitar la factura.") };
+  if (!data?.length) return { ok: false, mensaje: "Esta factura ya no está en error. Recarga la página." };
+
+  const { error: errorArchivo } = await supabase.storage.from("facturas-proveedor").remove([data[0].archivo]);
+  if (errorArchivo) console.error("Factura quitada, pero su original sigue en Storage:", errorArchivo);
+
+  revalidarProveedores();
   return { ok: true };
 }

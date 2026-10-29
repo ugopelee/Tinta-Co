@@ -5,9 +5,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@tinta/compartido"],
   experimental: {
     serverActions: {
-      // Las nóminas en PDF (hasta 5 MB) y las fotos del equipo suben por
-      // server action; el límite por defecto es 1 MB.
-      bodySizeLimit: "6mb",
+      // Las nóminas en PDF (hasta 5 MB), las fotos del equipo y las facturas
+      // de proveedor (hasta 10 MB, de una en una) suben por server action; el
+      // límite por defecto es 1 MB. El margen cubre la cabecera multipart.
+      bodySizeLimit: "11mb",
     },
   },
 };

@@ -193,6 +193,10 @@ def test_importes_que_no_cuadran_no_insertan_y_van_a_errores(factura, carpetas):
     assert modelo.llamadas == 1
     assert (carpetas / "errores" / "factura.pdf").exists()
     assert (carpetas / "errores" / "factura.pdf.error.txt").exists()
+    # El motivo tiene que llegar al .error.txt: LangGraph descarta los errores
+    # de validación que no van ligados a un campo.
+    razon = (carpetas / "errores" / "factura.pdf.error.txt").read_text(encoding="utf-8")
+    assert "no cuadran" in razon
 
 
 def test_factura_duplicada_va_a_errores_y_borra_lo_subido(factura, carpetas):
