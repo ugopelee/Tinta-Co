@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { estudio } from "@tinta/compartido/estudio";
 import { Logo } from "@/components/Logo";
 import { cerrarSesion } from "@/app/acciones";
@@ -333,8 +333,18 @@ export function BarraLateral({
                 {iniciales || "·"}
               </span>
               <span className="barra-texto min-w-0 flex-1">
-                <span className="block truncate text-[0.72rem] font-medium leading-tight tracking-tight">
-                  {nombre}
+                <span className="block break-words text-[0.72rem] font-medium leading-tight tracking-tight">
+                  {/* Si el nombre es el email, salta de línea tras la "@" y no a mitad de palabra. */}
+                  {nombre.split("@").map((parte, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && (
+                        <>
+                          @<wbr />
+                        </>
+                      )}
+                      {parte}
+                    </Fragment>
+                  ))}
                 </span>
                 <span className="block truncate text-xs text-tenue">Propietario</span>
               </span>

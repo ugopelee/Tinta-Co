@@ -2,9 +2,9 @@
 
 /* Pantallas bajas (portátiles): la barra lateral se compacta por escalones
    para caber entera sin desplazarse. */
-@custom-variant bajo (@media (max-height: 1000px));
-@custom-variant enano (@media (max-height: 900px));
-@custom-variant mini (@media (max-height: 800px));
+@custom-variant bajo (@media (max-height: 940px));
+@custom-variant enano (@media (max-height: 840px));
+@custom-variant mini (@media (max-height: 680px));
 
 @theme inline {
   --color-fondo: var(--fondo);
