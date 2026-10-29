@@ -450,6 +450,20 @@ export const estadosNomina = {
   pendiente: { nombre: "Por firmar", color: "#ffa814" },
 } as const;
 
+/**
+ * Fases de un proceso de selección, en orden. «Contratado» no se elige a
+ * mano: lo pone el botón «Contratar», que crea la ficha del empleado.
+ */
+export const estadosCandidato = [
+  { id: "nuevo", nombre: "CV recibido", color: "#3b82f6" },
+  { id: "entrevista", nombre: "Entrevista", color: "#ffa814" },
+  { id: "oferta", nombre: "Oferta", color: "#a855f7" },
+  { id: "contratado", nombre: "Contratado", color: "#12b955" },
+  { id: "descartado", nombre: "Descartado", color: "#8a8a8a" },
+] as const;
+
+export type EstadoCandidato = (typeof estadosCandidato)[number]["id"];
+
 /** Escala de la evaluación trimestral. */
 export const notasEvaluacion = [
   { nota: 1, nombre: "Muy insuficiente" },

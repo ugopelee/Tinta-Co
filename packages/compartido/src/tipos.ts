@@ -1,5 +1,6 @@
 import type {
   EstadoCita,
+  EstadoCandidato,
   EstadoEmpleado,
   EstadoFactura,
   EstadoFacturaProveedor,
@@ -249,4 +250,34 @@ export type FacturaProveedor = {
   estado: EstadoFacturaProveedor;
   revisada_at: string | null;
   created_at: string;
+};
+
+/**
+ * Factura subida desde el CRM que espera al agente. Desaparece cuando el
+ * agente la convierte en `FacturaProveedor`; si falla, queda en «error».
+ */
+export type FacturaEntrante = {
+  id: string;
+  archivo: string;
+  nombre_archivo: string;
+  estado: "pendiente" | "leyendo" | "error";
+  motivo: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Persona en un proceso de selección. `cv` es la ruta en el bucket «cvs». */
+export type Candidato = {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  puesto: string;
+  departamento: string | null;
+  cv: string;
+  notas: string | null;
+  estado: EstadoCandidato;
+  empleado_id: string | null;
+  created_at: string;
+  updated_at: string;
 };

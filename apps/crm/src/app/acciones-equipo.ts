@@ -78,24 +78,26 @@ async function crearCuentaPara(
 
 // --- Propietario -------------------------------------------------------------
 
+type DatosAlta = {
+  nombre: string;
+  email: string;
+  puesto: string;
+  departamento: string | null;
+  telefono: string | null;
+  fechaAlta: string;
+  foto?: File | null;
+};
+
 /**
  * Alta completa: ficha, foto, checklist de incorporación y cuenta del CRM con
  * usuario y contraseña. Es lo que en Odoo hacían a mano el plan de
- * incorporación y la regla automatizada.
+ * incorporación y la regla automatizada. La usan el alta a mano y el botón
+ * «Contratar» de Selección.
  */
-export async function altaEmpleado(_anterior: ResultadoAlta, datos: FormData): Promise<ResultadoAlta> {
-  const supabase = await conPropietario();
-  if (!supabase) return { estado: "error", mensaje: "Solo el propietario puede dar altas." };
-
-  const texto = (campo: string) => String(datos.get(campo) ?? "").trim();
-  const nombre = texto("nombre");
-  const email = texto("email").toLowerCase();
-  const puesto = texto("puesto");
-  const departamento = texto("departamento") || null;
-  const telefono = texto("telefono") || null;
-  const fechaAlta = texto("fecha_alta") || hoyMadrid();
-  const foto = datos.get("foto");
-
+async function darDeAlta(
+  supabase: NonNullable<Awaited<ReturnType<typeof conPropietario>>>,
+  { nombre, email, puesto, departamento, telefono, fechaAlta, foto }: DatosAlta,
+): Promise<ResultadoAlta> {
   if (!nombre || !email || !puesto) {
     return { estado: "error", mensaje: "Nombre, email y puesto son obligatorios." };
   }
@@ -170,6 +172,23 @@ export async function altaEmpleado(_anterior: ResultadoAlta, datos: FormData): P
     mensaje: `${nombre} ya está dado de alta y tiene su checklist de incorporación.`,
     credenciales: cuenta.credenciales,
   };
+}
+
+export async function altaEmpleado(_anterior: ResultadoAlta, datos: FormData): Promise<ResultadoAlta> {
+  const supabase = await conPropietario();
+  if (!supabase) return { estado: "error", mensaje: "Solo el propietario puede dar altas." };
+
+  const texto = (campo: string) => String(datos.get(campo) ?? "").trim();
+  const foto = datos.get("foto");
+  return darDeAlta(supabase, {
+    nombre: texto("nombre"),
+    email: texto("email").toLowerCase(),
+    puesto: texto("puesto"),
+    departamento: texto("departamento") || null,
+    telefono: texto("telefono") || null,
+    fechaAlta: texto("fecha_alta") || hoyMadrid(),
+    foto: foto instanceof File ? foto : null,
+  });
 }
 
 export async function cambiarFoto(empleadoId: string, datos: FormData) {
@@ -390,6 +409,119 @@ export async function subirNomina(
 
   revalidarEquipo(empleadoId);
   return { estado: "ok", mensaje: "Nómina subida. El empleado ya puede verla y firmarla en su portal." };
+}
+
+// --- Selección ---------------------------------------------------------------
+
+const FASES_A_MANO = ["nuevo", "entrevista", "oferta", "descartado"] as const;
+
+/** Abre un proceso de admisión: datos del candidato y su CV en PDF. */
+export async function crearCandidato(
+  _anterior: ResultadoFormulario,
+  datos: FormData,
+): Promise<ResultadoFormulario> {
+  const supabase = await conPropietario();
+  if (!supabase) return { estado: "error", mensaje: "Solo el propietario gestiona la selección." };
+
+  const texto = (campo: string) => String(datos.get(campo) ?? "").trim();
+  const nombre = texto("nombre");
+  const email = texto("email").toLowerCase();
+  const puesto = texto("puesto");
+  const archivo = datos.get("cv");
+
+  if (!nombre || !email || !puesto) {
+    return { estado: "error", mensaje: "Nombre, email y puesto son obligatorios." };
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { estado: "error", mensaje: "El email no es válido." };
+  if (!(archivo instanceof File) || archivo.size === 0) return { estado: "error", mensaje: "Adjunta el CV en PDF." };
+  if (archivo.size > 5 * 1024 * 1024) return { estado: "error", mensaje: "El CV no puede pasar de 5 MB." };
+
+  // Igual que en las nóminas: manda la cabecera, no el tipo que dice el navegador.
+  const cabecera = new TextDecoder().decode(new Uint8Array(await archivo.slice(0, 5).arrayBuffer()));
+  if (cabecera !== "%PDF-") return { estado: "error", mensaje: "El CV tiene que ser un PDF." };
+
+  const ruta = `${randomUUID()}.pdf`;
+  const { error: errorSubida } = await supabase.storage
+    .from("cvs")
+    .upload(ruta, archivo, { contentType: "application/pdf" });
+  if (errorSubida) {
+    console.error("Error al subir el CV:", errorSubida);
+    return { estado: "error", mensaje: "No se ha podido subir el CV." };
+  }
+
+  const { error } = await supabase.from("candidatos").insert({
+    nombre,
+    email,
+    puesto,
+    departamento: texto("departamento") || null,
+    telefono: texto("telefono") || null,
+    notas: texto("notas") || null,
+    cv: ruta,
+  });
+
+  if (error) {
+    await supabase.storage.from("cvs").remove([ruta]);
+    console.error("Error al crear el candidato:", error);
+    return { estado: "error", mensaje: "No se ha podido abrir el proceso." };
+  }
+
+  revalidatePath("/equipo/seleccion");
+  return { estado: "ok", mensaje: `Proceso abierto para ${nombre}.` };
+}
+
+/** Mueve al candidato de fase. «Contratado» solo llega por `contratarCandidato`. */
+export async function cambiarEstadoCandidato(id: string, estado: (typeof FASES_A_MANO)[number]) {
+  const supabase = await conPropietario();
+  if (!supabase) return { ok: false as const, mensaje: "Sesión caducada." };
+  if (!FASES_A_MANO.includes(estado)) return { ok: false as const, mensaje: "Fase no válida." };
+
+  const { error } = await supabase
+    .from("candidatos")
+    .update({ estado, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .neq("estado", "contratado");
+
+  if (error) {
+    console.error("Error al mover al candidato:", error);
+    return { ok: false as const, mensaje: "No se ha podido guardar." };
+  }
+
+  revalidatePath("/equipo/seleccion");
+  return { ok: true as const, mensaje: "" };
+}
+
+/**
+ * Contratar = alta. Con los datos del candidato se crea su ficha (su email
+ * pasa a ser su usuario del CRM), la checklist de incorporación y la cuenta.
+ * El proceso queda cerrado y enlazado a la ficha.
+ */
+export async function contratarCandidato(id: string): Promise<ResultadoAlta> {
+  const supabase = await conPropietario();
+  if (!supabase) return { estado: "error", mensaje: "Solo el propietario puede contratar." };
+
+  const { data: candidato } = await supabase.from("candidatos").select("*").eq("id", id).maybeSingle();
+  if (!candidato) return { estado: "error", mensaje: "Ese candidato no existe." };
+  if (candidato.estado === "contratado") return { estado: "error", mensaje: "Ya está contratado." };
+
+  const resultado = await darDeAlta(supabase, {
+    nombre: candidato.nombre,
+    email: candidato.email,
+    puesto: candidato.puesto,
+    departamento: candidato.departamento,
+    telefono: candidato.telefono,
+    fechaAlta: hoyMadrid(),
+  });
+  if (resultado.estado !== "ok") return resultado;
+
+  await supabase
+    .from("candidatos")
+    .update({ estado: "contratado", empleado_id: resultado.empleadoId, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  // Sin revalidar /equipo/seleccion a propósito: si la tarjeta saltase ya a
+  // «Procesos cerrados», se desmontaría con la contraseña nueva, que solo se
+  // enseña esta vez. Se mueve en la siguiente visita.
+  return resultado;
 }
 
 // --- Empleado ---------------------------------------------------------------
