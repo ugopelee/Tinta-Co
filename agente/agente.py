@@ -13,6 +13,7 @@ import shutil
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from herramientas import TIPOS_MIME, FacturaDuplicada, crear_guardar_factura
+from herramientas import BUCKET, TIPOS_MIME, FacturaDuplicada, crear_guardar_factura
 
 # 1. Modelo
 MODELO_POR_DEFECTO = "anthropic/claude-sonnet-5.5"
@@ -39,7 +40,12 @@ SEGUNDOS_ENTRE_PASADAS = 10
 # Una copia lenta o una descarga puede tener el archivo a medias; se espera a la pasada siguiente.
 EDAD_MINIMA_SEGUNDOS = 2
 MAX_TEXTO_CLAUDE = 300
-CARPETAS = ("entrada", "procesadas", "errores")
+# «crm» recibe las facturas subidas desde el CRM: no es `entrada/` para que la
+# pasada de la carpeta (u otro agente que la vigile) no se las lleve a medias.
+CARPETAS = ("entrada", "crm", "procesadas", "errores")
+# Cola de las facturas subidas desde el CRM (migración 20261029120000_subida_facturas.sql).
+TABLA_ENTRANTES = "facturas_entrantes"
+MAX_MOTIVO_CRM = 300
 
 log = logging.getLogger("agente")
 # Para avisar una sola vez de cada archivo ignorado y no llenar el registro en cada pasada.
@@ -151,12 +157,105 @@ def _pendientes(entrada: Path) -> list[Path]:
     return pendientes
 
 
+def motivo_legible(detalle: str) -> str:
+    """El motivo que se enseña en el CRM, sin la plantilla de LangGraph alrededor."""
+    if detalle.startswith("ResponseValidationError"):
+        # OpenRouter devolvió un error en vez de una respuesta; con el modelo
+        # gratuito, que cambia en cada petición, suele bastar con reintentar.
+        return "El modelo de IA no ha respondido bien. Pulsa Reintentar."
+    for linea in detalle.splitlines():
+        if "Value error, " in linea:
+            return linea.split("Value error, ", 1)[1].strip()[:MAX_MOTIVO_CRM]
+    primera = detalle.strip().splitlines()[0] if detalle.strip() else "Error desconocido"
+    return primera[:MAX_MOTIVO_CRM]
+
+
+def _ruta_libre(carpeta: Path, nombre: str, marca: str) -> Path:
+    ruta = carpeta / Path(nombre).name
+    return ruta if not ruta.exists() else carpeta / f"{ruta.stem}-{marca}{ruta.suffix}"
+
+
+def reiniciar_entrantes(supabase) -> None:
+    """Las que se quedaron «leyendo» porque el agente se cortó vuelven a la cola."""
+    supabase.table(TABLA_ENTRANTES).update({"estado": "pendiente"}).eq("estado", "leyendo").execute()
+
+
+def procesar_entrante(fila: dict, carpeta: Path, modelo, supabase) -> Resultado | None:
+    """Lee una factura subida desde el CRM con el mismo flujo que las de la carpeta.
+
+    Se descarga a `crm/` y pasa por `procesar`, así que también acaba en
+    `procesadas/` o `errores/` como copia local. Devuelve None si otro agente
+    ya la había reclamado.
+    """
+    ahora = datetime.now(timezone.utc).isoformat()
+    reclamada = (
+        supabase.table(TABLA_ENTRANTES)
+        .update({"estado": "leyendo", "updated_at": ahora})
+        .eq("id", fila["id"])
+        .eq("estado", "pendiente")
+        .execute()
+    )
+    if not reclamada.data:
+        return None
+
+    almacen = supabase.storage.from_(BUCKET)
+    try:
+        contenido = almacen.download(fila["archivo"])
+        (carpeta / "crm").mkdir(exist_ok=True)
+        ruta = _ruta_libre(carpeta / "crm", fila["nombre_archivo"], fila["id"][:8])
+        ruta.write_bytes(contenido)
+    except Exception as error:
+        resultado = Resultado(False, f"No se pudo descargar el original: {type(error).__name__}: {error}")
+        log.error("error %s: %s", fila["nombre_archivo"], resultado.detalle)
+    else:
+        try:
+            resultado = procesar(ruta, modelo, supabase)
+        except Exception as error:
+            # Reclamada y sin resolver se quedaría «leyendo» hasta reiniciar el agente.
+            log.exception("error %s: no se pudo terminar de procesar", ruta.name)
+            resultado = Resultado(False, f"{type(error).__name__}: {error}")
+
+    if resultado.ok:
+        # guardar_factura ya subió su propia copia: la de entrada/ sobra.
+        supabase.table(TABLA_ENTRANTES).delete().eq("id", fila["id"]).execute()
+        try:
+            almacen.remove([fila["archivo"]])
+        except Exception:
+            log.exception("no se pudo borrar el original subido %s", fila["archivo"])
+    else:
+        # El original se queda en el bucket para verlo o reintentar desde el CRM.
+        supabase.table(TABLA_ENTRANTES).update(
+            {"estado": "error", "motivo": motivo_legible(resultado.detalle), "updated_at": ahora}
+        ).eq("id", fila["id"]).execute()
+    return resultado
+
+
+def _pasada_crm(carpeta: Path, modelo, supabase) -> None:
+    filas = (
+        supabase.table(TABLA_ENTRANTES)
+        .select("id, archivo, nombre_archivo")
+        .eq("estado", "pendiente")
+        .order("created_at")
+        .execute()
+        .data
+    )
+    for fila in filas or []:
+        try:
+            procesar_entrante(fila, carpeta, modelo, supabase)
+        except Exception:  # p. ej. Supabase caído a mitad: se registra y sigue con el resto
+            log.exception("error %s: no se pudo terminar de procesar", fila.get("nombre_archivo"))
+
+
 def _pasada(carpeta: Path, modelo, supabase) -> None:
     for ruta in _pendientes(carpeta / "entrada"):
         try:
             procesar(ruta, modelo, supabase)
         except Exception:  # p. ej. no se pudo mover: se registra y sigue con el resto
             log.exception("error %s: no se pudo terminar de procesar", ruta.name)
+    try:
+        _pasada_crm(carpeta, modelo, supabase)
+    except Exception:  # sin la tabla o sin red, la carpeta sigue funcionando
+        log.exception("error al leer las facturas subidas desde el CRM")
 
 
 VARIABLES_OBLIGATORIAS = ("OPENROUTER_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
@@ -187,6 +286,10 @@ def main() -> None:
 
     for nombre in CARPETAS:
         (carpeta / nombre).mkdir(parents=True, exist_ok=True)
+    try:
+        reiniciar_entrantes(supabase)
+    except Exception:
+        log.exception("no se pudo reiniciar la cola de facturas subidas desde el CRM")
 
     while True:
         try:

@@ -5,7 +5,7 @@ contexto), lee **esto primero**: resume qué es el proyecto, cómo está montado
 qué decisiones ya están tomadas y qué queda pendiente, para no tener que releer
 media conversación ni medio repositorio.
 
-Última actualización: 28 de octubre de 2026.
+Última actualización: 29 de octubre de 2026.
 
 ---
 
@@ -108,7 +108,7 @@ navegación de la web.
 - Cada server action comprueba la sesión por su cuenta, sin fiarse del proxy.
 - **Google (OAuth) está apagado en el proyecto de Supabase**
   (`/auth/v1/settings` devuelve `"google": false`). El botón ya no se pinta
-  cuando el proveedor está apagado (`apps/crm/src/lib/google.ts`). Para
+  cuando el proveedor está apagado (`@tinta/compartido/supabase/google`). Para
   encenderlo hace falta, fuera del código: credenciales OAuth en Google Cloud,
   pegarlas en Supabase → Authentication → Providers → Google, y añadir
   `http://localhost:3001/auth/callback` (y la URL de producción) como redirect.
@@ -210,6 +210,13 @@ entera en el editor SQL de Supabase). Tablas `empleados`,
   `/nominas/[id]` redirige a un enlace firmado de 60 s con la sesión de
   quien pulsa. El empleado firma dibujando en un lienzo (`FirmaNomina`);
   se guarda el PNG con `firmar_nomina`, que no deja firmar dos veces.
+- **Selección** (15/10/2026, migración `20261015120000_seleccion.sql`):
+  tabla `candidatos` y bucket privado `cvs` (solo propietario). En
+  `/equipo/seleccion` se abre un proceso con el CV en PDF y se avanza
+  CV recibido → Entrevista → Oferta (o Descartado). «Contratar»
+  (`contratarCandidato`) llama a `darDeAlta`, el mismo núcleo que el alta a
+  mano: ficha con el email del candidato, checklist y cuenta del CRM. El CV
+  se abre con `/cvs/[id]` (enlace firmado de 60 s, como las nóminas).
 
 ### Ventas, facturación y agente lector de facturas (28/10/2026)
 
@@ -237,6 +244,18 @@ con `supabase/revertir/` (el bucket se borra a mano desde Storage).
 - **Agente** (`agente/`, Python + LangChain + Claude vía OpenRouter): lee
   `agente/facturas/entrada/`, Claude extrae los datos y pide `guardar_factura`;
   el agente sube el original e inserta la fila (Claude nunca toca la base).
+- **Subida desde el CRM** (29/10/2026, migración
+  `20261029120000_subida_facturas.sql`, ya aplicada): en
+  `/facturacion/proveedores`, «Subir facturas» (botón o arrastrar, varias a la
+  vez, de una en una por server action, 10 MB, tipo comprobado por la
+  cabecera) sube el original a `facturas-proveedor/entrada/` y crea una fila
+  en la cola `facturas_entrantes` (pendiente → leyendo → se borra al crear la
+  factura, o error con `motivo`). El agente la recoge en cada pasada, la
+  descarga a `agente/facturas/crm/` (no a `entrada/`, para que otro agente
+  que vigile la carpeta no se la lleve) y usa el mismo `procesar()`. La lista
+  «En cola del agente» se refresca sola cada 5 s; las fallidas tienen
+  «Ver original» (`/facturas-entrantes/[id]`), «Reintentar» y «Quitar» (en
+  dos pasos). El contador de Proveedores suma por revisar + errores.
   Claves en `agente/.env` (ver `.env.example`; la service_role solo ahí).
   Instalación y uso en `agente/README.md`; tests con `pytest`.
 
@@ -295,8 +314,9 @@ entre posiciones.
 
 - [ ] **Encender Google en Supabase** (paso manual, ver §3). El código ya está
       listo a los dos lados.
-- [ ] La web pública (`apps/web`) tiene el mismo botón de Google sin la
-      comprobación de disponibilidad: si se quiere, se aplica el mismo helper.
+- [x] La web pública usa la misma comprobación que el CRM (29/10/2026):
+      `googleDisponible` vive ahora en `@tinta/compartido/supabase/google` y
+      `/acceder` solo pinta el botón si el proveedor está encendido.
 - [ ] **Portfolios** (trabajo aparte, todavía sin empezar): `.claude/launch.json`
       ya reserva `portfolios/server.mjs` para `ugo-peleato` (4010) y
       `diego-sarabia` (4020), pero la carpeta `portfolios/` no existe.

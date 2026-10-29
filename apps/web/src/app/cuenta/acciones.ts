@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
+import { googleDisponible } from "@tinta/compartido/supabase/google";
 import type { ResultadoFormulario } from "@tinta/compartido/formularios";
 
 async function origenPeticion() {
@@ -79,6 +80,12 @@ export async function crearCuenta(
 }
 
 export async function entrarConGoogle() {
+  // El botón solo se pinta si el proveedor está activo, pero lo volvemos a
+  // comprobar: entre pintar la pantalla y pulsar pueden pasar horas.
+  if (!(await googleDisponible())) {
+    redirect("/acceder?error=google_sin_configurar");
+  }
+
   const supabase = await crearClienteServidor();
   const origen = await origenPeticion();
 
@@ -92,27 +99,7 @@ export async function entrarConGoogle() {
     redirect("/acceder?error=google");
   }
 
-  // signInWithOAuth solo construye la URL; no comprueba que el proveedor esté
-  // configurado. Preguntamos antes para no soltar un JSON de error en crudo.
-  redirect(await comprobarProveedor(data.url));
-}
-
-async function comprobarProveedor(url: string) {
-  try {
-    const respuesta = await fetch(url, { redirect: "manual" });
-    if (respuesta.status >= 300 && respuesta.status < 400) return url;
-
-    const cuerpo = await respuesta.text();
-    if (cuerpo.includes("provider is not enabled")) {
-      return "/acceder?error=google_sin_configurar";
-    }
-
-    console.error("Respuesta inesperada de Supabase OAuth:", cuerpo.slice(0, 300));
-    return "/acceder?error=google";
-  } catch (fallo) {
-    console.error("No se ha podido contactar con Supabase OAuth:", fallo);
-    return "/acceder?error=google";
-  }
+  redirect(data.url);
 }
 
 export async function cerrarSesion() {

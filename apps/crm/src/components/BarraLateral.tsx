@@ -61,6 +61,7 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
         contador: "vacaciones",
       },
       { href: "/equipo/fichajes", texto: "Fichajes", icono: "fichaje" },
+      { href: "/equipo/seleccion", texto: "Selección", icono: "seleccion" },
     ],
   },
   {
@@ -251,7 +252,8 @@ export function BarraLateral({
                           ? ruta === "/equipo" ||
                             (ruta.startsWith("/equipo/") &&
                               !ruta.startsWith("/equipo/ausencias") &&
-                              !ruta.startsWith("/equipo/fichajes"))
+                              !ruta.startsWith("/equipo/fichajes") &&
+                              !ruta.startsWith("/equipo/seleccion"))
                           : enlace.href === "/facturacion"
                             ? ruta.startsWith("/facturacion") &&
                               !ruta.startsWith("/facturacion/proveedores")

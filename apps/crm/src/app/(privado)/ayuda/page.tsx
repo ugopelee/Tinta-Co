@@ -6,7 +6,7 @@ import { Bloque } from "@/components/Bloque";
 import { Encabezado } from "@/components/Encabezado";
 import { Icono } from "@/components/Icono";
 import { creditosFotos } from "@/lib/creditos";
-import { googleDisponible } from "@/lib/google";
+import { googleDisponible } from "@tinta/compartido/supabase/google";
 
 export const metadata: Metadata = { title: "Ayuda y soporte" };
 

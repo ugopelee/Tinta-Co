@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { MarcoCuenta } from "@/components/MarcoCuenta";
 import { BotonGoogle } from "@/components/BotonGoogle";
 import { FormularioAcceso } from "@/components/FormulariosCuenta";
+import { googleDisponible } from "@tinta/compartido/supabase/google";
 
 export const metadata: Metadata = { title: "Acceder" };
 
 export default async function Acceder({ searchParams }: PageProps<"/acceder">) {
   const parametros = await searchParams;
+  const conGoogle = await googleDisponible();
 
   return (
     <MarcoCuenta
@@ -22,7 +24,9 @@ export default async function Acceder({ searchParams }: PageProps<"/acceder">) {
         </>
       }
     >
-      <BotonGoogle />
+      {/* Sin el proveedor activo en Supabase, el botón solo lleva a un
+          error: mejor no ofrecerlo y dejar el acceso por email. */}
+      {conGoogle && <BotonGoogle />}
 
       {parametros.error === "google_sin_configurar" && (
         <p
@@ -40,11 +44,13 @@ export default async function Acceder({ searchParams }: PageProps<"/acceder">) {
         </p>
       )}
 
-      <div className="my-7 flex items-center gap-4">
-        <span className="h-px flex-1 bg-white/10" />
-        <span className="etiqueta text-tenue">o</span>
-        <span className="h-px flex-1 bg-white/10" />
-      </div>
+      {conGoogle && (
+        <div className="my-7 flex items-center gap-4">
+          <span className="h-px flex-1 bg-white/10" />
+          <span className="etiqueta text-tenue">o</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+      )}
 
       <FormularioAcceso />
     </MarcoCuenta>

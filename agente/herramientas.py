@@ -11,7 +11,7 @@ from pathlib import Path
 
 from langchain_core.tools import BaseTool, tool
 from postgrest.exceptions import APIError
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 log = logging.getLogger("agente")
 
@@ -51,13 +51,16 @@ class DatosFactura(BaseModel):
     iva: Decimal = Field(description="Importe del IVA en euros (no el porcentaje), con punto decimal.")
     total: Decimal = Field(description="Total de la factura en euros, con punto decimal.")
 
-    @model_validator(mode="after")
-    def importes_cuadran(self) -> "DatosFactura":
-        if abs(self.base + self.iva - self.total) > TOLERANCIA:
-            raise ValueError(
-                f"Los importes no cuadran: base {self.base} + IVA {self.iva} != total {self.total}"
-            )
-        return self
+    # Validador de campo y no de modelo: LangGraph solo pasa al mensaje de error
+    # los fallos ligados a un campo, y sin esto el .error.txt salía sin motivo.
+    @field_validator("total")
+    @classmethod
+    def importes_cuadran(cls, total: Decimal, info: ValidationInfo) -> Decimal:
+        base, iva = info.data.get("base"), info.data.get("iva")
+        # Si base o IVA no son válidos ya llevan su propio error.
+        if base is not None and iva is not None and abs(base + iva - total) > TOLERANCIA:
+            raise ValueError(f"Los importes no cuadran: base {base} + IVA {iva} != total {total}")
+        return total
 
 
 def crear_guardar_factura(supabase, ruta: Path) -> BaseTool:

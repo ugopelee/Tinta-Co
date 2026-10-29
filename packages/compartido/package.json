@@ -8,6 +8,7 @@
     "./formularios": "./src/formularios.ts",
     "./supabase/servidor": "./src/supabase/server.ts",
     "./supabase/navegador": "./src/supabase/client.ts",
+    "./supabase/google": "./src/supabase/google.ts",
     "./marca": "./src/Marca.tsx"
   },
   "dependencies": {

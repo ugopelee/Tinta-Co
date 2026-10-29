@@ -2,11 +2,13 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
 import { estadosFacturaProveedor, type EstadoFacturaProveedor } from "@tinta/compartido/estudio";
-import type { FacturaProveedor } from "@tinta/compartido/tipos";
+import type { FacturaEntrante, FacturaProveedor } from "@tinta/compartido/tipos";
 import { Bloque } from "@/components/Bloque";
+import { ColaFacturasEntrantes } from "@/components/ColaFacturasEntrantes";
 import { Encabezado } from "@/components/Encabezado";
 import { PastillaColor } from "@/components/PastillaColor";
 import { RevisionFacturaProveedor } from "@/components/RevisionFacturaProveedor";
+import { SubirFacturasProveedor } from "@/components/SubirFacturasProveedor";
 import { euros } from "@/lib/importes";
 import { fecha } from "@/lib/fechas";
 
@@ -21,18 +23,20 @@ export default async function FacturasProveedor({ searchParams }: PageProps<"/fa
     estadosFacturaProveedor.find((e) => e.id === parametro)?.id ?? "por_revisar";
 
   const supabase = await crearClienteServidor();
-  const [{ data }, ...cuentas] = await Promise.all([
+  const [{ data }, { data: cola }, ...cuentas] = await Promise.all([
     supabase
       .from("facturas_proveedor")
       .select("*")
       .eq("estado", estado)
       .order("fecha", { ascending: false })
       .limit(FACTURAS_VISIBLES),
+    supabase.from("facturas_entrantes").select("*").order("created_at"),
     ...estadosFacturaProveedor.map((e) =>
       supabase.from("facturas_proveedor").select("id", { count: "exact", head: true }).eq("estado", e.id),
     ),
   ]);
   const facturas = (data ?? []) as FacturaProveedor[];
+  const entrantes = (cola ?? []) as FacturaEntrante[];
   const actual = estadosFacturaProveedor.find((e) => e.id === estado)!;
 
   return (
@@ -40,8 +44,11 @@ export default async function FacturasProveedor({ searchParams }: PageProps<"/fa
       <Encabezado
         miga="Caja · proveedores"
         titulo="Facturas de proveedores"
-        nota="El agente de IA lee estas facturas de la carpeta y puede equivocarse: contrasta cada dato con el original antes de validar."
+        nota="Sube aquí las facturas y el agente de IA las lee. Puede equivocarse: contrasta cada dato con el original antes de validar."
       />
+
+      <SubirFacturasProveedor />
+      <ColaFacturasEntrantes entrantes={entrantes} />
 
       <nav aria-label="Estado de las facturas" className="mb-3 flex flex-wrap gap-2">
         {estadosFacturaProveedor.map((e, indice) => (
@@ -64,7 +71,7 @@ export default async function FacturasProveedor({ searchParams }: PageProps<"/fa
         <Bloque icono="tarjeta" titulo={actual.nombre}>
           <p className="text-sm text-tenue">
             {estado === "por_revisar"
-              ? "No hay facturas por revisar. Deja los PDF o imágenes de las facturas en la carpeta agente/facturas/entrada y el agente las leerá."
+              ? "No hay facturas por revisar. Sube los PDF o las fotos de las facturas con el botón de arriba y el agente las leerá."
               : `No hay facturas ${actual.nombre.toLowerCase()}.`}
           </p>
         </Bloque>

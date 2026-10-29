@@ -41,6 +41,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  UserSearch,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -93,6 +94,7 @@ const ICONOS = {
   copiar: Copy,
   hecho: Check,
   cerrar: X,
+  seleccion: UserSearch,
 } satisfies Record<string, LucideIcon>;
 
 export type NombreIcono = keyof typeof ICONOS;
