@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 /* Pantallas bajas (portátiles): la barra lateral se compacta por escalones
-   para caber entera sin desplazarse. */
-@custom-variant bajo (@media (max-height: 940px));
-@custom-variant enano (@media (max-height: 840px));
-@custom-variant mini (@media (max-height: 680px));
+   para caber entera sin desplazarse. Cada límite es la altura que necesita
+   el escalón anterior con todos los grupos (propietario incluido). */
+@custom-variant bajo (@media (max-height: 1050px));
+@custom-variant enano (@media (max-height: 890px));
+@custom-variant mini (@media (max-height: 770px));
 
 @theme inline {
   --color-fondo: var(--fondo);
