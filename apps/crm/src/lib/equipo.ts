@@ -37,7 +37,7 @@ export const diaDe = (valor: string) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(valor));
 
 /** Minutos de un fichaje; si sigue abierto, hasta ahora. */
-export function minutos(fichaje: Fichaje, ahora = Date.now()) {
+export function minutos(fichaje: Pick<Fichaje, "entrada" | "salida">, ahora = Date.now()) {
   const fin = fichaje.salida ? new Date(fichaje.salida).getTime() : ahora;
   return Math.max(0, Math.round((fin - new Date(fichaje.entrada).getTime()) / 60000));
 }

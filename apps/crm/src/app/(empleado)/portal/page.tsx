@@ -18,6 +18,7 @@ import { Estrellas } from "@/components/Estrellas";
 import { FirmaNomina } from "@/components/FirmaNomina";
 import { FormularioVacaciones } from "@/components/FormularioVacaciones";
 import { Icono } from "@/components/Icono";
+import { ListaFichajes } from "@/components/ListaFichajes";
 import { PastillaColor } from "@/components/PastillaColor";
 import {
   diaDe,
@@ -90,113 +91,113 @@ export default async function Portal() {
         <PastillaColor nombre={estado.nombre} color={estado.color} />
       </Encabezado>
 
-      <section className="tarjeta mb-3 flex flex-wrap items-center gap-5 p-5">
-        <Avatar nombre={empleado.nombre} foto={empleado.foto_url} className="h-16 w-16 text-base" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm text-tenue">
-            {abierto ? `Has entrado a las ${hora(abierto.entrada)}` : "Ahora mismo estás fuera"}
-          </p>
-          <p className="cifra mt-0.5 text-2xl font-semibold tracking-tight">{duracion(minutosHoy)} hoy</p>
-          <p className="cifra text-xs text-tenue">{duracion(semana)} esta semana</p>
+      {/* Ordenador: fichar y fichajes en una columna fija a la izquierda y el
+          resto ocupando el ancho. Móvil: una sola columna con los fichajes al
+          final (la columna izquierda se deshace con `contents`). */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
+        <div className="contents lg:grid lg:gap-3">
+          <section className="tarjeta flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between lg:flex-col lg:items-stretch">
+            <div className="flex min-w-0 items-center gap-4">
+              <Avatar nombre={empleado.nombre} foto={empleado.foto_url} className="h-14 w-14 shrink-0 text-base" />
+              <div className="min-w-0">
+                <p className="text-sm text-tenue">
+                  {abierto ? `Has entrado a las ${hora(abierto.entrada)}` : "Ahora mismo estás fuera"}
+                </p>
+                <p className="cifra mt-0.5 whitespace-nowrap text-2xl font-semibold tracking-tight">
+                  {duracion(minutosHoy)} hoy
+                </p>
+                <p className="cifra whitespace-nowrap text-xs text-tenue">{duracion(semana)} esta semana</p>
+              </div>
+            </div>
+            <BotonFichar dentro={Boolean(abierto)} />
+          </section>
+
+          <div className="order-last lg:order-none">
+            <Bloque titulo="Tus fichajes" nota="Últimos registros">
+              <ListaFichajes fichajes={fichajes} vacio="Todavía no has fichado." />
+            </Bloque>
+          </div>
         </div>
-        <BotonFichar dentro={Boolean(abierto)} />
-      </section>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {empleado.estado === "incorporacion" && (
-          <Bloque titulo="Tu incorporación" nota="El estudio va marcando lo suyo; lo tuyo lo marcas tú">
-            <Checklist tareas={tareas} modo="empleado" />
-          </Bloque>
-        )}
-
-        <Bloque titulo="Nóminas" nota="Ábrelas y fírmalas para confirmar que las has recibido">
-          {nominas.length === 0 ? (
-            <p className="fila px-4 py-6 text-center text-sm text-tenue">Todavía no tienes nóminas.</p>
-          ) : (
-            <ul className="space-y-2">
-              {nominas.map((nomina) => (
-                <li key={nomina.id} className="fila flex flex-wrap items-center gap-3 px-4 py-3">
-                  <Icono nombre="documento" className="h-5 w-5 text-tenue" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{nombrePeriodo(nomina.periodo)}</span>
-                    <span className="block text-xs text-tenue">
-                      {nomina.firmada_at ? `Firmada el ${fechaCorta(nomina.firmada_at)}` : "Pendiente de tu firma"}
-                    </span>
-                  </span>
-                  <a href={`/nominas/${nomina.id}`} target="_blank" rel="noopener" className="boton-fantasma">
-                    Ver PDF
-                  </a>
-                  {nomina.firmada_at ? (
-                    <PastillaColor {...estadosNomina.firmada} />
-                  ) : (
-                    <FirmaNomina nominaId={nomina.id} periodo={nombrePeriodo(nomina.periodo)} />
-                  )}
-                </li>
-              ))}
-            </ul>
+        {/* En dos columnas tipo mosaico: cada bloque sube hasta el de encima. */}
+        <div className="grid gap-3 xl:block xl:columns-2 xl:[&>*]:mb-3 xl:[&>*]:break-inside-avoid">
+          {empleado.estado === "incorporacion" && (
+            <Bloque titulo="Tu incorporación" nota="El estudio va marcando lo suyo; lo tuyo lo marcas tú">
+              <Checklist tareas={tareas} modo="empleado" />
+            </Bloque>
           )}
-        </Bloque>
 
-        <Bloque titulo="Vacaciones" nota={`${saldo.usados} de ${saldo.total} días usados · te quedan ${saldo.quedan}`}>
-          <FormularioVacaciones disponibles={saldo.quedan - saldo.pendientes} />
-          {vacaciones.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {vacaciones.map((solicitud) => {
-                const definicion = estadosVacaciones.find((e) => e.id === solicitud.estado)!;
-                return (
-                  <li key={solicitud.id} className="fila grid gap-1 px-4 py-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-sm font-medium">
-                        {fechaCorta(solicitud.desde)} – {fechaCorta(solicitud.hasta)}
-                        <span className="ml-2 text-xs font-normal text-tenue">
-                          {diasLaborables(solicitud.desde, solicitud.hasta)} días
-                        </span>
+          <Bloque titulo="Nóminas" nota="Ábrelas y fírmalas para confirmar que las has recibido">
+            {nominas.length === 0 ? (
+              <p className="fila px-4 py-6 text-center text-sm text-tenue">Todavía no tienes nóminas.</p>
+            ) : (
+              <ul className="space-y-2">
+                {nominas.map((nomina) => (
+                  <li key={nomina.id} className="fila flex flex-wrap items-center gap-3 px-4 py-3">
+                    <Icono nombre="documento" className="h-5 w-5 text-tenue" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">{nombrePeriodo(nomina.periodo)}</span>
+                      <span className="block text-xs text-tenue">
+                        {nomina.firmada_at ? `Firmada el ${fechaCorta(nomina.firmada_at)}` : "Pendiente de tu firma"}
                       </span>
-                      <PastillaColor nombre={definicion.nombre} color={definicion.color} />
-                    </div>
-                    {solicitud.respuesta && <p className="text-xs text-tenue">Respuesta: {solicitud.respuesta}</p>}
+                    </span>
+                    <a href={`/nominas/${nomina.id}`} target="_blank" rel="noopener" className="boton-fantasma">
+                      Ver PDF
+                    </a>
+                    {nomina.firmada_at ? (
+                      <PastillaColor {...estadosNomina.firmada} />
+                    ) : (
+                      <FirmaNomina nominaId={nomina.id} periodo={nombrePeriodo(nomina.periodo)} />
+                    )}
                   </li>
-                );
-              })}
-            </ul>
-          )}
-        </Bloque>
+                ))}
+              </ul>
+            )}
+          </Bloque>
 
-        <Bloque titulo="Tus evaluaciones" nota="Una por trimestre, del 1 al 5">
-          {evaluaciones.length === 0 ? (
-            <p className="fila px-4 py-6 text-center text-sm text-tenue">Aún no tienes evaluaciones.</p>
-          ) : (
-            <ul className="space-y-2">
-              {evaluaciones.map((evaluacion) => (
-                <li key={evaluacion.id} className="fila grid gap-1 px-4 py-2.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{evaluacion.trimestre.replace("-T", " · T")}</span>
-                    <Estrellas nota={evaluacion.nota} />
-                  </div>
-                  {evaluacion.comentario && <p className="text-xs text-tenue">{evaluacion.comentario}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Bloque>
+          <Bloque titulo="Vacaciones" nota={`${saldo.usados} de ${saldo.total} días usados · te quedan ${saldo.quedan}`}>
+            <FormularioVacaciones disponibles={saldo.quedan - saldo.pendientes} />
+            {vacaciones.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {vacaciones.map((solicitud) => {
+                  const definicion = estadosVacaciones.find((e) => e.id === solicitud.estado)!;
+                  return (
+                    <li key={solicitud.id} className="fila grid gap-1 px-4 py-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-sm font-medium">
+                          {fechaCorta(solicitud.desde)} – {fechaCorta(solicitud.hasta)}
+                          <span className="ml-2 text-xs font-normal text-tenue">
+                            {diasLaborables(solicitud.desde, solicitud.hasta)} días
+                          </span>
+                        </span>
+                        <PastillaColor nombre={definicion.nombre} color={definicion.color} />
+                      </div>
+                      {solicitud.respuesta && <p className="text-xs text-tenue">Respuesta: {solicitud.respuesta}</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Bloque>
 
-        <Bloque titulo="Tus fichajes" nota="Últimos registros">
-          {fichajes.length === 0 ? (
-            <p className="fila px-4 py-6 text-center text-sm text-tenue">Todavía no has fichado.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {fichajes.slice(0, 8).map((fichaje) => (
-                <li key={fichaje.id} className="fila flex items-center justify-between gap-3 px-4 py-2 text-sm">
-                  <span>{fechaCorta(diaDe(fichaje.entrada))}</span>
-                  <span className="cifra text-tenue">
-                    {hora(fichaje.entrada)} → {fichaje.salida ? hora(fichaje.salida) : "dentro"}
-                  </span>
-                  <span className="cifra w-24 text-right font-medium">{duracion(minutos(fichaje))}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Bloque>
+          <Bloque titulo="Tus evaluaciones" nota="Una por trimestre, del 1 al 5">
+            {evaluaciones.length === 0 ? (
+              <p className="fila px-4 py-6 text-center text-sm text-tenue">Aún no tienes evaluaciones.</p>
+            ) : (
+              <ul className="space-y-2">
+                {evaluaciones.map((evaluacion) => (
+                  <li key={evaluacion.id} className="fila grid gap-1 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{evaluacion.trimestre.replace("-T", " · T")}</span>
+                      <Estrellas nota={evaluacion.nota} />
+                    </div>
+                    {evaluacion.comentario && <p className="text-xs text-tenue">{evaluacion.comentario}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Bloque>
+        </div>
       </div>
     </>
   );

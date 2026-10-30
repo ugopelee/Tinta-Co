@@ -184,6 +184,10 @@ export function BarraLateral({
             </button>
           </div>
 
+          {/* Hueco flexible: reparte el espacio libre a medias con el final del
+              menú (ver el `flex` del nav). Sin espacio, mide 0. */}
+          <div aria-hidden className="flex-1" />
+
           {/* Acción principal: las oportunidades no se crean aquí, entran por
               la web, así que el botón grande lleva a lo que está sin responder. */}
           <Link
@@ -233,7 +237,7 @@ export function BarraLateral({
             </kbd>
           </form>
 
-          <nav className="sin-barra mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:mt-2 enano:space-y-2 mini:space-y-1.5">
+          <nav className="sin-barra mt-4 min-h-0 flex-auto space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:mt-2 enano:space-y-2 mini:space-y-1.5">
             {grupos.map((grupo, indice) => (
               <div key={grupo.titulo ?? indice}>
                 {grupo.titulo && (

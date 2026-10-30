@@ -28,12 +28,12 @@ export default async function LayoutEmpleado({ children }: LayoutProps<"/">) {
 
   return (
     <div className="min-h-screen">
-      <header className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-        <span className="flex items-center gap-2.5">
-          <Logo className="h-9 w-9" />
-          <span className="text-[0.95rem] font-semibold tracking-tight">
+      <header className="flex items-center justify-between gap-3 px-4 py-4 lg:px-6">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <Logo className="h-9 w-9 shrink-0" />
+          <span className="truncate text-[0.95rem] font-semibold tracking-tight">
             {estudio.nombre}
-            <span className="ml-2 font-normal text-tenue">· Portal del equipo</span>
+            <span className="ml-2 hidden font-normal text-tenue sm:inline">· Portal del equipo</span>
           </span>
         </span>
 
@@ -53,7 +53,7 @@ export default async function LayoutEmpleado({ children }: LayoutProps<"/">) {
         </span>
       </header>
 
-      <main id="contenido" tabIndex={-1} className="mx-auto max-w-5xl px-4 pb-10">{children}</main>
+      <main id="contenido" tabIndex={-1} className="px-4 pb-10 lg:px-6">{children}</main>
     </div>
   );
 }
