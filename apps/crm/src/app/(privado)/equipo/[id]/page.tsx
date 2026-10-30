@@ -20,6 +20,7 @@ import { Estrellas } from "@/components/Estrellas";
 import { FormularioEvaluacion } from "@/components/FormularioEvaluacion";
 import { FormularioNomina } from "@/components/FormularioNomina";
 import { Icono } from "@/components/Icono";
+import { ListaFichajes } from "@/components/ListaFichajes";
 import { PastillaColor } from "@/components/PastillaColor";
 import { RespuestaVacaciones } from "@/components/RespuestaVacaciones";
 import {
@@ -85,7 +86,7 @@ export default async function FichaEmpleado({ params }: PageProps<"/equipo/[id]"
   mesPasado.setUTCMonth(mesPasado.getUTCMonth() - 1);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Encabezado
         miga="Equipo · ficha"
         titulo={empleado.nombre}
@@ -130,7 +131,8 @@ export default async function FichaEmpleado({ params }: PageProps<"/equipo/[id]"
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {/* En dos columnas tipo mosaico: cada bloque sube hasta el de encima. */}
+      <div className="grid gap-3 lg:block lg:columns-2 lg:[&>*]:mb-3 lg:[&>*]:break-inside-avoid">
         <Bloque
           titulo="Incorporación"
           nota={
@@ -147,21 +149,7 @@ export default async function FichaEmpleado({ params }: PageProps<"/equipo/[id]"
           nota={`${duracion(semana)} esta semana · últimos registros`}
           accion={{ href: "/equipo/fichajes", texto: "Todos" }}
         >
-          {fichajes.length === 0 ? (
-            <p className="fila px-4 py-6 text-center text-sm text-tenue">Todavía no ha fichado.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {fichajes.slice(0, 8).map((fichaje) => (
-                <li key={fichaje.id} className="fila flex items-center justify-between gap-3 px-4 py-2 text-sm">
-                  <span>{fechaCorta(diaDe(fichaje.entrada))}</span>
-                  <span className="cifra text-tenue">
-                    {hora(fichaje.entrada)} → {fichaje.salida ? hora(fichaje.salida) : "dentro"}
-                  </span>
-                  <span className="cifra w-24 text-right font-medium">{duracion(minutos(fichaje))}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ListaFichajes fichajes={fichajes} vacio="Todavía no ha fichado." />
         </Bloque>
 
         <Bloque
@@ -218,9 +206,7 @@ export default async function FichaEmpleado({ params }: PageProps<"/equipo/[id]"
             </ul>
           )}
         </Bloque>
-      </div>
 
-      <div className="mt-3">
         <Bloque titulo="Nóminas" nota="PDF mensual que el empleado firma desde su portal">
           <FormularioNomina empleadoId={empleado.id} mesSugerido={mesPasado.toISOString().slice(0, 7)} />
 

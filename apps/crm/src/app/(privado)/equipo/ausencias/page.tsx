@@ -46,7 +46,7 @@ export default async function Ausencias({ searchParams }: PageProps<"/equipo/aus
   const fuera = solicitudes.filter((s) => s.estado === "aprobada" && s.desde <= hoy && s.hasta >= hoy);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Encabezado
         miga="Equipo · ausencias"
         titulo="Vacaciones"
@@ -79,7 +79,7 @@ export default async function Ausencias({ searchParams }: PageProps<"/equipo/aus
           {filtro.id === "pendiente" ? "No hay nada por responder." : "Ninguna solicitud en este filtro."}
         </p>
       ) : (
-        <ul className="tarjeta space-y-2 p-3">
+        <ul className="tarjeta grid content-start items-start gap-2 p-3 xl:grid-cols-2">
           {visibles.map((solicitud) => {
             const empleado = empleados.get(solicitud.empleado_id);
             const definicion = estadosVacaciones.find((e) => e.id === solicitud.estado)!;

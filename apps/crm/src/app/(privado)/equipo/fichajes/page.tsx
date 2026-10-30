@@ -47,7 +47,7 @@ export default async function Fichajes() {
   const dentro = resumen.filter((fila) => fila.abierto).length;
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Encabezado
         miga="Equipo · control horario"
         titulo="Fichajes"

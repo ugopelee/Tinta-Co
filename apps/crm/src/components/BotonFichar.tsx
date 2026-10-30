@@ -10,7 +10,8 @@ export function BotonFichar({ dentro }: { dentro: boolean }) {
   const [ocupado, iniciar] = useTransition();
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    // Ocupa el ancho de su contenedor: en una columna, el botón va de lado a lado.
+    <div className="flex flex-col gap-2">
       <button
         type="button"
         disabled={ocupado}
@@ -20,7 +21,7 @@ export function BotonFichar({ dentro }: { dentro: boolean }) {
             setMensaje(resultado.mensaje);
           })
         }
-        className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-transform duration-150 active:scale-[0.98] disabled:opacity-60 ${
+        className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-transform duration-150 active:scale-[0.98] disabled:opacity-60 ${
           dentro ? "bg-texto text-fondo" : "bg-lima text-sobre-lima"
         }`}
       >
