@@ -51,6 +51,18 @@ class DatosFactura(BaseModel):
     iva: Decimal = Field(description="Importe del IVA en euros (no el porcentaje), con punto decimal.")
     total: Decimal = Field(description="Total de la factura en euros, con punto decimal.")
 
+    # Some models send Spanish-formatted amounts ("1.234,56 €"). With a comma present,
+    # "." is the thousands separator and "," the decimal point; otherwise leave it as is.
+    @field_validator("base", "iva", "total", mode="before")
+    @classmethod
+    def normalizar_importe(cls, valor: object) -> object:
+        if not isinstance(valor, str):
+            return valor
+        valor = "".join(valor.split()).replace("€", "").replace("EUR", "")
+        if "," in valor:
+            valor = valor.replace(".", "").replace(",", ".")
+        return valor
+
     # Validador de campo y no de modelo: LangGraph solo pasa al mensaje de error
     # los fallos ligados a un campo, y sin esto el .error.txt salía sin motivo.
     @field_validator("total")

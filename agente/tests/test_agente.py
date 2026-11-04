@@ -8,6 +8,7 @@ import base64
 import logging
 import os
 import time
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -238,6 +239,38 @@ def test_datos_factura_acepta_importes_que_cuadran_con_tolerancia():
     DatosFactura(**{**DATOS, "total": "121.02"})
     with pytest.raises(ValueError):
         DatosFactura(**{**DATOS, "total": "121.05"})
+
+
+@pytest.mark.parametrize(
+    "texto, esperado",
+    [
+        ("1,36", Decimal("1.36")),
+        ("1.234,56", Decimal("1234.56")),
+        ("15,00 €", Decimal("15.00")),
+        ("15,00 EUR", Decimal("15.00")),
+        ("1234.56", Decimal("1234.56")),
+    ],
+)
+def test_datos_factura_acepta_importes_con_formato_espanol(texto, esperado):
+    datos = DatosFactura(**{**DATOS, "base": texto, "iva": "0", "total": texto})
+    assert (datos.base, datos.total) == (esperado, esperado)
+
+
+def test_datos_factura_rechaza_importe_que_no_es_un_numero():
+    with pytest.raises(ValueError):
+        DatosFactura(**{**DATOS, "base": "cien euros"})
+
+
+def test_importes_con_coma_se_guardan_si_cuadran(factura, carpetas):
+    argumentos = {**DATOS, "base": "13,64", "iva": "1,36", "total": "15,00"}
+    supabase = SupabaseFalso()
+
+    resultado = agente.procesar(factura, ModeloGuionizado(argumentos=argumentos), supabase)
+
+    assert resultado.ok
+    fila = supabase.inserciones[0][1]
+    assert (fila["base"], fila["iva"], fila["total"]) == ("13.64", "1.36", "15.00")
+    assert (carpetas / "procesadas" / "factura.pdf").exists()
 
 
 def test_construir_mensaje_pdf(carpetas):
