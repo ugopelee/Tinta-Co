@@ -113,7 +113,7 @@ export default async function Portal() {
           </section>
 
           <div className="order-last lg:order-none">
-            <Bloque titulo="Tus fichajes" nota="Últimos registros">
+            <Bloque titulo="Tus fichajes" nota="Últimos registros" plegable>
               <ListaFichajes fichajes={fichajes} vacio="Todavía no has fichado." />
             </Bloque>
           </div>
