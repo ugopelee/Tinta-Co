@@ -209,3 +209,18 @@ def test_motivo_legible_quita_la_plantilla_de_langgraph():
 def test_motivo_legible_resume_los_errores_de_openrouter():
     detalle = "ResponseValidationError: Response validation failed: 5 validation errors for Unmarshaller\nbody.choices ..."
     assert agente.motivo_legible(detalle) == "El modelo de IA no ha respondido bien. Pulsa Reintentar."
+
+
+def test_motivo_legible_limpia_la_respuesta_sin_guardar():
+    detalle = (
+        f"{agente.SIN_GUARDAR}: ## Aviso\n"
+        "Este documento **no es una factura**, sino una\n"
+        "**solicitud** de `presupuesto`."
+    )
+    motivo = agente.motivo_legible(detalle)
+    assert motivo == "Aviso Este documento no es una factura, sino una solicitud de presupuesto."
+    assert "Claude" not in motivo and "guardar_factura" not in motivo and "*" not in motivo
+
+
+def test_motivo_legible_sin_guardar_y_sin_texto():
+    assert agente.motivo_legible(agente.SIN_GUARDAR) == "No parece una factura: no se ha encontrado nada que guardar."
