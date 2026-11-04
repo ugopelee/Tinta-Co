@@ -6,6 +6,7 @@ import {
   Check,
   Copy,
   ChartColumn,
+  ChevronDown,
   CircleCheck,
   CircleHelp,
   Clock,
@@ -95,6 +96,7 @@ const ICONOS = {
   hecho: Check,
   cerrar: X,
   seleccion: UserSearch,
+  desplegar: ChevronDown,
 } satisfies Record<string, LucideIcon>;
 
 export type NombreIcono = keyof typeof ICONOS;
