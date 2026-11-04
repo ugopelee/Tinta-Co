@@ -9,6 +9,7 @@ import argparse
 import base64
 import logging
 import os
+import re
 import shutil
 import time
 import uuid
@@ -46,6 +47,8 @@ CARPETAS = ("entrada", "crm", "procesadas", "errores")
 # Cola de las facturas subidas desde el CRM (migración 20261029120000_subida_facturas.sql).
 TABLA_ENTRANTES = "facturas_entrantes"
 MAX_MOTIVO_CRM = 300
+# Prefix of the failure reason when the model answers without calling the tool.
+SIN_GUARDAR = "Claude no llamó a guardar_factura"
 
 log = logging.getLogger("agente")
 # Para avisar una sola vez de cada archivo ignorado y no llenar el registro en cada pasada.
@@ -95,7 +98,7 @@ def _razon_del_fallo(mensajes: list) -> str:
             return str(mensaje.content)
     respuestas = [m for m in mensajes if isinstance(m, AIMessage) and m.text.strip()]
     texto = respuestas[-1].text.strip()[:MAX_TEXTO_CLAUDE] if respuestas else ""
-    return f"Claude no llamó a guardar_factura: {texto}" if texto else "Claude no llamó a guardar_factura"
+    return f"{SIN_GUARDAR}: {texto}" if texto else SIN_GUARDAR
 
 
 def _ejecutar(ruta: Path, modelo, supabase) -> Resultado:
@@ -163,6 +166,12 @@ def motivo_legible(detalle: str) -> str:
         # OpenRouter devolvió un error en vez de una respuesta; con el modelo
         # gratuito, que cambia en cada petición, suele bastar con reintentar.
         return "El modelo de IA no ha respondido bien. Pulsa Reintentar."
+    if detalle.startswith(SIN_GUARDAR):
+        # Keep the model's explanation but drop the internal prefix and markdown.
+        texto = detalle[len(SIN_GUARDAR):].removeprefix(":")
+        texto = re.sub(r"^\s*#+|[*`]", "", texto, flags=re.MULTILINE)
+        texto = " ".join(texto.split())
+        return texto[:MAX_MOTIVO_CRM] or "No parece una factura: no se ha encontrado nada que guardar."
     for linea in detalle.splitlines():
         if "Value error, " in linea:
             return linea.split("Value error, ", 1)[1].strip()[:MAX_MOTIVO_CRM]
