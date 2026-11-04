@@ -2,3 +2,10 @@
 .agents export-ignore
 .claude export-ignore
 skills-lock.json export-ignore
+
+# Binary files: never convert line endings (autocrlf would corrupt them)
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
