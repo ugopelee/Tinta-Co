@@ -73,7 +73,7 @@ export default async function LayoutPrivado({ children }: LayoutProps<"/">) {
         esPropietario
       />
 
-      <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 px-4 pb-8 pt-2 lg:px-4 lg:pt-1">
+      <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 px-4 pb-8 pt-2 peer-data-abierta:max-lg:hidden lg:px-4 lg:pt-1">
         {children}
       </main>
     </div>

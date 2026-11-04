@@ -158,8 +158,11 @@ export function BarraLateral({
         </button>
       </div>
 
+      {/* On mobile the open menu replaces the page: `<main>` (a later sibling)
+          hides itself through `peer-data-abierta`. */}
       <aside
-        className={`barra ${
+        data-abierta={abierta || undefined}
+        className={`barra peer ${
           abierta ? "block" : "hidden"
         } tarjeta mx-3 mb-3 lg:sticky lg:top-3 lg:mx-0 lg:mb-0 lg:block lg:h-[calc(100vh-1.5rem)] lg:shrink-0`}
       >
