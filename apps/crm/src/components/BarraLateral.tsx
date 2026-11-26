@@ -99,7 +99,7 @@ const GRUPOS_PROPIETARIO: { titulo: string; enlaces: Enlace[] }[] = [
 
 /** Misma caja para enlaces, botones y formularios de la barra. */
 const FILA =
-  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 bajo:py-1.5 enano:py-1 enano:text-[0.8125rem] mini:py-[3px]";
+  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 bajo:py-1.5 enano:py-1 enano:text-[0.8125rem] mini:py-[2px]";
 
 export function BarraLateral({
   nombre,
@@ -250,7 +250,7 @@ export function BarraLateral({
             {grupos.map((grupo, indice) => (
               <div key={grupo.titulo ?? indice}>
                 {grupo.titulo && (
-                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:hidden">
+                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:mb-0.5 mini:text-[0.6rem] mini:leading-none">
                     {grupo.titulo}
                   </p>
                 )}
