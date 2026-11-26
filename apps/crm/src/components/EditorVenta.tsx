@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar as preguntar } from "@/lib/confirmar";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { estudio, tiposIva } from "@tinta/compartido/estudio";
@@ -134,9 +135,15 @@ export function EditorVenta({
     });
   }
 
-  function cancelar() {
-    const aviso = sucio ? "¿Cancelar esta venta? Los cambios sin guardar se perderán." : "¿Cancelar esta venta?";
-    if (!window.confirm(aviso)) return;
+  async function cancelar() {
+    const seguro = await preguntar({
+      titulo: "¿Cancelar esta venta?",
+      texto: sucio ? "Los cambios sin guardar se perderán." : undefined,
+      aceptar: "Cancelar venta",
+      cancelar: "Volver",
+      peligro: true,
+    });
+    if (!seguro) return;
     setError("");
     iniciar(async () => {
       const resultado = await cambiarEstadoVenta(id!, "cancelada");

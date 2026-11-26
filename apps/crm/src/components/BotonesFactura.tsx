@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar } from "@/lib/confirmar";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { metodosPago, type MetodoPago } from "@tinta/compartido/tipos";
@@ -15,8 +16,13 @@ export function BotonesFactura({ id }: { id: string }) {
   const [anulando, setAnulando] = useState(false);
   const [error, setError] = useState("");
 
-  function cobrar() {
-    if (!window.confirm("Se marcará la factura como cobrada hoy y ya no se podrá modificar. ¿Continuar?")) return;
+  async function cobrar() {
+    const seguro = await confirmar({
+      titulo: "¿Marcar la factura como cobrada?",
+      texto: "Se registra el cobro con fecha de hoy y la factura ya no se podrá modificar.",
+      aceptar: "Marcar cobrada",
+    });
+    if (!seguro) return;
     iniciar(async () => {
       const resultado = await marcarFacturaCobrada(id, metodo);
       if (!resultado.ok) return setError(resultado.mensaje);
@@ -26,8 +32,14 @@ export function BotonesFactura({ id }: { id: string }) {
     });
   }
 
-  function anular() {
-    if (!window.confirm("La factura quedará anulada y no se podrá deshacer. ¿Continuar?")) return;
+  async function anular() {
+    const seguro = await confirmar({
+      titulo: "¿Anular la factura?",
+      texto: "Quedará anulada y no se podrá deshacer.",
+      aceptar: "Anular factura",
+      peligro: true,
+    });
+    if (!seguro) return;
     iniciar(async () => {
       const resultado = await anularFactura(id, motivo);
       if (!resultado.ok) return setError(resultado.mensaje);
