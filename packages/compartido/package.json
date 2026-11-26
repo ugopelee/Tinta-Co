@@ -9,7 +9,10 @@
     "./supabase/servidor": "./src/supabase/server.ts",
     "./supabase/navegador": "./src/supabase/client.ts",
     "./supabase/google": "./src/supabase/google.ts",
-    "./marca": "./src/Marca.tsx"
+    "./marca": "./src/Marca.tsx",
+    "./web/esquema": "./src/web/esquema.ts",
+    "./web/catalogo": "./src/web/catalogo.ts",
+    "./web/tema": "./src/web/tema.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -85,13 +85,21 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
   },
 ];
 
-const ENLACES_PROPIETARIO: Enlace[] = [
-  { href: "/cuentas", texto: "Cuentas", icono: "llave" },
+/** Only the owner edits the public site and manages accounts. */
+const GRUPOS_PROPIETARIO: { titulo: string; enlaces: Enlace[] }[] = [
+  {
+    titulo: "Web",
+    enlaces: [{ href: "/web", texto: "Editor de la web", icono: "web" }],
+  },
+  {
+    titulo: "Ajustes",
+    enlaces: [{ href: "/cuentas", texto: "Cuentas", icono: "llave" }],
+  },
 ];
 
 /** Misma caja para enlaces, botones y formularios de la barra. */
 const FILA =
-  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 bajo:py-1.5 enano:py-1 enano:text-[0.8125rem] mini:py-[3px]";
+  "barra-centrar group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 bajo:py-1.5 enano:py-1 enano:text-[0.8125rem] mini:py-[2px]";
 
 export function BarraLateral({
   nombre,
@@ -114,9 +122,7 @@ export function BarraLateral({
     barraPorDefecto,
   );
 
-  const grupos = esPropietario
-    ? [...GRUPOS, { titulo: "Ajustes", enlaces: ENLACES_PROPIETARIO }]
-    : GRUPOS;
+  const grupos = esPropietario ? [...GRUPOS, ...GRUPOS_PROPIETARIO] : GRUPOS;
 
   const iniciales = nombre
     .split(" ")
@@ -187,8 +193,8 @@ export function BarraLateral({
             </button>
           </div>
 
-          {/* Hueco flexible: reparte el espacio libre a medias con el final del
-              menú (ver el `flex` del nav). Sin espacio, mide 0. */}
+          {/* Flexible gap: takes a quarter of the free height (the nav takes
+              the rest, see its `flex`). Measures 0 when there is none. */}
           <div aria-hidden className="flex-1" />
 
           {/* Acción principal: las oportunidades no se crean aquí, entran por
@@ -240,11 +246,13 @@ export function BarraLateral({
             </kbd>
           </form>
 
-          <nav className="sin-barra mt-4 min-h-0 flex-auto space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:mt-2 enano:space-y-2 mini:space-y-1.5">
+          {/* Free height goes mostly here: `mt-auto` spreads it between the
+              groups, and collapses to 0 when the menu has to scroll. */}
+          <nav className="sin-barra mt-4 flex min-h-0 flex-[3_1_auto] flex-col gap-4 overflow-y-auto bajo:mt-3 bajo:gap-3 enano:mt-2 enano:gap-2 mini:gap-1.5">
             {grupos.map((grupo, indice) => (
-              <div key={grupo.titulo ?? indice}>
+              <div key={grupo.titulo ?? indice} className={indice > 0 ? "mt-auto" : undefined}>
                 {grupo.titulo && (
-                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:hidden">
+                  <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:mb-0.5 mini:text-[0.6rem] mini:leading-none">
                     {grupo.titulo}
                   </p>
                 )}

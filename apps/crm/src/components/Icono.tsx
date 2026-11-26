@@ -14,6 +14,7 @@ import {
   Download,
   FileChartColumn,
   FileText,
+  Globe,
   IdCard,
   Euro,
   ExternalLink,
@@ -97,6 +98,7 @@ const ICONOS = {
   cerrar: X,
   seleccion: UserSearch,
   desplegar: ChevronDown,
+  web: Globe,
 } satisfies Record<string, LucideIcon>;
 
 export type NombreIcono = keyof typeof ICONOS;
