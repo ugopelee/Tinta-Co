@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { cerrarSesion } from "@/app/cuenta/acciones";
 
+/** Account signed in on the public site. It never links into the CRM. */
 export type Sesion = {
   nombre: string;
   email: string;
-  esPropietario: boolean;
 };
-
-const URL_CRM = process.env.NEXT_PUBLIC_URL_CRM ?? "";
 
 export function MenuCuenta({ sesion }: { sesion: Sesion }) {
   const [abierto, setAbierto] = useState(false);
@@ -69,16 +67,6 @@ export function MenuCuenta({ sesion }: { sesion: Sesion }) {
             <p className="truncate text-sm">{sesion.nombre}</p>
             <p className="mt-0.5 truncate text-xs text-tenue">{sesion.email}</p>
           </div>
-
-          {sesion.esPropietario && URL_CRM && (
-            <a
-              href={URL_CRM}
-              role="menuitem"
-              className="block px-4 py-3 text-sm text-tenue transition-colors hover:bg-white/5 hover:text-texto"
-            >
-              Ir al panel
-            </a>
-          )}
 
           <form action={cerrarSesion}>
             <button
