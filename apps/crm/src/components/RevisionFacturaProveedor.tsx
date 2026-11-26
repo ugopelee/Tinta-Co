@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar } from "@/lib/confirmar";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
 import type { FacturaProveedor } from "@tinta/compartido/tipos";
@@ -36,12 +37,13 @@ export function RevisionFacturaProveedor({ factura }: { factura: FacturaProveedo
   const descuadra =
     [numBase, numIva, numTotal].every(Number.isFinite) && Math.abs(Math.round(numBase * 100) + Math.round(numIva * 100) - Math.round(numTotal * 100)) > 2;
 
-  function resolver(estado: "validada" | "descartada") {
-    const texto =
+  async function resolver(estado: "validada" | "descartada") {
+    const seguro = await confirmar(
       estado === "validada"
-        ? "La factura contará como gasto y ya no se podrá modificar. ¿Validar?"
-        : "La factura se descartará y no contará como gasto. ¿Descartar?";
-    if (!window.confirm(texto)) return;
+        ? { titulo: "¿Validar la factura?", texto: "Contará como gasto y ya no se podrá modificar.", aceptar: "Validar" }
+        : { titulo: "¿Descartar la factura?", texto: "No contará como gasto.", aceptar: "Descartar", peligro: true },
+    );
+    if (!seguro) return;
     iniciar(async () => {
       const resultado = await revisarFacturaProveedor(
         factura.id,

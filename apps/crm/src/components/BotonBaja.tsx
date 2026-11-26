@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar } from "@/lib/confirmar";
 import { useState, useTransition } from "react";
 import { cambiarBaja } from "@/app/acciones-equipo";
 
@@ -13,8 +14,17 @@ export function BotonBaja({ empleadoId, deBaja }: { empleadoId: string; deBaja: 
       <button
         type="button"
         disabled={ocupado}
-        onClick={() => {
-          if (!deBaja && !window.confirm("¿Dar de baja? Perderá el acceso a su portal.")) return;
+        onClick={async () => {
+          if (
+            !deBaja &&
+            !(await confirmar({
+              titulo: "¿Dar de baja?",
+              texto: "Perderá el acceso a su portal. Su historial se conserva.",
+              aceptar: "Dar de baja",
+              peligro: true,
+            }))
+          )
+            return;
           iniciar(async () => {
             const resultado = await cambiarBaja(empleadoId, !deBaja);
             setError(resultado.ok ? "" : resultado.mensaje);

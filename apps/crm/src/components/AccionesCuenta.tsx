@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar } from "@/lib/confirmar";
 import { useState, useTransition } from "react";
 import { crearCuentaEmpleado, restablecerClave } from "@/app/acciones-equipo";
 import { TarjetaCredenciales } from "@/components/TarjetaCredenciales";
@@ -11,8 +12,12 @@ export function AccionesCuenta({ empleadoId, tieneCuenta }: { empleadoId: string
   const [error, setError] = useState("");
   const [ocupado, iniciar] = useTransition();
 
-  function ejecutar() {
-    if (tieneCuenta && !window.confirm("¿Generar una contraseña nueva? La actual dejará de funcionar.")) return;
+  async function ejecutar() {
+    if (
+      tieneCuenta &&
+      !(await confirmar({ titulo: "¿Generar una contraseña nueva?", texto: "La actual dejará de funcionar.", aceptar: "Generar contraseña" }))
+    )
+      return;
 
     iniciar(async () => {
       setError("");

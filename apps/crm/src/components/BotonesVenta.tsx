@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmar } from "@/lib/confirmar";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { EstadoVenta } from "@tinta/compartido/estudio";
@@ -14,8 +15,17 @@ export function BotonesVenta({ id, estado }: { id: string; estado: Exclude<Estad
   const [ocupado, iniciar] = useTransition();
   const [error, setError] = useState("");
 
-  function cambiar(nuevo: "confirmada" | "cancelada" | "presupuesto", aviso?: string) {
-    if (aviso && !window.confirm(aviso)) return;
+  async function cambiar(nuevo: "confirmada" | "cancelada" | "presupuesto", aviso?: string) {
+    if (
+      aviso &&
+      !(await confirmar({
+        titulo: aviso,
+        aceptar: "Continuar",
+        cancelar: "Volver",
+        peligro: nuevo === "cancelada",
+      }))
+    )
+      return;
     iniciar(async () => {
       const resultado = await cambiarEstadoVenta(id, nuevo);
       setError(resultado.ok ? "" : resultado.mensaje);
@@ -23,8 +33,13 @@ export function BotonesVenta({ id, estado }: { id: string; estado: Exclude<Estad
     });
   }
 
-  function facturar() {
-    if (!window.confirm("Se emitirá la factura y la venta ya no se podrá modificar. ¿Continuar?")) return;
+  async function facturar() {
+    const seguro = await confirmar({
+      titulo: "¿Emitir la factura?",
+      texto: "La venta ya no se podrá modificar.",
+      aceptar: "Emitir factura",
+    });
+    if (!seguro) return;
     iniciar(async () => {
       const resultado = await facturarVenta(id);
       if (resultado.ok) router.push(`/facturacion/${resultado.facturaId}`);
