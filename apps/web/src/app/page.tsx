@@ -96,14 +96,13 @@ async function leerSesion(): Promise<Sesion | null> {
 
   const { data } = await supabase
     .from("perfiles")
-    .select("nombre, email, rol")
+    .select("nombre, email")
     .eq("id", user.id)
     .maybeSingle();
 
   return {
     nombre: data?.nombre ?? data?.email ?? user.email ?? "Mi cuenta",
     email: data?.email ?? user.email ?? "",
-    esPropietario: data?.rol === "propietario",
   };
 }
 
