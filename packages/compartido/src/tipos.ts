@@ -1,3 +1,4 @@
+import type { TemaPagina } from "./config/paginas";
 import type {
   EstadoCita,
   EstadoCandidato,
@@ -30,6 +31,21 @@ export type Diseno = {
   disponible: boolean;
   orden: number;
   created_at: string;
+};
+
+/** Página web editable desde el CRM. `plantilla` es un id de `plantillasPagina`. */
+export type Pagina = {
+  id: string;
+  slug: string;
+  titulo: string;
+  plantilla: string;
+  /** Valores de los campos de la plantilla, por su `clave`. */
+  contenido: Record<string, string>;
+  /** Paleta y retoques; se lee siempre con `resolverTema`. */
+  tema: TemaPagina;
+  publicada: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Cliente = {
