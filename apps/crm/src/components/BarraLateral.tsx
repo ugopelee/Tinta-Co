@@ -85,11 +85,16 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
   },
 ];
 
-/** Editor de la web: solo la propiedad, justo detrás del catálogo flash. */
-const ENLACE_WEB: Enlace = { href: "/web", texto: "Web", icono: "web" };
-
-const ENLACES_PROPIETARIO: Enlace[] = [
-  { href: "/cuentas", texto: "Cuentas", icono: "llave" },
+/** Only the owner edits the public site and manages accounts. */
+const GRUPOS_PROPIETARIO: { titulo: string; enlaces: Enlace[] }[] = [
+  {
+    titulo: "Web",
+    enlaces: [{ href: "/web", texto: "Editor de la web", icono: "web" }],
+  },
+  {
+    titulo: "Ajustes",
+    enlaces: [{ href: "/cuentas", texto: "Cuentas", icono: "llave" }],
+  },
 ];
 
 /** Misma caja para enlaces, botones y formularios de la barra. */
@@ -117,18 +122,7 @@ export function BarraLateral({
     barraPorDefecto,
   );
 
-  const grupos = esPropietario
-    ? [
-        {
-          ...GRUPOS[0],
-          enlaces: GRUPOS[0].enlaces.flatMap((e) =>
-            e.href === "/catalogo" ? [e, ENLACE_WEB] : [e],
-          ),
-        },
-        ...GRUPOS.slice(1),
-        { titulo: "Ajustes", enlaces: ENLACES_PROPIETARIO },
-      ]
-    : GRUPOS;
+  const grupos = esPropietario ? [...GRUPOS, ...GRUPOS_PROPIETARIO] : GRUPOS;
 
   const iniciales = nombre
     .split(" ")
