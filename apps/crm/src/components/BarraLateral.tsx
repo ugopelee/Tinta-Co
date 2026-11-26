@@ -193,8 +193,8 @@ export function BarraLateral({
             </button>
           </div>
 
-          {/* Hueco flexible: reparte el espacio libre a medias con el final del
-              menú (ver el `flex` del nav). Sin espacio, mide 0. */}
+          {/* Flexible gap: takes a quarter of the free height (the nav takes
+              the rest, see its `flex`). Measures 0 when there is none. */}
           <div aria-hidden className="flex-1" />
 
           {/* Acción principal: las oportunidades no se crean aquí, entran por
@@ -246,9 +246,11 @@ export function BarraLateral({
             </kbd>
           </form>
 
-          <nav className="sin-barra mt-4 min-h-0 flex-auto space-y-4 overflow-y-auto bajo:mt-3 bajo:space-y-3 enano:mt-2 enano:space-y-2 mini:space-y-1.5">
+          {/* Free height goes mostly here: `mt-auto` spreads it between the
+              groups, and collapses to 0 when the menu has to scroll. */}
+          <nav className="sin-barra mt-4 flex min-h-0 flex-[3_1_auto] flex-col gap-4 overflow-y-auto bajo:mt-3 bajo:gap-3 enano:mt-2 enano:gap-2 mini:gap-1.5">
             {grupos.map((grupo, indice) => (
-              <div key={grupo.titulo ?? indice}>
+              <div key={grupo.titulo ?? indice} className={indice > 0 ? "mt-auto" : undefined}>
                 {grupo.titulo && (
                   <p className="barra-texto etiqueta mb-1 px-3 text-tenue enano:mb-0.5 mini:mb-0.5 mini:text-[0.6rem] mini:leading-none">
                     {grupo.titulo}
