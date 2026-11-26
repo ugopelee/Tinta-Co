@@ -85,6 +85,9 @@ const GRUPOS: { titulo: string | null; enlaces: Enlace[] }[] = [
   },
 ];
 
+/** Editor de la web: solo la propiedad, justo detrás del catálogo flash. */
+const ENLACE_WEB: Enlace = { href: "/web", texto: "Web", icono: "web" };
+
 const ENLACES_PROPIETARIO: Enlace[] = [
   { href: "/cuentas", texto: "Cuentas", icono: "llave" },
 ];
@@ -115,7 +118,16 @@ export function BarraLateral({
   );
 
   const grupos = esPropietario
-    ? [...GRUPOS, { titulo: "Ajustes", enlaces: ENLACES_PROPIETARIO }]
+    ? [
+        {
+          ...GRUPOS[0],
+          enlaces: GRUPOS[0].enlaces.flatMap((e) =>
+            e.href === "/catalogo" ? [e, ENLACE_WEB] : [e],
+          ),
+        },
+        ...GRUPOS.slice(1),
+        { titulo: "Ajustes", enlaces: ENLACES_PROPIETARIO },
+      ]
     : GRUPOS;
 
   const iniciales = nombre

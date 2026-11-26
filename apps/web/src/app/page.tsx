@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { estudio } from "@tinta/compartido/estudio";
 import { crearClienteServidor } from "@tinta/compartido/supabase/servidor";
@@ -15,12 +16,39 @@ import { PapelRasgado } from "@/components/PapelRasgado";
 import { LienzoPuntos } from "@/components/puntos/LienzoPuntos";
 import { Servicios } from "@/components/Servicios";
 import { VolverArriba } from "@/components/VolverArriba";
+import { RenderSitio } from "@/components/sitio/RenderSitio";
 import { fotosEstudio } from "@/lib/flash";
+import { clasesFuentesSitio } from "@/lib/fuentes-sitio";
+import { datosWeb, webPublicada } from "@/lib/sitio";
 
 /** Oficios del estudio, al pie de la portada. */
 const OFICIOS = ["flash de autor", "piezas a medida", "piercing", "retoques", "eventos"];
 
-export default async function Landing() {
+export async function generateMetadata(): Promise<Metadata> {
+  const sitio = await webPublicada();
+  if (!sitio) return {};
+  return {
+    title: { absolute: sitio.seo.titulo || sitio.marca.nombre },
+    description: sitio.seo.descripcion || undefined,
+  };
+}
+
+/**
+ * La web pública. Si el propietario ha publicado una web desde el editor del
+ * CRM, se pinta con su plantilla; si no, sigue la landing original.
+ */
+export default async function Inicio() {
+  const sitio = await webPublicada();
+  if (!sitio) return <Landing />;
+  const datos = await datosWeb();
+  return (
+    <div className={clasesFuentesSitio}>
+      <RenderSitio sitio={sitio} datos={datos} />
+    </div>
+  );
+}
+
+async function Landing() {
   const supabase = await crearClienteServidor();
 
   // RLS ya limita al público a los diseños disponibles, pero un propietario
